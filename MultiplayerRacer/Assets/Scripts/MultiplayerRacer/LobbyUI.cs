@@ -79,39 +79,42 @@ namespace MultiplayerRacer
         /// Sets up room status with nickname
         /// </summary>
         /// <param name="nickname"></param>
-        private void SetupNickname(string nickname)
+        private void UpdateNickname(string nickname)
         {
             Text nicknameComp = roomStatus.transform.Find("Nickname")?.GetComponent<Text>();
             if (nicknameComp != null)
             {
                 nicknameComp.text = $"Nickname: {nickname}";
             }
+            else Debug.LogError("Wont update nickname :: text component is null");
         }
 
         /// <summary>
         /// sets up room status with room information
         /// </summary>
         /// <param name="playercount"></param>
-        private void SetupRoomStats(Room room)
+        public void UpdateRoomInfo(Room room)
         {
             Text playerCountComp = roomStatus.transform.Find("Playercount")?.GetComponent<Text>();
             if (playerCountComp != null)
             {
                 playerCountComp.text = $"Playercount: {room.PlayerCount}";
             }
+            else Debug.LogError("Wont update player count :: text component is null");
 
             Text roomNameComp = roomStatus.transform.Find("RoomName")?.GetComponent<Text>();
             if (roomNameComp != null)
             {
                 roomNameComp.text = $"RoomName: {room.Name}";
             }
+            else Debug.LogError("Wont update room name :: text component is null");
         }
 
         /// <summary>
         /// sets up room status with ismasterclient status
         /// </summary>
         /// <param name="ismaster"></param>
-        private void SetupIsMasterclient(bool ismaster)
+        private void UpdateIsMasterclient(bool ismaster)
         {
             Text isMasterclientComp = roomStatus.transform.Find("Ismasterclient")?.GetComponent<Text>();
             if (isMasterclientComp != null)
@@ -119,6 +122,7 @@ namespace MultiplayerRacer
                 string yesOrNo = ismaster ? "yes" : "no";
                 isMasterclientComp.text = $"IsMasterclient: {yesOrNo}";
             }
+            else Debug.LogError("Wont update ismasterclient :: text component is null");
         }
 
         public void SetupRoomStatus(string nickname, Room room, bool ismaster)
@@ -132,17 +136,17 @@ namespace MultiplayerRacer
 
             if (!string.IsNullOrEmpty(nickname))
             {
-                SetupNickname(nickname);
+                UpdateNickname(nickname);
             }
             else Debug.LogError($"string nickname: {nickname} is not valid");
 
             if (room != null)
             {
-                SetupRoomStats(room);
+                UpdateRoomInfo(room);
             }
             else Debug.LogError("given room to show status of is null");
 
-            SetupIsMasterclient(ismaster);
+            UpdateIsMasterclient(ismaster);
         }
 
         /// <summary>

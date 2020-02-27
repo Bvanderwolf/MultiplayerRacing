@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace MultiplayerRacer
 {
-    public class NetworkConnectionManager : MonoBehaviourPunCallbacks
+    public class MatchMakingManager : MonoBehaviourPunCallbacks
     {
         private LobbyUI lobbyUI = null;
         private Color connectColor = new Color(0, 0.75f, 0);
