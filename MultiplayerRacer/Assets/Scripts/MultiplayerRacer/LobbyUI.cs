@@ -1,6 +1,7 @@
 ﻿using Photon.Realtime;
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace MultiplayerRacer
@@ -8,6 +9,7 @@ namespace MultiplayerRacer
     public class LobbyUI : MonoBehaviour
     {
         [SerializeField] private Button connectButton;
+        [SerializeField] private Button exitButton;
         [SerializeField] private GameObject roomStatus;
         [SerializeField] private Color connectColor = new Color(0, 0.75f, 0);
         [SerializeField] private Color disconnectColor = new Color(0.75f, 0, 0);
@@ -98,7 +100,7 @@ namespace MultiplayerRacer
             Text playerCountComp = roomStatus.transform.Find("Playercount")?.GetComponent<Text>();
             if (playerCountComp != null)
             {
-                playerCountComp.text = $"Playercount: {room.PlayerCount}";
+                playerCountComp.text = $"Players: {room.PlayerCount}/{MatchMakingManager.MAX_PLAYERS}";
             }
             else Debug.LogError("Wont update player count :: text component is null");
 
@@ -149,20 +151,68 @@ namespace MultiplayerRacer
             UpdateIsMasterclient(ismaster);
         }
 
+        public void SetupExitButton(UnityAction clickAction)
+        {
+            if (exitButton == null)
+                if (FindAndSetExitButtonReference())
+                    return;
+
+            exitButton.gameObject.SetActive(true);
+            exitButton.onClick.AddListener(() =>
+            {
+                clickAction?.Invoke();
+                exitButton.onClick.RemoveListener(clickAction);
+                exitButton.gameObject.SetActive(false);
+            });
+        }
+
+        private void UpdateReadyStatus()
+        {
+        }
+
         /// <summary>
         /// tries find connect button in scene en reset its reference
         /// </summary>
         private bool FindAndSetConnectButtonReference()
         {
-            if (connectButton == null)
+            foreach (Button b in GetComponentsInChildren<Button>())
             {
-                connectButton = GetComponentInChildren<Button>();
-                if (connectButton == null || connectButton.name != "ConnectButton")
+                if (b.gameObject.name == "ConnectButton")
                 {
-                    Debug.LogError("connect button not found or invalid name");
-                    return false;
+                    connectButton = b;
+                    break;
                 }
             }
+
+            if (connectButton == null)
+            {
+                Debug.LogError($"Connect button not found");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// tries find exit button in scene en reset its reference
+        /// </summary>
+        private bool FindAndSetExitButtonReference()
+        {
+            foreach (Button b in GetComponentsInChildren<Button>())
+            {
+                if (b.gameObject.name == "ExitButton")
+                {
+                    exitButton = b;
+                    break;
+                }
+            }
+
+            if (exitButton == null)
+            {
+                Debug.LogError($"Exit button not found");
+                return false;
+            }
+
             return true;
         }
     }

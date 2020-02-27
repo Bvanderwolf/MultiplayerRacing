@@ -9,6 +9,16 @@ namespace MultiplayerRacer
     {
         private LobbyUI lobbyUI = null;
 
+        private void OnEnable()
+        {
+            PhotonNetwork.AddCallbackTarget(this);
+        }
+
+        private void OnDisable()
+        {
+            PhotonNetwork.RemoveCallbackTarget(this);
+        }
+
         private void Start()
         {
             lobbyUI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<LobbyUI>();
@@ -30,6 +40,12 @@ namespace MultiplayerRacer
 
         public void OnPlayerLeftRoom(Player otherPlayer)
         {
+            //Update Room Info
+            if (lobbyUI != null)
+            {
+                lobbyUI.UpdateRoomInfo(PhotonNetwork.CurrentRoom);
+            }
+            else Debug.LogError("Wont update room info :: lobbyUI is null");
         }
 
         public void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
