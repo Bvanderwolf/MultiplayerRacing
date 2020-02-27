@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Photon.Realtime;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,31 +11,31 @@ namespace MultiplayerRacer
         [SerializeField] private GameObject roomStatus;
         [SerializeField] private Color connectColor = new Color(0, 0.75f, 0);
         [SerializeField] private Color disconnectColor = new Color(0.75f, 0, 0);
+        [SerializeField] private float roomStatRoundness = 0.25f;
 
         //sets up connect button and returns if succeeded
-        public bool SetupConnectButton(Action<Button> clickAction)
+        public void SetupConnectButton(Action<Button> clickAction)
         {
-            if (connectButton != null)
+            //if connect button is null try finding it and if not found return
+            if (connectButton == null)
+                if (FindAndSetConnectButtonReference())
+                    return;
+
+            //handle edgecase where connect button is inactive and room status enabled
+            if (!connectButton.gameObject.activeInHierarchy)
             {
-                connectButton.onClick.AddListener(() => clickAction.Invoke(connectButton));
+                connectButton.gameObject.SetActive(true);
+                roomStatus.SetActive(false);
             }
-            else
-            {
-                if (connectButton == null)
-                {
-                    Debug.LogError("No connect button found on canvas");
-                    return false;
-                }
-                else
-                {
-                    connectButton.onClick.AddListener(() => clickAction.Invoke(connectButton));
-                }
-            }
-            return true;
+            connectButton.onClick.AddListener(() => clickAction.Invoke(connectButton));
         }
 
         public void UpdateConnectColor(bool connected)
         {
+            if (connectButton == null)
+                if (FindAndSetConnectButtonReference())
+                    return;
+
             //show green or red button color for succesfull/unsuccesfull connection with master
             Image image = connectButton.image;
             if (image != null)
@@ -45,6 +46,10 @@ namespace MultiplayerRacer
 
         public void UpdateConnectStatus(bool connected)
         {
+            if (connectButton == null)
+                if (FindAndSetConnectButtonReference())
+                    return;
+
             string destination = connected ? "Room" : "Master";
             //replace the button text with updated text based on new status
             Text textComponent = connectButton.GetComponentInChildren<Text>();
@@ -63,14 +68,98 @@ namespace MultiplayerRacer
         public string ConnectDestination()
         {
             if (connectButton == null)
-                return "";
+                if (FindAndSetConnectButtonReference())
+                    return "";
 
             string text = connectButton.GetComponentInChildren<Text>().text;
             return text.Substring(text.LastIndexOf(' ') + 1);
         }
 
-        public void SetupRoomStatus()
+        /// <summary>
+        /// Sets up room status with nickname
+        /// </summary>
+        /// <param name="nickname"></param>
+        private void SetupNickname(string nickname)
         {
+            Text nicknameComp = roomStatus.transform.Find("Nickname")?.GetComponent<Text>();
+            if (nicknameComp != null)
+            {
+                nicknameComp.text = $"Nickname: {nickname}";
+            }
+        }
+
+        /// <summary>
+        /// sets up room status with room information
+        /// </summary>
+        /// <param name="playercount"></param>
+        private void SetupRoomStats(Room room)
+        {
+            Text playerCountComp = roomStatus.transform.Find("Playercount")?.GetComponent<Text>();
+            if (playerCountComp != null)
+            {
+                playerCountComp.text = $"Playercount: {room.PlayerCount}";
+            }
+
+            Text roomNameComp = roomStatus.transform.Find("RoomName")?.GetComponent<Text>();
+            if (roomNameComp != null)
+            {
+                roomNameComp.text = $"RoomName: {room.Name}";
+            }
+        }
+
+        /// <summary>
+        /// sets up room status with ismasterclient status
+        /// </summary>
+        /// <param name="ismaster"></param>
+        private void SetupIsMasterclient(bool ismaster)
+        {
+            Text isMasterclientComp = roomStatus.transform.Find("Ismasterclient")?.GetComponent<Text>();
+            if (isMasterclientComp != null)
+            {
+                string yesOrNo = ismaster ? "yes" : "no";
+                isMasterclientComp.text = $"IsMasterclient: {yesOrNo}";
+            }
+        }
+
+        public void SetupRoomStatus(string nickname, Room room, bool ismaster)
+        {
+            //if room status is not enabled yet, enable it and disable connect button
+            if (!roomStatus.activeInHierarchy)
+            {
+                roomStatus.SetActive(true);
+                connectButton.gameObject.SetActive(false);
+            }
+
+            if (!string.IsNullOrEmpty(nickname))
+            {
+                SetupNickname(nickname);
+            }
+            else Debug.LogError($"string nickname: {nickname} is not valid");
+
+            if (room != null)
+            {
+                SetupRoomStats(room);
+            }
+            else Debug.LogError("given room to show status of is null");
+
+            SetupIsMasterclient(ismaster);
+        }
+
+        /// <summary>
+        /// tries find connect button in scene en reset its reference
+        /// </summary>
+        private bool FindAndSetConnectButtonReference()
+        {
+            if (connectButton == null)
+            {
+                connectButton = GetComponentInChildren<Button>();
+                if (connectButton == null || connectButton.name != "ConnectButton")
+                {
+                    Debug.LogError("connect button not found or invalid name");
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }
