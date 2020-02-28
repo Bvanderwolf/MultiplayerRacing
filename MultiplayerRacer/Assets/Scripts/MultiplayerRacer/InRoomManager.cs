@@ -7,11 +7,26 @@ namespace MultiplayerRacer
 {
     public class InRoomManager : MonoBehaviour, IInRoomCallbacks
     {
+        public static InRoomManager Instance { get; private set; }
         private LobbyUI lobbyUI = null;
 
         private void OnEnable()
         {
             PhotonNetwork.AddCallbackTarget(this);
+        }
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(this.gameObject);
+            }
+            else
+            {
+                Instance = this;
+            }
+
+            DontDestroyOnLoad(this.gameObject);
         }
 
         private void OnDisable()
@@ -24,29 +39,39 @@ namespace MultiplayerRacer
             lobbyUI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<LobbyUI>();
         }
 
+        private void FullRoomCheck(Room room)
+        {
+            if (room.PlayerCount == MatchMakingManager.MAX_PLAYERS)
+            {
+                lobbyUI.ListenToReadyButton(MatchMakingManager.Instance.NumberInRoom);
+            }
+        }
+
         public void OnMasterClientSwitched(Player newMasterClient)
         {
         }
 
         public void OnPlayerEnteredRoom(Player newPlayer)
         {
-            //Update Room Info
+            //Update Room status
             if (lobbyUI != null)
             {
                 Room room = PhotonNetwork.CurrentRoom;
                 lobbyUI.UpdateRoomInfo(room);
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                FullRoomCheck(room);
             }
             else Debug.LogError("Wont update room :: lobbyUI is null");
         }
 
         public void OnPlayerLeftRoom(Player otherPlayer)
         {
-            //Update Room Info
+            //Update Room status
             if (lobbyUI != null)
             {
                 Room room = PhotonNetwork.CurrentRoom;
                 lobbyUI.UpdateRoomInfo(room);
+                lobbyUI.ResetReadyButtons();
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
             }
             else Debug.LogError("Wont update room :: lobbyUI is null");

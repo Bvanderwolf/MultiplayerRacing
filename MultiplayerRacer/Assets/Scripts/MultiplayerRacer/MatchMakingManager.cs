@@ -7,6 +7,7 @@ namespace MultiplayerRacer
 {
     public class MatchMakingManager : MonoBehaviourPunCallbacks
     {
+        public static MatchMakingManager Instance { get; private set; }
         private LobbyUI lobbyUI = null;
         private Color connectColor = new Color(0, 0.75f, 0);
         private Color disconnectColor = new Color(0.75f, 0, 0);
@@ -16,6 +17,22 @@ namespace MultiplayerRacer
 
         private bool connectingToMaster = false;
         private bool connectingToRoom = false;
+
+        public int NumberInRoom { get; private set; } = 0;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(this.gameObject);
+            }
+            else
+            {
+                Instance = this;
+            }
+
+            DontDestroyOnLoad(this.gameObject);
+        }
 
         // Start is called before the first frame update
         private void Start()
@@ -71,15 +88,41 @@ namespace MultiplayerRacer
             if (!PhotonNetwork.InRoom)
                 return "";
 
-            return $"Player{PhotonNetwork.CurrentRoom.PlayerCount}";
+            return $"Player{NumberInRoom}";
         }
 
-        private void OnConnectToMaster()
+        private void LeaveRoom()
         {
-            //dont connect to master if we are already trying
-            if (connectingToMaster)
-                return;
+            if (PhotonNetwork.IsConnectedAndReady)
+            {
+                PhotonNetwork.LeaveRoom();
+            }
+        }
 
+        private void SetConnectedToRoom(Room room)
+        {
+            connectingToRoom = false;
+            NumberInRoom = room.PlayerCount;
+        }
+
+        private void SetConnectingToRoom()
+        {
+            connectingToRoom = true;
+
+            //setup room options and join or create room
+            RoomOptions options = new RoomOptions();
+            options.IsVisible = false;
+            options.MaxPlayers = MAX_PLAYERS;
+            PhotonNetwork.JoinOrCreateRoom(ROOM_NAME, options, TypedLobby.Default);
+        }
+
+        private void SetConnectedToMaster()
+        {
+            connectingToMaster = false;
+        }
+
+        private void SetConnectingToMaster()
+        {
             connectingToMaster = true;
 
             //set photonnetwork settings and connect
@@ -88,19 +131,30 @@ namespace MultiplayerRacer
             PhotonNetwork.ConnectUsingSettings();
         }
 
+        private void FullRoomCheck(Room room)
+        {
+            if (room.PlayerCount == MAX_PLAYERS)
+            {
+                lobbyUI.ListenToReadyButton(NumberInRoom);
+            }
+        }
+
+        private void OnConnectToMaster()
+        {
+            //dont connect to master if we are already trying
+            if (!connectingToMaster)
+            {
+                SetConnectingToMaster();
+            }
+        }
+
         private void OnConnectToRoom()
         {
-            //check if we can actually connect to the room
-            if (lobbyUI.ConnectDestination() != "Room" || connectingToRoom || !PhotonNetwork.IsConnectedAndReady)
-                return;
-
-            connectingToRoom = true;
-
-            //setup room options and join or create room
-            RoomOptions options = new RoomOptions();
-            options.IsVisible = false;
-            options.MaxPlayers = MAX_PLAYERS;
-            PhotonNetwork.JoinOrCreateRoom(ROOM_NAME, options, TypedLobby.Default);
+            //connect only if we can actually connect to the room
+            if (lobbyUI.ConnectDestination() == "Room" && !connectingToRoom && PhotonNetwork.IsConnectedAndReady)
+            {
+                SetConnectingToRoom();
+            }
         }
 
         public override void OnCreatedRoom()
@@ -117,23 +171,15 @@ namespace MultiplayerRacer
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
-
-            connectingToRoom = false;
-
-            lobbyUI.SetupRoomStatus(
-                MakeNickname(),
-                PhotonNetwork.CurrentRoom,
-                PhotonNetwork.IsMasterClient);
-
-            lobbyUI.UpdateReadyButtons(PhotonNetwork.CurrentRoom.PlayerCount);
-
-            lobbyUI.SetupExitButton(() =>
+            if (connectingToRoom)
             {
-                if (PhotonNetwork.IsConnectedAndReady)
-                {
-                    PhotonNetwork.LeaveRoom();
-                }
-            });
+                Room room = PhotonNetwork.CurrentRoom;
+                SetConnectedToRoom(room);
+                lobbyUI.SetupRoomStatus(MakeNickname(), room, PhotonNetwork.IsMasterClient);
+                lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                lobbyUI.SetupExitButton(LeaveRoom);
+                FullRoomCheck(room);
+            }
         }
 
         public override void OnJoinRoomFailed(short returnCode, string message)
@@ -145,12 +191,13 @@ namespace MultiplayerRacer
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
-
-            connectingToMaster = false;
-
-            //update lobby ui when connected to master
-            lobbyUI.UpdateConnectStatus(true);
-            lobbyUI.UpdateConnectColor(true);
+            if (connectingToMaster)
+            {
+                SetConnectedToMaster();
+                //update lobby ui when connected to master
+                lobbyUI.UpdateConnectStatus(true);
+                lobbyUI.UpdateConnectColor(true);
+            }
         }
 
         //Note* will be called before OnConnectedToMaster gets called

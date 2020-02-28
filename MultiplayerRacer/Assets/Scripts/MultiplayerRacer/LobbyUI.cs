@@ -1,4 +1,5 @@
-﻿using Photon.Realtime;
+﻿using Photon.Pun;
+using Photon.Realtime;
 using System;
 using UnityEngine;
 using UnityEngine.Events;
@@ -43,11 +44,7 @@ namespace MultiplayerRacer
                     return;
 
             //show green or red button color for succesfull/unsuccesfull connection with master
-            Image image = connectButton.image;
-            if (image != null)
-            {
-                image.color = connected ? connectColor : disconnectColor;
-            }
+            connectButton.image.color = connected ? connectColor : disconnectColor;
         }
 
         public void UpdateConnectStatus(bool connected)
@@ -202,7 +199,28 @@ namespace MultiplayerRacer
                 {
                     child.SetActive(true);
                 }
+                if (count == MatchMakingManager.MAX_PLAYERS)
+                {
+                    child.GetComponent<Button>().interactable = true;
+                }
             }
+        }
+
+        public void ListenToReadyButton(int playerNumber)
+        {
+            if (playerNumber < 0 || playerNumber > MatchMakingManager.MAX_PLAYERS)
+                return;
+
+            Transform statusTransform = readyStatus.transform;
+            Button button = statusTransform.GetChild(playerNumber - 1)?.GetComponent<Button>();
+            if (button != null)
+            {
+                button.onClick.AddListener(() =>
+                {
+                    GetComponent<PhotonView>().RPC("UpdateReadyButton", RpcTarget.AllBufferedViaServer, playerNumber);
+                });
+            }
+            else Debug.LogError($"Player number {playerNumber} is out of bounds of child array");
         }
 
         public void ResetReadyButtons()
@@ -215,13 +233,21 @@ namespace MultiplayerRacer
             for (int ci = 0; ci < statusTransform.childCount; ci++)
             {
                 GameObject child = statusTransform.GetChild(ci).gameObject;
+                RectTransform rectTF = child.GetComponent<RectTransform>();
+                rectTF.anchoredPosition = new Vector2(0, rectTF.anchoredPosition.y);
+                child.GetComponent<Button>().image.color = Color.white;
                 if (child.activeInHierarchy)
                 {
-                    RectTransform rectTF = child.GetComponent<RectTransform>();
-                    rectTF.anchoredPosition = new Vector2(0, rectTF.anchoredPosition.y);
                     child.SetActive(false);
                 }
             }
+        }
+
+        [PunRPC]
+        private void UpdateReadyButton(int playerNumber)
+        {
+            Button button = readyStatus.transform.GetChild(playerNumber - 1)?.GetComponent<Button>();
+            button.image.color = connectColor;
         }
 
         #region FallbackFunctions
