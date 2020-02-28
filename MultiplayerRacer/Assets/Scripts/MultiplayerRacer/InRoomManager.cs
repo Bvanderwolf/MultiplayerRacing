@@ -33,9 +33,11 @@ namespace MultiplayerRacer
             //Update Room Info
             if (lobbyUI != null)
             {
-                lobbyUI.UpdateRoomInfo(PhotonNetwork.CurrentRoom);
+                Room room = PhotonNetwork.CurrentRoom;
+                lobbyUI.UpdateRoomInfo(room);
+                lobbyUI.UpdateReadyButtons(room.PlayerCount);
             }
-            else Debug.LogError("Wont update room info :: lobbyUI is null");
+            else Debug.LogError("Wont update room :: lobbyUI is null");
         }
 
         public void OnPlayerLeftRoom(Player otherPlayer)
@@ -43,9 +45,11 @@ namespace MultiplayerRacer
             //Update Room Info
             if (lobbyUI != null)
             {
-                lobbyUI.UpdateRoomInfo(PhotonNetwork.CurrentRoom);
+                Room room = PhotonNetwork.CurrentRoom;
+                lobbyUI.UpdateRoomInfo(room);
+                lobbyUI.UpdateReadyButtons(room.PlayerCount);
             }
-            else Debug.LogError("Wont update room info :: lobbyUI is null");
+            else Debug.LogError("Wont update room :: lobbyUI is null");
         }
 
         public void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)

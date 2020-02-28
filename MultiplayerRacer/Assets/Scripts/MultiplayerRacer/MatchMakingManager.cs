@@ -88,12 +88,6 @@ namespace MultiplayerRacer
             PhotonNetwork.ConnectUsingSettings();
         }
 
-        private void FixedUpdate()
-        {
-            if (PhotonNetwork.IsConnectedAndReady)
-                print(PhotonNetwork.NetworkClientState);
-        }
-
         private void OnConnectToRoom()
         {
             //check if we can actually connect to the room
@@ -131,6 +125,8 @@ namespace MultiplayerRacer
                 PhotonNetwork.CurrentRoom,
                 PhotonNetwork.IsMasterClient);
 
+            lobbyUI.UpdateReadyButtons(PhotonNetwork.CurrentRoom.PlayerCount);
+
             lobbyUI.SetupExitButton(() =>
             {
                 if (PhotonNetwork.IsConnectedAndReady)
@@ -162,6 +158,7 @@ namespace MultiplayerRacer
         {
             base.OnLeftRoom();
             AttachUIListeners();
+            lobbyUI.ResetReadyButtons();
         }
 
         public override void OnDisconnected(DisconnectCause cause)

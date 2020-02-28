@@ -10,8 +10,12 @@ namespace MultiplayerRacer
     {
         [SerializeField] private Button connectButton;
         [SerializeField] private Button exitButton;
+
         [SerializeField] private GameObject roomStatus;
+        [SerializeField] private GameObject readyStatus;
+
         [SerializeField] private Color connectColor = new Color(0, 0.75f, 0);
+
         [SerializeField] private Color disconnectColor = new Color(0.75f, 0, 0);
         [SerializeField] private float roomStatRoundness = 0.25f;
 
@@ -20,7 +24,7 @@ namespace MultiplayerRacer
         {
             //if connect button is null try finding it and if not found return
             if (connectButton == null)
-                if (FindAndSetConnectButtonReference())
+                if (!FindAndSetConnectButtonReference())
                     return;
 
             //handle edgecase where connect button is inactive and room status enabled
@@ -35,7 +39,7 @@ namespace MultiplayerRacer
         public void UpdateConnectColor(bool connected)
         {
             if (connectButton == null)
-                if (FindAndSetConnectButtonReference())
+                if (!FindAndSetConnectButtonReference())
                     return;
 
             //show green or red button color for succesfull/unsuccesfull connection with master
@@ -49,7 +53,7 @@ namespace MultiplayerRacer
         public void UpdateConnectStatus(bool connected)
         {
             if (connectButton == null)
-                if (FindAndSetConnectButtonReference())
+                if (!FindAndSetConnectButtonReference())
                     return;
 
             string destination = connected ? "Room" : "Master";
@@ -70,7 +74,7 @@ namespace MultiplayerRacer
         public string ConnectDestination()
         {
             if (connectButton == null)
-                if (FindAndSetConnectButtonReference())
+                if (!FindAndSetConnectButtonReference())
                     return "";
 
             string text = connectButton.GetComponentInChildren<Text>().text;
@@ -129,6 +133,10 @@ namespace MultiplayerRacer
 
         public void SetupRoomStatus(string nickname, Room room, bool ismaster)
         {
+            if (roomStatus == null)
+                if (!FindAndSetRoomStatusReference())
+                    return;
+
             //if room status is not enabled yet, enable it and disable connect button
             if (!roomStatus.activeInHierarchy)
             {
@@ -154,7 +162,7 @@ namespace MultiplayerRacer
         public void SetupExitButton(UnityAction clickAction)
         {
             if (exitButton == null)
-                if (FindAndSetExitButtonReference())
+                if (!FindAndSetExitButtonReference())
                     return;
 
             exitButton.gameObject.SetActive(true);
@@ -166,9 +174,57 @@ namespace MultiplayerRacer
             });
         }
 
-        private void UpdateReadyStatus()
+        public void UpdateReadyButtons(int count)
         {
+            if (readyStatus == null)
+                if (!FindAndSetReadyStatusReference())
+                    return;
+
+            Transform statusTransform = readyStatus.transform;
+            if (count < 0 || count > statusTransform.childCount)
+            {
+                Debug.LogError("count does not corespond with ready status child count");
+                return;
+            }
+            //setup necessary variables for chaining buttons on x axis
+            float width = GetComponent<Canvas>().pixelRect.width;
+            float buttonWidthHalf = statusTransform.GetChild(0).GetComponent<RectTransform>().rect.width * 0.5f;
+            float margin = (width - (buttonWidthHalf * count)) / (count + 1);
+            float x = -(width * 0.5f) - (buttonWidthHalf * 0.5f);
+            //loop through children based on count and display them on given position
+            for (int ci = 0; ci < count; ci++)
+            {
+                GameObject child = statusTransform.GetChild(ci).gameObject;
+                RectTransform rectTF = child.GetComponent<RectTransform>();
+                x += margin + buttonWidthHalf;
+                rectTF.anchoredPosition = new Vector2(x, rectTF.anchoredPosition.y);
+                if (!child.activeInHierarchy)
+                {
+                    child.SetActive(true);
+                }
+            }
         }
+
+        public void ResetReadyButtons()
+        {
+            if (readyStatus == null)
+                if (!FindAndSetReadyStatusReference())
+                    return;
+
+            Transform statusTransform = readyStatus.transform;
+            for (int ci = 0; ci < statusTransform.childCount; ci++)
+            {
+                GameObject child = statusTransform.GetChild(ci).gameObject;
+                if (child.activeInHierarchy)
+                {
+                    RectTransform rectTF = child.GetComponent<RectTransform>();
+                    rectTF.anchoredPosition = new Vector2(0, rectTF.anchoredPosition.y);
+                    child.SetActive(false);
+                }
+            }
+        }
+
+        #region FallbackFunctions
 
         /// <summary>
         /// tries find connect button in scene en reset its reference
@@ -215,5 +271,57 @@ namespace MultiplayerRacer
 
             return true;
         }
+
+        /// <summary>
+        /// tries find ready status in scene en reset its reference
+        /// </summary>
+        private bool FindAndSetReadyStatusReference()
+        {
+            Transform tf = transform;
+            for (int ci = 0; ci < tf.childCount; ci++)
+            {
+                GameObject child = tf.GetChild(ci).gameObject;
+                if (child.name == "ReadyStatus")
+                {
+                    readyStatus = child;
+                    break;
+                }
+            }
+
+            if (readyStatus == null)
+            {
+                Debug.LogError($"Ready status GameObject not found");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// tries find room status in scene en reset its reference
+        /// </summary>
+        private bool FindAndSetRoomStatusReference()
+        {
+            Transform tf = transform;
+            for (int ci = 0; ci < tf.childCount; ci++)
+            {
+                GameObject child = tf.GetChild(ci).gameObject;
+                if (child.name == "RoomStatus")
+                {
+                    roomStatus = child;
+                    break;
+                }
+            }
+
+            if (roomStatus == null)
+            {
+                Debug.LogError($"Room status GameObject not found");
+                return false;
+            }
+
+            return true;
+        }
+
+        #endregion FallbackFunctions
     }
 }
