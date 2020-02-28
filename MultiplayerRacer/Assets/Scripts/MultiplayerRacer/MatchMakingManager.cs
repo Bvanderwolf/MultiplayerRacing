@@ -37,10 +37,10 @@ namespace MultiplayerRacer
         // Start is called before the first frame update
         private void Start()
         {
-            AttachUIListeners();
+            AttachUI();
         }
 
-        private void AttachUIListeners()
+        private void AttachUI()
         {
             //setup lobby ui if not already done
             if (lobbyUI == null)
@@ -83,6 +83,10 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// if in a room returns a nickname based on your number in room
+        /// </summary>
+        /// <returns></returns>
         private string MakeNickname()
         {
             if (!PhotonNetwork.InRoom)
@@ -91,6 +95,9 @@ namespace MultiplayerRacer
             return $"Player{NumberInRoom}";
         }
 
+        /// <summary>
+        /// tries leaving room if ready
+        /// </summary>
         private void LeaveRoom()
         {
             if (PhotonNetwork.IsConnectedAndReady)
@@ -99,12 +106,19 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// Sets up matchmaking values for being connected to a room
+        /// </summary>
+        /// <param name="room"></param>
         private void SetConnectedToRoom(Room room)
         {
             connectingToRoom = false;
             NumberInRoom = room.PlayerCount;
         }
 
+        /// <summary>
+        /// Sets up matchmaking values for connecting to a room and then tries connecting to one
+        /// </summary>
         private void SetConnectingToRoom()
         {
             connectingToRoom = true;
@@ -116,11 +130,17 @@ namespace MultiplayerRacer
             PhotonNetwork.JoinOrCreateRoom(ROOM_NAME, options, TypedLobby.Default);
         }
 
+        /// <summary>
+        /// Sets up matchmaking values for being connected to the master server
+        /// </summary>
         private void SetConnectedToMaster()
         {
             connectingToMaster = false;
         }
 
+        /// <summary>
+        /// sets up matchmaking values for connecting to master and then connects to it
+        /// </summary>
         private void SetConnectingToMaster()
         {
             connectingToMaster = true;
@@ -131,6 +151,10 @@ namespace MultiplayerRacer
             PhotonNetwork.ConnectUsingSettings();
         }
 
+        /// <summary>
+        /// checks if given room is full and acts accordingly if so
+        /// </summary>
+        /// <param name="room"></param>
         private void FullRoomCheck(Room room)
         {
             if (room.PlayerCount == MAX_PLAYERS)
@@ -139,6 +163,9 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// should be called when connect to master button is clicked
+        /// </summary>
         private void OnConnectToMaster()
         {
             //dont connect to master if we are already trying
@@ -148,6 +175,9 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// should be called when connect to room button is clicked
+        /// </summary>
         private void OnConnectToRoom()
         {
             //connect only if we can actually connect to the room
@@ -171,6 +201,7 @@ namespace MultiplayerRacer
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
+            //if we where connecting to a room we setup values and ui accordingly
             if (connectingToRoom)
             {
                 Room room = PhotonNetwork.CurrentRoom;
@@ -178,7 +209,7 @@ namespace MultiplayerRacer
                 lobbyUI.SetupRoomStatus(MakeNickname(), room, PhotonNetwork.IsMasterClient);
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
                 lobbyUI.SetupExitButton(LeaveRoom);
-                FullRoomCheck(room);
+                FullRoomCheck(room); //client can be the one filling up the room.
             }
         }
 
@@ -191,10 +222,10 @@ namespace MultiplayerRacer
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
+            //if we where connecting to master we set up values and ui accordingly
             if (connectingToMaster)
             {
                 SetConnectedToMaster();
-                //update lobby ui when connected to master
                 lobbyUI.UpdateConnectStatus(true);
                 lobbyUI.UpdateConnectColor(true);
             }
@@ -204,7 +235,8 @@ namespace MultiplayerRacer
         public override void OnLeftRoom()
         {
             base.OnLeftRoom();
-            AttachUIListeners();
+            //reset ui when having left a room
+            AttachUI();
             lobbyUI.ResetReadyButtons();
         }
 
@@ -216,7 +248,8 @@ namespace MultiplayerRacer
             lobbyUI.UpdateConnectColor(false);
 
             //try reattaching the UI for when we where inside another scene
-            AttachUIListeners();
+            AttachUI();
+            lobbyUI.ResetReadyButtons();
 
             print(cause);
         }

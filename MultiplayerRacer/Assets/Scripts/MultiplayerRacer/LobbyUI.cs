@@ -37,6 +37,10 @@ namespace MultiplayerRacer
             connectButton.onClick.AddListener(() => clickAction.Invoke(connectButton));
         }
 
+        /// <summary>
+        /// Updates the connect button its color based on given connected value
+        /// </summary>
+        /// <param name="connected"></param>
         public void UpdateConnectColor(bool connected)
         {
             if (connectButton == null)
@@ -47,6 +51,10 @@ namespace MultiplayerRacer
             connectButton.image.color = connected ? connectColor : disconnectColor;
         }
 
+        /// <summary>
+        /// Updates the connected button text based on the given connected value
+        /// </summary>
+        /// <param name="connected"></param>
         public void UpdateConnectStatus(bool connected)
         {
             if (connectButton == null)
@@ -79,7 +87,7 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
-        /// Sets up room status with nickname
+        /// Sets up room status panel with nickname
         /// </summary>
         /// <param name="nickname"></param>
         private void UpdateNickname(string nickname)
@@ -93,7 +101,7 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
-        /// sets up room status with room information
+        /// sets up room status panel with room information
         /// </summary>
         /// <param name="playercount"></param>
         public void UpdateRoomInfo(Room room)
@@ -114,7 +122,7 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
-        /// sets up room status with ismasterclient status
+        /// sets up room status panel with ismasterclient status
         /// </summary>
         /// <param name="ismaster"></param>
         private void UpdateIsMasterclient(bool ismaster)
@@ -128,6 +136,12 @@ namespace MultiplayerRacer
             else Debug.LogError("Wont update ismasterclient :: text component is null");
         }
 
+        /// <summary>
+        /// Tries setting up the room status pannel with given paramaters
+        /// </summary>
+        /// <param name="nickname">player name in room</param>
+        /// <param name="room">room in</param>
+        /// <param name="ismaster">ismaster client status</param>
         public void SetupRoomStatus(string nickname, Room room, bool ismaster)
         {
             if (roomStatus == null)
@@ -156,6 +170,10 @@ namespace MultiplayerRacer
             UpdateIsMasterclient(ismaster);
         }
 
+        /// <summary>
+        /// sets up exit button with given click Action
+        /// </summary>
+        /// <param name="clickAction"></param>
         public void SetupExitButton(UnityAction clickAction)
         {
             if (exitButton == null)
@@ -171,6 +189,10 @@ namespace MultiplayerRacer
             });
         }
 
+        /// <summary>
+        /// Updates ready count buttons on lobby canvas based on given count
+        /// </summary>
+        /// <param name="count"></param>
         public void UpdateReadyButtons(int count)
         {
             if (readyStatus == null)
@@ -180,9 +202,10 @@ namespace MultiplayerRacer
             Transform statusTransform = readyStatus.transform;
             if (count < 0 || count > statusTransform.childCount)
             {
-                Debug.LogError("count does not corespond with ready status child count");
+                Debug.LogError("count does not corespond with child count");
                 return;
             }
+
             //setup necessary variables for chaining buttons on x axis
             float width = GetComponent<Canvas>().pixelRect.width;
             float buttonWidthHalf = statusTransform.GetChild(0).GetComponent<RectTransform>().rect.width * 0.5f;
@@ -191,14 +214,17 @@ namespace MultiplayerRacer
             //loop through children based on count and display them on given position
             for (int ci = 0; ci < count; ci++)
             {
+                //place button on canvas based
                 GameObject child = statusTransform.GetChild(ci).gameObject;
                 RectTransform rectTF = child.GetComponent<RectTransform>();
                 x += margin + buttonWidthHalf;
                 rectTF.anchoredPosition = new Vector2(x, rectTF.anchoredPosition.y);
+                //set it to active if not already active
                 if (!child.activeInHierarchy)
                 {
                     child.SetActive(true);
                 }
+                //if max players has been reached set buttons to be interactable
                 if (count == MatchMakingManager.MAX_PLAYERS)
                 {
                     child.GetComponent<Button>().interactable = true;
@@ -206,23 +232,34 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// Starts listening to a ready button corresponding with given player number
+        /// </summary>
+        /// <param name="playerNumber"></param>
         public void ListenToReadyButton(int playerNumber)
         {
+            //player number has to be between 0 and max players value
             if (playerNumber < 0 || playerNumber > MatchMakingManager.MAX_PLAYERS)
                 return;
 
+            //add onclick listener to players ready button
             Transform statusTransform = readyStatus.transform;
             Button button = statusTransform.GetChild(playerNumber - 1)?.GetComponent<Button>();
             if (button != null)
             {
                 button.onClick.AddListener(() =>
                 {
+                    //send buffered rpc through server so all players get it in the same packet
                     GetComponent<PhotonView>().RPC("UpdateReadyButton", RpcTarget.AllBufferedViaServer, playerNumber);
                 });
             }
             else Debug.LogError($"Player number {playerNumber} is out of bounds of child array");
         }
 
+        /// <summary>
+        /// resets ready buttons to default values, making them inactive, repositioning them,
+        /// resseting the color and making them uninteractable
+        /// </summary>
         public void ResetReadyButtons()
         {
             if (readyStatus == null)
@@ -234,8 +271,10 @@ namespace MultiplayerRacer
             {
                 GameObject child = statusTransform.GetChild(ci).gameObject;
                 RectTransform rectTF = child.GetComponent<RectTransform>();
+                Button button = child.GetComponent<Button>();
                 rectTF.anchoredPosition = new Vector2(0, rectTF.anchoredPosition.y);
-                child.GetComponent<Button>().image.color = Color.white;
+                button.image.color = Color.white;
+                button.interactable = false;
                 if (child.activeInHierarchy)
                 {
                     child.SetActive(false);
@@ -246,6 +285,7 @@ namespace MultiplayerRacer
         [PunRPC]
         private void UpdateReadyButton(int playerNumber)
         {
+            //get ready button on canvas based on player number and change its color to a connect color
             Button button = readyStatus.transform.GetChild(playerNumber - 1)?.GetComponent<Button>();
             button.image.color = connectColor;
         }

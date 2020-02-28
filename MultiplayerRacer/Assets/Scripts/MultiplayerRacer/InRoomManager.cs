@@ -39,6 +39,10 @@ namespace MultiplayerRacer
             lobbyUI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<LobbyUI>();
         }
 
+        /// <summary>
+        /// checks whether the room is full or not acts accordingly if so
+        /// </summary>
+        /// <param name="room"></param>
         private void FullRoomCheck(Room room)
         {
             if (room.PlayerCount == MatchMakingManager.MAX_PLAYERS)
@@ -59,7 +63,7 @@ namespace MultiplayerRacer
                 Room room = PhotonNetwork.CurrentRoom;
                 lobbyUI.UpdateRoomInfo(room);
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
-                FullRoomCheck(room);
+                FullRoomCheck(room); //entering player can be the one to fill the room
             }
             else Debug.LogError("Wont update room :: lobbyUI is null");
         }
@@ -71,7 +75,7 @@ namespace MultiplayerRacer
             {
                 Room room = PhotonNetwork.CurrentRoom;
                 lobbyUI.UpdateRoomInfo(room);
-                lobbyUI.ResetReadyButtons();
+                lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
             }
             else Debug.LogError("Wont update room :: lobbyUI is null");
