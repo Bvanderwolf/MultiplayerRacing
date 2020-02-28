@@ -2,6 +2,7 @@
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace MultiplayerRacer
 {
@@ -9,6 +10,31 @@ namespace MultiplayerRacer
     {
         public static InRoomManager Instance { get; private set; }
         private LobbyUI lobbyUI = null;
+
+        public int NumberInRoom { get; private set; } = 0;
+        public bool IsReady { get; private set; } = false;
+
+        public const int COUNTDOWN_LENGTH = 3;
+
+        /*
+         master client attributes (have default value if not master client)
+         */
+        private int playersReady = 0;
+        private int currentLevelIndex = 0;
+
+        public int NextLevelIndex
+        {
+            get
+            {
+                //return next value only if not out of scene count bounds, else -1
+                int next = currentLevelIndex + 1;
+                if (next <= SceneManager.sceneCountInBuildSettings)
+                {
+                    return next;
+                }
+                else return -1;
+            }
+        }
 
         private void OnEnable()
         {
@@ -40,6 +66,24 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
+        /// sets InroomManager its isready value and updates the master client with this value
+        /// </summary>
+        /// <param name="value"></param>
+        public void SetReady(bool value)
+        {
+            IsReady = value;
+            GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
+        }
+
+        public void SetNumberInRoom(MatchMakingManager manager, int number)
+        {
+            if (manager == MatchMakingManager.Instance)
+            {
+                NumberInRoom = number;
+            }
+        }
+
+        /// <summary>
         /// checks whether the room is full or not acts accordingly if so
         /// </summary>
         /// <param name="room"></param>
@@ -47,7 +91,7 @@ namespace MultiplayerRacer
         {
             if (room.PlayerCount == MatchMakingManager.MAX_PLAYERS)
             {
-                lobbyUI.ListenToReadyButton(MatchMakingManager.Instance.NumberInRoom);
+                lobbyUI.ListenToReadyButton(this);
             }
         }
 
@@ -87,6 +131,29 @@ namespace MultiplayerRacer
 
         public void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
         {
+        }
+
+        [PunRPC]
+        private void UpdatePlayersReady(bool isready)
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                playersReady += isready ? 1 : -1;
+                if (playersReady == MatchMakingManager.MAX_PLAYERS)
+                {
+                    //not buffered because no players can join after the countdown has started
+                    GetComponent<PhotonView>().RPC("StartCountdown", RpcTarget.AllViaServer);
+                }
+            }
+        }
+
+        [PunRPC]
+        private void StartCountdown()
+        {
+            if (lobbyUI != null)
+            {
+                lobbyUI.DoCountDown();
+            }
         }
     }
 }

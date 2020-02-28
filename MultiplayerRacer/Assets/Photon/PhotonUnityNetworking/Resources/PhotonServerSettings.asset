@@ -35,5 +35,7 @@ MonoBehaviour:
   - Fire
   - RespawnSpaceship
   - UpdateReadyButton
+  - StartCountdown
+  - UpdatePlayersReady
   DisableAutoOpenWizard: 1
   ShowSettings: 0

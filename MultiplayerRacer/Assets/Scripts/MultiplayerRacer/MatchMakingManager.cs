@@ -18,8 +18,6 @@ namespace MultiplayerRacer
         private bool connectingToMaster = false;
         private bool connectingToRoom = false;
 
-        public int NumberInRoom { get; private set; } = 0;
-
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -92,7 +90,7 @@ namespace MultiplayerRacer
             if (!PhotonNetwork.InRoom)
                 return "";
 
-            return $"Player{NumberInRoom}";
+            return $"Player{InRoomManager.Instance.NumberInRoom}";
         }
 
         /// <summary>
@@ -107,13 +105,13 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
-        /// Sets up matchmaking values for being connected to a room
+        /// Sets up matchmaking and roomManagement values for being connected to a room
         /// </summary>
         /// <param name="room"></param>
         private void SetConnectedToRoom(Room room)
         {
             connectingToRoom = false;
-            NumberInRoom = room.PlayerCount;
+            InRoomManager.Instance.SetNumberInRoom(this, room.PlayerCount);
         }
 
         /// <summary>
@@ -159,7 +157,7 @@ namespace MultiplayerRacer
         {
             if (room.PlayerCount == MAX_PLAYERS)
             {
-                lobbyUI.ListenToReadyButton(NumberInRoom);
+                lobbyUI.ListenToReadyButton(InRoomManager.Instance);
             }
         }
 
@@ -206,7 +204,7 @@ namespace MultiplayerRacer
             {
                 Room room = PhotonNetwork.CurrentRoom;
                 SetConnectedToRoom(room);
-                lobbyUI.SetupRoomStatus(MakeNickname(), room, PhotonNetwork.IsMasterClient);
+                lobbyUI.SetupRoomStatus(MakeNickname(), room);
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
                 lobbyUI.SetupExitButton(LeaveRoom);
                 FullRoomCheck(room); //client can be the one filling up the room.

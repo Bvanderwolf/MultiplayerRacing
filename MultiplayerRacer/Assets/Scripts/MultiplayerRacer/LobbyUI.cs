@@ -1,6 +1,7 @@
 ﻿using Photon.Pun;
 using Photon.Realtime;
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -14,11 +15,24 @@ namespace MultiplayerRacer
 
         [SerializeField] private GameObject roomStatus;
         [SerializeField] private GameObject readyStatus;
+        [SerializeField] private GameObject countdownText;
 
         [SerializeField] private Color connectColor = new Color(0, 0.75f, 0);
 
         [SerializeField] private Color disconnectColor = new Color(0.75f, 0, 0);
         [SerializeField] private float roomStatRoundness = 0.25f;
+
+        private LobbyUIAnimation animations;
+
+        private void Awake()
+        {
+            //set up ui animations reference
+            animations = GetComponent<LobbyUIAnimation>();
+            if (animations == null)
+            {
+                animations = gameObject.AddComponent<LobbyUIAnimation>();
+            }
+        }
 
         //sets up connect button and returns if succeeded
         public void SetupConnectButton(Action<Button> clickAction)
@@ -125,12 +139,12 @@ namespace MultiplayerRacer
         /// sets up room status panel with ismasterclient status
         /// </summary>
         /// <param name="ismaster"></param>
-        private void UpdateIsMasterclient(bool ismaster)
+        private void UpdateIsMasterclient()
         {
             Text isMasterclientComp = roomStatus.transform.Find("Ismasterclient")?.GetComponent<Text>();
             if (isMasterclientComp != null)
             {
-                string yesOrNo = ismaster ? "yes" : "no";
+                string yesOrNo = PhotonNetwork.IsMasterClient ? "yes" : "no";
                 isMasterclientComp.text = $"IsMasterclient: {yesOrNo}";
             }
             else Debug.LogError("Wont update ismasterclient :: text component is null");
@@ -142,7 +156,7 @@ namespace MultiplayerRacer
         /// <param name="nickname">player name in room</param>
         /// <param name="room">room in</param>
         /// <param name="ismaster">ismaster client status</param>
-        public void SetupRoomStatus(string nickname, Room room, bool ismaster)
+        public void SetupRoomStatus(string nickname, Room room)
         {
             if (roomStatus == null)
                 if (!FindAndSetRoomStatusReference())
@@ -167,7 +181,7 @@ namespace MultiplayerRacer
             }
             else Debug.LogError("given room to show status of is null");
 
-            UpdateIsMasterclient(ismaster);
+            UpdateIsMasterclient();
         }
 
         /// <summary>
@@ -236,8 +250,12 @@ namespace MultiplayerRacer
         /// Starts listening to a ready button corresponding with given player number
         /// </summary>
         /// <param name="playerNumber"></param>
-        public void ListenToReadyButton(int playerNumber)
+        public void ListenToReadyButton(InRoomManager roomManager)
         {
+            if (roomManager != InRoomManager.Instance)
+                return;
+
+            int playerNumber = roomManager.NumberInRoom;
             //player number has to be between 0 and max players value
             if (playerNumber < 0 || playerNumber > MatchMakingManager.MAX_PLAYERS)
                 return;
@@ -249,8 +267,11 @@ namespace MultiplayerRacer
             {
                 button.onClick.AddListener(() =>
                 {
-                    //send buffered rpc through server so all players get it in the same packet
-                    GetComponent<PhotonView>().RPC("UpdateReadyButton", RpcTarget.AllBufferedViaServer, playerNumber);
+                    bool ready = !InRoomManager.Instance.IsReady;
+                    roomManager.SetReady(ready);
+                    //send buffered rpc through server so all players get it around the same time
+                    PhotonView PV = GetComponent<PhotonView>();
+                    PV.RPC("UpdateReadyButton", RpcTarget.AllBufferedViaServer, playerNumber, ready);
                 });
             }
             else Debug.LogError($"Player number {playerNumber} is out of bounds of child array");
@@ -282,12 +303,35 @@ namespace MultiplayerRacer
             }
         }
 
-        [PunRPC]
-        private void UpdateReadyButton(int playerNumber)
+        public void DoCountDown()
         {
-            //get ready button on canvas based on player number and change its color to a connect color
+            if (countdownText == null)
+                if (!FindAndSetCountdownTextReference())
+                    return;
+            //reset ready buttons so players are not able to ready up/down
+            ResetReadyButtons();
+
+            //start countdown animation and let masterclient load the game scene on ond
+            animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, true, () =>
+            {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    int levelIndexToLoad = InRoomManager.Instance.NextLevelIndex;
+                    if (levelIndexToLoad != -1)
+                    {
+                        PhotonNetwork.LoadLevel(levelIndexToLoad);
+                    }
+                    else Debug.LogError("Level index to load is not valid. Check current level index");
+                }
+            });
+        }
+
+        [PunRPC]
+        private void UpdateReadyButton(int playerNumber, bool ready)
+        {
+            //get ready button on canvas based on player number and change its color based on ready value
             Button button = readyStatus.transform.GetChild(playerNumber - 1)?.GetComponent<Button>();
-            button.image.color = connectColor;
+            button.image.color = ready ? connectColor : Color.white;
         }
 
         #region FallbackFunctions
@@ -382,6 +426,31 @@ namespace MultiplayerRacer
             if (roomStatus == null)
             {
                 Debug.LogError($"Room status GameObject not found");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// tries find countdown text in scene en reset its reference
+        /// </summary>
+        private bool FindAndSetCountdownTextReference()
+        {
+            Transform tf = transform;
+            for (int ci = 0; ci < tf.childCount; ci++)
+            {
+                GameObject child = tf.GetChild(ci).gameObject;
+                if (child.name == "CountdownText")
+                {
+                    countdownText = child;
+                    break;
+                }
+            }
+
+            if (roomStatus == null)
+            {
+                Debug.LogError($"countdown text GameObject not found");
                 return false;
             }
 
