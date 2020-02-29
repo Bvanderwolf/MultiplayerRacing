@@ -240,6 +240,7 @@ namespace MultiplayerRacer
                 //place button on canvas based
                 GameObject child = statusTransform.GetChild(ci).gameObject;
                 RectTransform rectTF = child.GetComponent<RectTransform>();
+                SetReadyButtonHeader(child.transform.Find("PlayerName")?.gameObject, $"Player {ci + 1}");
                 x += margin + buttonWidthHalf;
                 rectTF.anchoredPosition = new Vector2(x, rectTF.anchoredPosition.y);
                 //set it to active if not already active
@@ -253,6 +254,20 @@ namespace MultiplayerRacer
                     child.GetComponentInChildren<Button>().interactable = true;
                 }
             }
+        }
+
+        /// <summary>
+        /// sets ready button header text
+        /// </summary>
+        /// <param name="textGo"></param>
+        private void SetReadyButtonHeader(GameObject textGo, string name)
+        {
+            if (textGo != null)
+            {
+                Text header = textGo.GetComponent<Text>();
+                header.text = name;
+            }
+            else Debug.LogError("ready button header not set :: text gameobject is null");
         }
 
         /// <summary>

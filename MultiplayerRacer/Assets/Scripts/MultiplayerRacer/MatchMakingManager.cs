@@ -82,7 +82,7 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
-        /// if in a room returns a nickname based on your number in room
+        /// if in a room, set and returns a nickname based on your number in room
         /// </summary>
         /// <returns></returns>
         public string MakeNickname()
@@ -90,7 +90,9 @@ namespace MultiplayerRacer
             if (!PhotonNetwork.InRoom)
                 return "";
 
-            return $"Player{InRoomManager.Instance.NumberInRoom}";
+            string nickname = $"Player{InRoomManager.Instance.NumberInRoom}";
+            PhotonNetwork.NickName = nickname;
+            return nickname;
         }
 
         /// <summary>
@@ -167,7 +169,7 @@ namespace MultiplayerRacer
         /// should be called before leaving the room, to make sure data is not lost
         /// when the master client leaves
         /// </summary>
-        private void LeavingMasterCheck()
+        private bool LeavingMasterCheck()
         {
             if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount > 1)
             {
@@ -176,6 +178,21 @@ namespace MultiplayerRacer
                 int newMasterNumber = PhotonNetwork.LocalPlayer.GetNext().ActorNumber;
                 //update for each needed class, the master client data
                 InRoomManager.Instance.SwitchRoomMaster(newMasterNumber);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Should be called on application quit to make sure a quiting master client
+        /// its data is not lost but given to a new one
+        /// </summary>
+        private void OnQuitEvent()
+        {
+            if (LeavingMasterCheck())
+            {
+                //if a master client is leaving send all outgoing commands to make sure the data is send
+                PhotonNetwork.SendAllOutgoingCommands();
             }
         }
 
@@ -231,6 +248,7 @@ namespace MultiplayerRacer
                 lobbyUI.SetupExitButton(LeaveRoom);
                 lobbyUI.SetConnectButtonInteractability(true);
                 FullRoomCheck(room); //client can be the one filling up the room.
+                Application.quitting += OnQuitEvent; //setup quitting event with leaving master check
             }
         }
 
@@ -260,6 +278,7 @@ namespace MultiplayerRacer
             //reset ui when having left a room
             AttachUI();
             lobbyUI.ResetReadyButtons();
+            Application.quitting -= OnQuitEvent; //unsubsribe from quitting event
         }
 
         public override void OnDisconnected(DisconnectCause cause)
