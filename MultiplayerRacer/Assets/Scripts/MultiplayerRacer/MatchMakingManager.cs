@@ -85,7 +85,7 @@ namespace MultiplayerRacer
         /// if in a room returns a nickname based on your number in room
         /// </summary>
         /// <returns></returns>
-        private string MakeNickname()
+        public string MakeNickname()
         {
             if (!PhotonNetwork.InRoom)
                 return "";
@@ -100,6 +100,7 @@ namespace MultiplayerRacer
         {
             if (PhotonNetwork.IsConnectedAndReady)
             {
+                LeavingMasterCheck();
                 PhotonNetwork.LeaveRoom();
             }
         }
@@ -157,7 +158,24 @@ namespace MultiplayerRacer
         {
             if (room.PlayerCount == MAX_PLAYERS)
             {
-                lobbyUI.ListenToReadyButton(InRoomManager.Instance);
+                lobbyUI.ListenToReadyButton();
+            }
+        }
+
+        /// <summary>
+        /// checks for a possible transferring of data from old masterclient to new
+        /// should be called before leaving the room, to make sure data is not lost
+        /// when the master client leaves
+        /// </summary>
+        private void LeavingMasterCheck()
+        {
+            if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount > 1)
+            {
+                /*the new master client will be the player with the next lowest actor number
+                 according to the Photon Pun Documentation*/
+                int newMasterNumber = PhotonNetwork.LocalPlayer.GetNext().ActorNumber;
+                //update for each needed class, the master client data
+                InRoomManager.Instance.SwitchRoomMaster(newMasterNumber);
             }
         }
 
@@ -170,6 +188,7 @@ namespace MultiplayerRacer
             if (!connectingToMaster)
             {
                 SetConnectingToMaster();
+                lobbyUI.SetConnectButtonInteractability(false);
             }
         }
 
@@ -182,12 +201,15 @@ namespace MultiplayerRacer
             if (lobbyUI.ConnectDestination() == "Room" && !connectingToRoom && PhotonNetwork.IsConnectedAndReady)
             {
                 SetConnectingToRoom();
+                lobbyUI.SetConnectButtonInteractability(false);
             }
         }
 
         public override void OnCreatedRoom()
         {
             base.OnCreatedRoom();
+            //if this client created the room, it is the master client and is the room master
+            InRoomManager.Instance.SetRoomMaster(this);
         }
 
         public override void OnCreateRoomFailed(short returnCode, string message)
@@ -207,6 +229,7 @@ namespace MultiplayerRacer
                 lobbyUI.SetupRoomStatus(MakeNickname(), room);
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
                 lobbyUI.SetupExitButton(LeaveRoom);
+                lobbyUI.SetConnectButtonInteractability(true);
                 FullRoomCheck(room); //client can be the one filling up the room.
             }
         }
@@ -226,6 +249,7 @@ namespace MultiplayerRacer
                 SetConnectedToMaster();
                 lobbyUI.UpdateConnectStatus(true);
                 lobbyUI.UpdateConnectColor(true);
+                lobbyUI.SetConnectButtonInteractability(true);
             }
         }
 

@@ -15,26 +15,13 @@ namespace MultiplayerRacer
         public bool IsReady { get; private set; } = false;
 
         public const int COUNTDOWN_LENGTH = 3;
+        public const float READY_SEND_TIMEOUT = 0.75f;
 
         /*
-         master client attributes (have default value if not master client)
+         master client attributes are stored inside the room master instance
+         this defaults to null and is set for the client creating the room
          */
-        private int playersReady = 0;
-        private int currentLevelIndex = 0;
-
-        public int NextLevelIndex
-        {
-            get
-            {
-                //return next value only if not out of scene count bounds, else -1
-                int next = currentLevelIndex + 1;
-                if (next <= SceneManager.sceneCountInBuildSettings)
-                {
-                    return next;
-                }
-                else return -1;
-            }
-        }
+        public RoomMaster RoomMaster { get; private set; } = null;
 
         private void OnEnable()
         {
@@ -75,12 +62,34 @@ namespace MultiplayerRacer
             GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
         }
 
+        /// <summary>
+        /// sets the room master. Will need a MatchMakingManager instance for security
+        /// </summary>
+        /// <param name="matchMakingManager"></param>
+        public void SetRoomMaster(MatchMakingManager matchMakingManager)
+        {
+            if (matchMakingManager == MatchMakingManager.Instance)
+            {
+                RoomMaster = new RoomMaster();
+            }
+            else Debug.LogError("matchmaking manager reference is null or not the singleton instance");
+        }
+
         public void SetNumberInRoom(MatchMakingManager manager, int number)
         {
             if (manager == MatchMakingManager.Instance)
             {
                 NumberInRoom = number;
             }
+        }
+
+        public void SwitchRoomMaster(int newMasterNumber)
+        {
+            if (newMasterNumber < 0)
+                return;
+
+            //send RPC call with master client data to new master client
+            GetComponent<PhotonView>().RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber);
         }
 
         /// <summary>
@@ -91,12 +100,20 @@ namespace MultiplayerRacer
         {
             if (room.PlayerCount == MatchMakingManager.MAX_PLAYERS)
             {
-                lobbyUI.ListenToReadyButton(this);
+                lobbyUI.ListenToReadyButton();
             }
         }
 
         public void OnMasterClientSwitched(Player newMasterClient)
         {
+            /*Note: photon assigns new masterclient when current one leaves.
+            New one is the one with the lowest actor number, so first one to join
+            should correlate to NumberInRoom*/
+            if (lobbyUI != null)
+            {
+                lobbyUI.UpdateIsMasterclient();
+            }
+            else Debug.LogError("Wont update room :: lobbyUI is null");
         }
 
         public void OnPlayerEnteredRoom(Player newPlayer)
@@ -114,11 +131,21 @@ namespace MultiplayerRacer
 
         public void OnPlayerLeftRoom(Player otherPlayer)
         {
+            /*if the leaving player its actor number was greater than ours,
+            it means this player joined before us so our number will go down
+            by one to get the correct value for our number in the room*/
+            Player me = PhotonNetwork.LocalPlayer;
+            if (me.ActorNumber > otherPlayer.ActorNumber)
+            {
+                NumberInRoom--;
+            }
+
             //Update Room status
             if (lobbyUI != null)
             {
                 Room room = PhotonNetwork.CurrentRoom;
                 lobbyUI.UpdateRoomInfo(room);
+                lobbyUI.UpdateNickname(MatchMakingManager.Instance.MakeNickname());
                 lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
             }
@@ -138,12 +165,23 @@ namespace MultiplayerRacer
         {
             if (PhotonNetwork.IsMasterClient)
             {
-                playersReady += isready ? 1 : -1;
-                if (playersReady == MatchMakingManager.MAX_PLAYERS)
+                //let the room master update players ready
+                RoomMaster.UpdatePlayersReady(isready);
+                //start countdown if all players are ready
+                if (RoomMaster.PlayersReady == MatchMakingManager.MAX_PLAYERS)
                 {
                     //not buffered because no players can join after the countdown has started
                     GetComponent<PhotonView>().RPC("StartCountdown", RpcTarget.AllViaServer);
                 }
+            }
+        }
+
+        [PunRPC]
+        private void UpdateRoomMaster(int newRoomMasterNumber)
+        {
+            if (PhotonNetwork.LocalPlayer.ActorNumber == newRoomMasterNumber)
+            {
+                Debug.LogError("i get the master client data!");
             }
         }
 

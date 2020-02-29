@@ -85,6 +85,15 @@ namespace MultiplayerRacer
             }
         }
 
+        public void SetConnectButtonInteractability(bool value)
+        {
+            if (connectButton == null)
+                if (!FindAndSetConnectButtonReference())
+                    return;
+
+            connectButton.interactable = value;
+        }
+
         /// <summary>
         /// should return the destination from the connect button text
         /// if failed, returns an empty string
@@ -104,7 +113,7 @@ namespace MultiplayerRacer
         /// Sets up room status panel with nickname
         /// </summary>
         /// <param name="nickname"></param>
-        private void UpdateNickname(string nickname)
+        public void UpdateNickname(string nickname)
         {
             Text nicknameComp = roomStatus.transform.Find("Nickname")?.GetComponent<Text>();
             if (nicknameComp != null)
@@ -139,7 +148,7 @@ namespace MultiplayerRacer
         /// sets up room status panel with ismasterclient status
         /// </summary>
         /// <param name="ismaster"></param>
-        private void UpdateIsMasterclient()
+        public void UpdateIsMasterclient()
         {
             Text isMasterclientComp = roomStatus.transform.Find("Ismasterclient")?.GetComponent<Text>();
             if (isMasterclientComp != null)
@@ -241,7 +250,7 @@ namespace MultiplayerRacer
                 //if max players has been reached set buttons to be interactable
                 if (count == MatchMakingManager.MAX_PLAYERS)
                 {
-                    child.GetComponent<Button>().interactable = true;
+                    child.GetComponentInChildren<Button>().interactable = true;
                 }
             }
         }
@@ -250,25 +259,27 @@ namespace MultiplayerRacer
         /// Starts listening to a ready button corresponding with given player number
         /// </summary>
         /// <param name="playerNumber"></param>
-        public void ListenToReadyButton(InRoomManager roomManager)
+        public void ListenToReadyButton()
         {
-            if (roomManager != InRoomManager.Instance)
-                return;
-
-            int playerNumber = roomManager.NumberInRoom;
+            int playerNumber = InRoomManager.Instance.NumberInRoom;
             //player number has to be between 0 and max players value
             if (playerNumber < 0 || playerNumber > MatchMakingManager.MAX_PLAYERS)
                 return;
 
             //add onclick listener to players ready button
             Transform statusTransform = readyStatus.transform;
-            Button button = statusTransform.GetChild(playerNumber - 1)?.GetComponent<Button>();
+            Button button = statusTransform.GetChild(playerNumber - 1)?.GetComponentInChildren<Button>();
             if (button != null)
             {
                 button.onClick.AddListener(() =>
                 {
+                    //set room manager ready settings
                     bool ready = !InRoomManager.Instance.IsReady;
-                    roomManager.SetReady(ready);
+                    InRoomManager.Instance.SetReady(ready);
+
+                    //set time out for the clicked ready button
+                    animations.TimeOutButton(button, InRoomManager.READY_SEND_TIMEOUT);
+
                     //send buffered rpc through server so all players get it around the same time
                     PhotonView PV = GetComponent<PhotonView>();
                     PV.RPC("UpdateReadyButton", RpcTarget.AllBufferedViaServer, playerNumber, ready);
@@ -292,7 +303,7 @@ namespace MultiplayerRacer
             {
                 GameObject child = statusTransform.GetChild(ci).gameObject;
                 RectTransform rectTF = child.GetComponent<RectTransform>();
-                Button button = child.GetComponent<Button>();
+                Button button = child.GetComponentInChildren<Button>();
                 rectTF.anchoredPosition = new Vector2(0, rectTF.anchoredPosition.y);
                 button.image.color = Color.white;
                 button.interactable = false;
@@ -316,7 +327,7 @@ namespace MultiplayerRacer
             {
                 if (PhotonNetwork.IsMasterClient)
                 {
-                    int levelIndexToLoad = InRoomManager.Instance.NextLevelIndex;
+                    int levelIndexToLoad = InRoomManager.Instance.RoomMaster.NextLevelIndex;
                     if (levelIndexToLoad != -1)
                     {
                         PhotonNetwork.LoadLevel(levelIndexToLoad);
@@ -330,7 +341,7 @@ namespace MultiplayerRacer
         private void UpdateReadyButton(int playerNumber, bool ready)
         {
             //get ready button on canvas based on player number and change its color based on ready value
-            Button button = readyStatus.transform.GetChild(playerNumber - 1)?.GetComponent<Button>();
+            Button button = readyStatus.transform.GetChild(playerNumber - 1)?.GetComponentInChildren<Button>();
             button.image.color = ready ? connectColor : Color.white;
         }
 

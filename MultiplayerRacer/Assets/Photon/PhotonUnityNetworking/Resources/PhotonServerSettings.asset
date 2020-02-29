@@ -37,5 +37,6 @@ MonoBehaviour:
   - UpdateReadyButton
   - StartCountdown
   - UpdatePlayersReady
+  - UpdateRoomMaster
   DisableAutoOpenWizard: 1
   ShowSettings: 0
