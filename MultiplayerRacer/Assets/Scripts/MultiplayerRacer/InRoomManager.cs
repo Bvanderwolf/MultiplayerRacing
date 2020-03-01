@@ -2,13 +2,14 @@
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace MultiplayerRacer
 {
     public class InRoomManager : MonoBehaviour, IInRoomCallbacks
     {
         public static InRoomManager Instance { get; private set; }
+        public static readonly byte[] memRoomMaster = new byte[2 * 4];
+
         private LobbyUI lobbyUI = null;
 
         public int NumberInRoom { get; private set; } = 0;
@@ -21,7 +22,7 @@ namespace MultiplayerRacer
          master client attributes are stored inside the room master instance
          this defaults to null and is set for the client creating the room
          */
-        public RoomMaster RoomMaster { get; private set; } = null;
+        public RoomMaster Master { get; private set; } = null;
 
         private void OnEnable()
         {
@@ -70,9 +71,26 @@ namespace MultiplayerRacer
         {
             if (matchMakingManager == MatchMakingManager.Instance)
             {
-                RoomMaster = new RoomMaster();
+                Master = new RoomMaster();
             }
             else Debug.LogError("matchmaking manager reference is null or not the singleton instance");
+        }
+
+        /// <summary>
+        /// Registers the Room Master as a Custom Serializable Type for this room
+        /// </summary>
+        public void RegisterRoomMaster()
+        {
+            if (!RoomMaster.Registered)
+            {
+                bool succes = PhotonPeer.RegisterType(typeof(RoomMaster), (byte)'R', SerializeRoomMaster, DeserializeRoomMaster);
+                if (succes)
+                {
+                    RoomMaster.SetRegistered();
+                }
+                else Debug.LogError("Failed Registering Room Master! Can't play game");
+            }
+            else Debug.LogError("Room Master is already registered :: wont do it again");
         }
 
         public void SetNumberInRoom(MatchMakingManager manager, int number)
@@ -160,15 +178,45 @@ namespace MultiplayerRacer
         {
         }
 
+        private static short SerializeRoomMaster(StreamBuffer outStream, object customobject)
+        {
+            RoomMaster rm = (RoomMaster)customobject;
+
+            int index = 0;
+            lock (memRoomMaster)
+            {
+                byte[] bytes = memRoomMaster;
+                Protocol.Serialize(rm.PlayersReady, bytes, ref index);
+                Protocol.Serialize(rm.CurrentLevelIndex, bytes, ref index);
+                outStream.Write(bytes, 0, 2 * 4);
+            }
+
+            return 2 * 4;
+        }
+
+        private static object DeserializeRoomMaster(StreamBuffer inStream, short length)
+        {
+            RoomMaster rm = new RoomMaster();
+            lock (memRoomMaster)
+            {
+                inStream.Read(memRoomMaster, 0, 2 * 4);
+                int index = 0;
+                Protocol.Deserialize(out rm.PlayersReady, memRoomMaster, ref index);
+                Protocol.Deserialize(out rm.CurrentLevelIndex, memRoomMaster, ref index);
+            }
+
+            return rm;
+        }
+
         [PunRPC]
         private void UpdatePlayersReady(bool isready)
         {
             if (PhotonNetwork.IsMasterClient)
             {
                 //let the room master update players ready
-                RoomMaster.UpdatePlayersReady(isready);
+                Master.UpdatePlayersReady(isready);
                 //start countdown if all players are ready
-                if (RoomMaster.PlayersReady == MatchMakingManager.MAX_PLAYERS)
+                if (Master.PlayersReady == MatchMakingManager.MAX_PLAYERS)
                 {
                     //not buffered because no players can join after the countdown has started
                     GetComponent<PhotonView>().RPC("StartCountdown", RpcTarget.AllViaServer);

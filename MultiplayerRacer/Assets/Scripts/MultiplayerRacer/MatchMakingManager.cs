@@ -1,4 +1,5 @@
-﻿using Photon.Pun;
+﻿using ExitGames.Client.Photon;
+using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 using UnityEngine.UI;
@@ -114,6 +115,7 @@ namespace MultiplayerRacer
         private void SetConnectedToRoom(Room room)
         {
             connectingToRoom = false;
+            InRoomManager.Instance.RegisterRoomMaster();
             InRoomManager.Instance.SetNumberInRoom(this, room.PlayerCount);
         }
 
