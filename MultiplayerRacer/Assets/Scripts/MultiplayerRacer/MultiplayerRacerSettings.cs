@@ -1,19 +1,20 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class MultiplayerRacerSettings : MonoBehaviour
+namespace MultiplayerRacer
 {
-    private const int SCREEN_WIDTH = 1024;
-    private const int SCREEN_HEIGHT = 768;
-
-    private void Awake()
+    public class MultiplayerRacerSettings : MonoBehaviour
     {
-        if (Screen.width != SCREEN_WIDTH || Screen.height != SCREEN_HEIGHT)
+        private const int SCREEN_WIDTH = 1024;
+        private const int SCREEN_HEIGHT = 768;
+
+        private void Awake()
         {
-            Screen.SetResolution(SCREEN_WIDTH, SCREEN_HEIGHT, false);
-            PlayerPrefs.SetInt("Screenmanager Resolution Width", SCREEN_WIDTH);
-            PlayerPrefs.SetInt("Screenmanager Resolution Height", SCREEN_HEIGHT);
+            if (Screen.width != SCREEN_WIDTH || Screen.height != SCREEN_HEIGHT)
+            {
+                Screen.SetResolution(SCREEN_WIDTH, SCREEN_HEIGHT, false);
+                PlayerPrefs.SetInt("Screenmanager Resolution Width", SCREEN_WIDTH);
+                PlayerPrefs.SetInt("Screenmanager Resolution Height", SCREEN_HEIGHT);
+            }
         }
     }
 }
