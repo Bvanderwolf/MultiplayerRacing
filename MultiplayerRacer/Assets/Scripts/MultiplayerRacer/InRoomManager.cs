@@ -61,6 +61,11 @@ namespace MultiplayerRacer
         /// <param name="value"></param>
         public void SetReady(bool value, bool updateMaster = true)
         {
+            if (IsReady == value)
+            {
+                Debug.LogError("Trying to update ready value with same value :: not updating Room Master instance");
+                return;
+            }
             IsReady = value;
             if (updateMaster)
             {
