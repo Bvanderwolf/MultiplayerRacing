@@ -179,7 +179,7 @@ namespace MultiplayerRacer
                 int newMasterNumber = PhotonNetwork.LocalPlayer.GetNext().ActorNumber;
 
                 //switch room master
-                InRoomManager.Instance.SwitchRoomMaster(newMasterNumber);
+                InRoomManager.Instance.SwitchRoomMaster(newMasterNumber, true);
             }
             else
             {

@@ -58,11 +58,10 @@ namespace MultiplayerRacer
         /// sets InroomManager its isready value and updates the master client with this value
         /// </summary>
         /// <param name="value"></param>
-        public void SetReady(bool value, bool fast = false)
+        public void SetReady(bool value)
         {
             IsReady = value;
             GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
-            if (fast) PhotonNetwork.SendAllOutgoingCommands();
         }
 
         /// <summary>
@@ -109,13 +108,13 @@ namespace MultiplayerRacer
         /// the roomMaster data to the newly assigned master client
         /// </summary>
         /// <param name="newMasterNumber"></param>
-        public void SwitchRoomMaster(int newMasterNumber)
+        public void SwitchRoomMaster(int newMasterNumber, bool wasLeaving)
         {
             if (newMasterNumber < 0 || !RoomMaster.Registered)
                 return;
 
             //send RPC call with master client data to new master client
-            GetComponent<PhotonView>().RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber, Master);
+            GetComponent<PhotonView>().RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber, Master, wasLeaving);
 
             Master = null; //after sending the master data, we should no longer have the master client data
         }
@@ -235,6 +234,7 @@ namespace MultiplayerRacer
             {
                 //let the room master update players ready
                 Master.UpdatePlayersReady(isready);
+                Debug.LogError(Master.PlayersReady);
                 //start countdown if all players are ready
                 if (Master.PlayersReady == MatchMakingManager.MAX_PLAYERS)
                 {
@@ -245,13 +245,17 @@ namespace MultiplayerRacer
         }
 
         [PunRPC]
-        private void UpdateRoomMaster(int newRoomMasterNumber, RoomMaster newMaster)
+        private void UpdateRoomMaster(int newRoomMasterNumber, RoomMaster newMaster, bool wasLeaving)
         {
             if (PhotonNetwork.LocalPlayer.ActorNumber == newRoomMasterNumber)
             {
                 Debug.LogError($"i got the master client data! :: {newMaster.PlayersReady}, {newMaster.CurrentLevelIndex}");
                 Master = newMaster;
-                Master.LeavingMasterCheck();
+                if (wasLeaving)
+                {
+                    Master.LeavingMasterCheck();
+                    Debug.LogError("leaving master :: players ready now " + Master.PlayersReady);
+                }
             }
         }
 
