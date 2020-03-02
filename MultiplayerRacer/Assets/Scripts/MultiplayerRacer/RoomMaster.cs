@@ -23,22 +23,16 @@ namespace MultiplayerRacer
             }
         }
 
+        public bool InLobby => CurrentLevelIndex == 0;
+
         public static void SetRegistered()
         {
             Registered = true;
         }
 
-        /// <summary>
-        /// needs to be called after a new master has been assigned
-        /// to make sure that if the old master left, it can readjust
-        /// its values based on the missing player
-        /// </summary>
-        public void LeavingMasterCheck(bool wasReady)
+        public void ResetPlayersReady()
         {
-            if (CurrentLevelIndex == 0)
-            {
-                if (wasReady) UpdatePlayersReady(false);
-            }
+            PlayersReady = 0;
         }
 
         public void UpdatePlayersReady(bool ready)
