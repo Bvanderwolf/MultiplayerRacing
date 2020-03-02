@@ -77,6 +77,14 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
+        ///resets RoomMaster instance value
+        /// </summary>
+        public void ResetIsRoomMaster()
+        {
+            Master = null;
+        }
+
+        /// <summary>
         /// sets the room master. Will need a MatchMakingManager instance for security
         /// </summary>
         /// <param name="matchMakingManager"></param>
@@ -127,8 +135,6 @@ namespace MultiplayerRacer
 
             //send RPC call with master client data to new master client
             GetComponent<PhotonView>().RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber, Master, wasLeaving, IsReady);
-
-            Master = null; //after sending the master data, we should no longer have the master client data
         }
 
         /// <summary>

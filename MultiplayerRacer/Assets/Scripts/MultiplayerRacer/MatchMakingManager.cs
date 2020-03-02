@@ -185,6 +185,9 @@ namespace MultiplayerRacer
                  important we do this after switching sending room master data to make it send our old
                  attritubes*/
                 InRoomManager.Instance.SetReady(false, false);
+
+                //We are no long the room master
+                InRoomManager.Instance.ResetIsRoomMaster();
             }
             else
             {
