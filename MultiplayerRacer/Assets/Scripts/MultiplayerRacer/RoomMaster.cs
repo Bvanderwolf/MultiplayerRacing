@@ -33,11 +33,11 @@ namespace MultiplayerRacer
         /// to make sure that if the old master left, it can readjust
         /// its values based on the missing player
         /// </summary>
-        public void LeavingMasterCheck()
+        public void LeavingMasterCheck(bool wasReady)
         {
             if (CurrentLevelIndex == 0)
             {
-                UpdatePlayersReady(false);
+                if (wasReady) UpdatePlayersReady(false);
             }
         }
 

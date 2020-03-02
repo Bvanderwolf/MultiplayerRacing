@@ -178,11 +178,13 @@ namespace MultiplayerRacer
                  according to the Photon Pun Documentation*/
                 int newMasterNumber = PhotonNetwork.LocalPlayer.GetNext().ActorNumber;
 
-                //set ready with sending to master, because we are the master client
-                InRoomManager.Instance.SetReady(false, false);
+                //send the room master data to new master with newMasterNumber with leaving set to true
+                InRoomManager.Instance.SendMasterDataToNewMaster(newMasterNumber, true);
 
-                //switch room master
-                InRoomManager.Instance.SwitchRoomMaster(newMasterNumber, true);
+                /*set ready to false with sending to master to false, because we are the master client.
+                 important we do this after switching sending room master data to make it send our old
+                 attritubes*/
+                InRoomManager.Instance.SetReady(false, false);
             }
             else
             {
