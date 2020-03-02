@@ -180,6 +180,8 @@ namespace MultiplayerRacer
                 int newMasterNumber = PhotonNetwork.LocalPlayer.GetNext().ActorNumber;
                 //update for each needed class, the master client data
                 InRoomManager.Instance.SwitchRoomMaster(newMasterNumber);
+                //if a master client is leaving send all outgoing commands to make sure the data is send
+                PhotonNetwork.SendAllOutgoingCommands();
                 return true;
             }
             return false;
@@ -191,11 +193,7 @@ namespace MultiplayerRacer
         /// </summary>
         private void OnQuitEvent()
         {
-            if (LeavingMasterCheck())
-            {
-                //if a master client is leaving send all outgoing commands to make sure the data is send
-                PhotonNetwork.SendAllOutgoingCommands();
-            }
+            LeavingMasterCheck();
         }
 
         /// <summary>

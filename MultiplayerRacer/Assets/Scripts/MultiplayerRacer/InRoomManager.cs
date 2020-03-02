@@ -107,7 +107,7 @@ namespace MultiplayerRacer
                 return;
 
             //send RPC call with master client data to new master client
-            GetComponent<PhotonView>().RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber);
+            GetComponent<PhotonView>().RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber, Master);
         }
 
         /// <summary>
@@ -197,15 +197,17 @@ namespace MultiplayerRacer
         private static object DeserializeRoomMaster(StreamBuffer inStream, short length)
         {
             RoomMaster rm = new RoomMaster();
+            int playersready;
+            int currentlevelindex;
             lock (memRoomMaster)
             {
                 inStream.Read(memRoomMaster, 0, 2 * 4);
                 int index = 0;
-                Protocol.Deserialize(out rm.PlayersReady, memRoomMaster, ref index);
-                Protocol.Deserialize(out rm.CurrentLevelIndex, memRoomMaster, ref index);
+                Protocol.Deserialize(out playersready, memRoomMaster, ref index);
+                Protocol.Deserialize(out currentlevelindex, memRoomMaster, ref index);
             }
 
-            return rm;
+            return rm.SetAttributes(playersready, currentlevelindex);
         }
 
         [PunRPC]
@@ -225,11 +227,12 @@ namespace MultiplayerRacer
         }
 
         [PunRPC]
-        private void UpdateRoomMaster(int newRoomMasterNumber)
+        private void UpdateRoomMaster(int newRoomMasterNumber, RoomMaster newMaster)
         {
             if (PhotonNetwork.LocalPlayer.ActorNumber == newRoomMasterNumber)
             {
-                Debug.LogError("i get the master client data!");
+                Debug.LogError($"i get the master client data! :: {newMaster.PlayersReady}, {newMaster.CurrentLevelIndex}");
+                Master = newMaster;
             }
         }
 

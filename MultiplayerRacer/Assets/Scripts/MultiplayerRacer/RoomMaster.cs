@@ -6,8 +6,8 @@ namespace MultiplayerRacer
     public class RoomMaster
     {
         public static bool Registered { get; private set; }
-        public int PlayersReady = 0;
-        public int CurrentLevelIndex = 0;
+        public int PlayersReady { get; private set; } = 0;
+        public int CurrentLevelIndex { get; private set; } = 0;
 
         public int NextLevelIndex
         {
@@ -31,6 +31,13 @@ namespace MultiplayerRacer
         public void UpdatePlayersReady(bool ready)
         {
             PlayersReady += ready ? 1 : -1;
+        }
+
+        public RoomMaster SetAttributes(int playersready, int currentlevelindex)
+        {
+            PlayersReady = playersready;
+            CurrentLevelIndex = currentlevelindex;
+            return this;
         }
     }
 }
