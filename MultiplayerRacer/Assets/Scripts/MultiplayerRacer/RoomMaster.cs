@@ -24,6 +24,7 @@ namespace MultiplayerRacer
         }
 
         public bool InLobby => CurrentLevelIndex == 0;
+        public bool InGame => CurrentLevelIndex == 1;
 
         public static void SetRegistered()
         {

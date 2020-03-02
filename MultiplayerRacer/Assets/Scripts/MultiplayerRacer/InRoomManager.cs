@@ -172,8 +172,6 @@ namespace MultiplayerRacer
                 lobbyUI.UpdateIsMasterclient();
             }
             else Debug.LogError("Wont update room :: lobbyUI is null");
-
-            Debug.LogError("master client switched callback");
         }
 
         public void OnPlayerEnteredRoom(Player newPlayer)
@@ -199,7 +197,7 @@ namespace MultiplayerRacer
             {
                 NumberInRoom--;
             }
-            Debug.LogError("player left callback");
+
             //Update Room status
             if (lobbyUI != null)
             {
@@ -214,7 +212,6 @@ namespace MultiplayerRacer
             //the masterclient resets the players ready count when someone leaves
             if (PhotonNetwork.IsMasterClient)
             {
-                Debug.LogError("reset players ready from left room callback");
                 Master.ResetPlayersReady();
             }
         }
@@ -266,7 +263,7 @@ namespace MultiplayerRacer
             {
                 //let the room master update players ready
                 Master.UpdatePlayersReady(isready);
-                Debug.LogError(Master.PlayersReady);
+
                 //start countdown if all players are ready
                 if (Master.PlayersReady == MatchMakingManager.MAX_PLAYERS)
                 {
@@ -282,12 +279,10 @@ namespace MultiplayerRacer
             //if your actornumber matches the new room master number you get the data
             if (PhotonNetwork.LocalPlayer.ActorNumber == newRoomMasterNumber)
             {
-                Debug.LogError($"i got the master client data! :: {newMaster.PlayersReady}, {newMaster.CurrentLevelIndex}");
                 Master = newMaster;
                 //if the master client was leaving we make sure to handle that edge case
                 if (wasLeaving && Master.InLobby)
                 {
-                    Debug.LogError("reset players ready from new master client");
                     Master.ResetPlayersReady();
                 }
             }
