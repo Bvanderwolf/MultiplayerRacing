@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace MultiplayerRacer
 {
-    public class LobbyUIAnimation : MonoBehaviour
+    public class UIAnimations : MonoBehaviour
     {
         [SerializeField] private float scaleSpeed = 1f;
         [SerializeField] private float fadeSpeed = 1f;

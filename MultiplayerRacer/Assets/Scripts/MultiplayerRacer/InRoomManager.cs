@@ -2,6 +2,7 @@
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace MultiplayerRacer
 {
@@ -103,7 +104,7 @@ namespace MultiplayerRacer
 
         public void SwitchRoomMaster(int newMasterNumber)
         {
-            if (newMasterNumber < 0)
+            if (newMasterNumber < 0 || !RoomMaster.Registered)
                 return;
 
             //send RPC call with master client data to new master client
@@ -120,6 +121,14 @@ namespace MultiplayerRacer
             {
                 lobbyUI.ListenToReadyButton();
             }
+        }
+
+        private void OnGameSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            //reset lobbyUI value since we are now in the game scene
+            lobbyUI = null;
+            //unsubscribe from scene loaded event
+            SceneManager.sceneLoaded += OnGameSceneLoaded;
         }
 
         public void OnMasterClientSwitched(Player newMasterClient)
@@ -241,7 +250,9 @@ namespace MultiplayerRacer
         {
             if (lobbyUI != null)
             {
-                lobbyUI.DoCountDown();
+                //subscribe client to scene loaded event before starting the room countdown
+                SceneManager.sceneLoaded += OnGameSceneLoaded;
+                lobbyUI.StartGameCountDown();
             }
         }
     }
