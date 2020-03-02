@@ -58,10 +58,11 @@ namespace MultiplayerRacer
         /// sets InroomManager its isready value and updates the master client with this value
         /// </summary>
         /// <param name="value"></param>
-        public void SetReady(bool value)
+        public void SetReady(bool value, bool fast = false)
         {
             IsReady = value;
             GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
+            if (fast) PhotonNetwork.SendAllOutgoingCommands();
         }
 
         /// <summary>
@@ -94,6 +95,7 @@ namespace MultiplayerRacer
             else Debug.LogError("Room Master is already registered :: wont do it again");
         }
 
+        //sets number in the room
         public void SetNumberInRoom(MatchMakingManager manager, int number)
         {
             if (manager == MatchMakingManager.Instance)
@@ -102,6 +104,11 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// should be called before a master client switch happens to send
+        /// the roomMaster data to the newly assigned master client
+        /// </summary>
+        /// <param name="newMasterNumber"></param>
         public void SwitchRoomMaster(int newMasterNumber)
         {
             if (newMasterNumber < 0 || !RoomMaster.Registered)
@@ -109,6 +116,8 @@ namespace MultiplayerRacer
 
             //send RPC call with master client data to new master client
             GetComponent<PhotonView>().RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber, Master);
+
+            Master = null; //after sending the master data, we should no longer have the master client data
         }
 
         /// <summary>
@@ -240,8 +249,9 @@ namespace MultiplayerRacer
         {
             if (PhotonNetwork.LocalPlayer.ActorNumber == newRoomMasterNumber)
             {
-                Debug.LogError($"i get the master client data! :: {newMaster.PlayersReady}, {newMaster.CurrentLevelIndex}");
+                Debug.LogError($"i got the master client data! :: {newMaster.PlayersReady}, {newMaster.CurrentLevelIndex}");
                 Master = newMaster;
+                Master.LeavingMasterCheck();
             }
         }
 

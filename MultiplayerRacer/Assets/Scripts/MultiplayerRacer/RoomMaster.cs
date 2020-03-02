@@ -28,6 +28,19 @@ namespace MultiplayerRacer
             Registered = true;
         }
 
+        /// <summary>
+        /// needs to be called after a new master has been assigned
+        /// to make sure that if the old master left, it can readjust
+        /// its values based on the missing player
+        /// </summary>
+        public void LeavingMasterCheck()
+        {
+            if (CurrentLevelIndex == 0)
+            {
+                UpdatePlayersReady(false);
+            }
+        }
+
         public void UpdatePlayersReady(bool ready)
         {
             PlayersReady += ready ? 1 : -1;

@@ -103,6 +103,7 @@ namespace MultiplayerRacer
             if (PhotonNetwork.IsConnectedAndReady)
             {
                 LeavingMasterCheck();
+                InRoomManager.Instance.SetReady(false, true); //make sure we reset our ready value when leaving
                 PhotonNetwork.LeaveRoom();
             }
         }
@@ -177,8 +178,10 @@ namespace MultiplayerRacer
                 /*the new master client will be the player with the next lowest actor number
                  according to the Photon Pun Documentation*/
                 int newMasterNumber = PhotonNetwork.LocalPlayer.GetNext().ActorNumber;
-                //update for each needed class, the master client data
+
+                //switch room master
                 InRoomManager.Instance.SwitchRoomMaster(newMasterNumber);
+
                 //if a master client is leaving send all outgoing commands to make sure the data is send
                 PhotonNetwork.SendAllOutgoingCommands();
                 return true;
