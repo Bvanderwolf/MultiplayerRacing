@@ -188,6 +188,7 @@ namespace MultiplayerRacer
             it means this player joined before us so our number will go down
             by one to get the correct value for our number in the room*/
             Player me = PhotonNetwork.LocalPlayer;
+            Debug.LogError(me.ActorNumber + " " + otherPlayer.ActorNumber);
             if (me.ActorNumber > otherPlayer.ActorNumber)
             {
                 NumberInRoom--;

@@ -183,7 +183,7 @@ namespace MultiplayerRacer
             //player number has to be between 0 and max players value
             if (playerNumber < 0 || playerNumber > MatchMakingManager.MAX_PLAYERS)
                 return;
-
+            Debug.LogError("listening to button: " + playerNumber);
             //add onclick listener to players ready button
             Transform statusTransform = readyStatus.transform;
             Button button = statusTransform.GetChild(playerNumber - 1)?.GetComponentInChildren<Button>();
