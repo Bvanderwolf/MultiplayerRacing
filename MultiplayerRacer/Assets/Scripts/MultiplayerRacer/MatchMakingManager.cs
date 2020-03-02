@@ -178,6 +178,9 @@ namespace MultiplayerRacer
                  according to the Photon Pun Documentation*/
                 int newMasterNumber = PhotonNetwork.LocalPlayer.GetNext().ActorNumber;
 
+                //set ready with sending to master, because we are the master client
+                InRoomManager.Instance.SetReady(false, false);
+
                 //switch room master
                 InRoomManager.Instance.SwitchRoomMaster(newMasterNumber, true);
             }

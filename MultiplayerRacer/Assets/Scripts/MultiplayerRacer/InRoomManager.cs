@@ -58,10 +58,13 @@ namespace MultiplayerRacer
         /// sets InroomManager its isready value and updates the master client with this value
         /// </summary>
         /// <param name="value"></param>
-        public void SetReady(bool value)
+        public void SetReady(bool value, bool updateMaster = true)
         {
             IsReady = value;
-            GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
+            if (updateMaster)
+            {
+                GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
+            }
         }
 
         /// <summary>
