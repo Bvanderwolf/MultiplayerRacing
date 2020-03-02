@@ -102,8 +102,7 @@ namespace MultiplayerRacer
         {
             if (PhotonNetwork.IsConnectedAndReady)
             {
-                LeavingMasterCheck();
-                InRoomManager.Instance.SetReady(false, true); //make sure we reset our ready value when leaving
+                DoLeavingChecks();
                 PhotonNetwork.LeaveRoom();
             }
         }
@@ -171,7 +170,7 @@ namespace MultiplayerRacer
         /// should be called before leaving the room, to make sure data is not lost
         /// when the master client leaves
         /// </summary>
-        private bool LeavingMasterCheck()
+        private void DoLeavingChecks()
         {
             if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount > 1)
             {
@@ -181,12 +180,14 @@ namespace MultiplayerRacer
 
                 //switch room master
                 InRoomManager.Instance.SwitchRoomMaster(newMasterNumber);
-
-                //if a master client is leaving send all outgoing commands to make sure the data is send
-                PhotonNetwork.SendAllOutgoingCommands();
-                return true;
             }
-            return false;
+            else
+            {
+                //make sure we reset our ready value when leaving
+                InRoomManager.Instance.SetReady(false);
+            }
+            //if a client is leaving send all outgoing commands to make sure the data is send
+            PhotonNetwork.SendAllOutgoingCommands();
         }
 
         /// <summary>
@@ -195,7 +196,7 @@ namespace MultiplayerRacer
         /// </summary>
         private void OnQuitEvent()
         {
-            LeavingMasterCheck();
+            DoLeavingChecks();
         }
 
         /// <summary>
