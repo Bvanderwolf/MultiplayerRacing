@@ -11,21 +11,21 @@ namespace MultiplayerRacer
         public static InRoomManager Instance { get; private set; }
         public static readonly byte[] memRoomMaster = new byte[4];
 
-        private enum MultiplayerRacerScenes { LOBBY, GAME }
+        public enum MultiplayerRacerScenes { LOBBY, GAME }
 
         private MultiplayerRacerUI UI = null;
 
         public int NumberInRoom { get; private set; } = 0;
         public bool IsReady { get; private set; } = false;
 
-        private MultiplayerRacerScenes currentScene = MultiplayerRacerScenes.LOBBY;
+        public MultiplayerRacerScenes CurrentScene { get; private set; } = MultiplayerRacerScenes.LOBBY;
 
         public int NextLevelIndex
         {
             get
             {
                 //return next value only if not out of scene count bounds, else -1
-                int next = (int)currentScene + 1;
+                int next = (int)CurrentScene + 1;
                 if (next <= SceneManager.sceneCountInBuildSettings)
                 {
                     return next;
@@ -34,8 +34,8 @@ namespace MultiplayerRacer
             }
         }
 
-        public bool InLobby => currentScene == MultiplayerRacerScenes.LOBBY;
-        public bool InGame => currentScene == MultiplayerRacerScenes.GAME;
+        public bool InLobby => CurrentScene == MultiplayerRacerScenes.LOBBY;
+        public bool InGame => CurrentScene == MultiplayerRacerScenes.GAME;
 
         public const int COUNTDOWN_LENGTH = 3;
         public const float READY_SEND_TIMEOUT = 0.75f;
@@ -77,7 +77,7 @@ namespace MultiplayerRacer
 
         private void SetCanvasReference()
         {
-            switch (currentScene)
+            switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
                     UI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<LobbyUI>();
@@ -94,7 +94,7 @@ namespace MultiplayerRacer
 
         public void SetToLobby()
         {
-            currentScene = MultiplayerRacerScenes.LOBBY;
+            CurrentScene = MultiplayerRacerScenes.LOBBY;
             IsReady = false;
         }
 
@@ -181,7 +181,7 @@ namespace MultiplayerRacer
         /// <param name="room"></param>
         private void FullRoomCheck(Room room)
         {
-            switch (currentScene)
+            switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
                     LobbyUI lobbyUI = (LobbyUI)UI;
@@ -224,10 +224,16 @@ namespace MultiplayerRacer
                 return;
             }
 
-            currentScene = (MultiplayerRacerScenes)scene.buildIndex; //set current scene to game scene build index(should be 1)
+            CurrentScene = (MultiplayerRacerScenes)scene.buildIndex; //set current scene to game scene build index(should be 1)
             SetReady(false); //reset ready value for usage in game scene
-            SetCanvasReference(); //now that currentScene is updated, we set our canvas reference based on it
-            PhotonNetwork.CurrentRoom.IsOpen = false; //New players cannot join the game if the game scene has been loaded
+
+            //now that currentScene is updated, we set our canvas reference
+            SetCanvasReference();
+            //and set it up
+            Room room = PhotonNetwork.CurrentRoom;
+            UI.SetupRoomStatus(PhotonNetwork.NickName, room);
+            room.IsOpen = false; //New players cannot join the game if the game scene has been loaded
+
             SceneManager.sceneLoaded -= OnGameSceneLoaded; //unsubscribe from scene loaded event
         }
 
@@ -256,7 +262,7 @@ namespace MultiplayerRacer
             UI.UpdateRoomInfo(room);
 
             //Update Room status based on current Scene
-            switch (currentScene)
+            switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
                     LobbyUI lobbyUI = (LobbyUI)UI;
@@ -302,7 +308,7 @@ namespace MultiplayerRacer
             UI.ShowExitButton(); //handle edge cases where exit button is in hidden state
 
             //Update Room status based on current scene
-            switch (currentScene)
+            switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
                     LobbyUI lobbyUI = (LobbyUI)UI;
@@ -396,7 +402,7 @@ namespace MultiplayerRacer
             }
 
             //Do countdown based on current Scene
-            switch (currentScene)
+            switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
                     LobbyUI lobbyUI = (LobbyUI)UI;

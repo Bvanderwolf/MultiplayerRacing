@@ -6,10 +6,12 @@ using UnityEngine.UI;
 
 namespace MultiplayerRacer
 {
+    using MultiplayerRacerScenes = InRoomManager.MultiplayerRacerScenes;
+
     public class MatchMakingManager : MonoBehaviourPunCallbacks
     {
         public static MatchMakingManager Instance { get; private set; }
-        private LobbyUI lobbyUI = null;
+        private MultiplayerRacerUI UI = null;
         private Color connectColor = new Color(0, 0.75f, 0);
         private Color disconnectColor = new Color(0.75f, 0, 0);
 
@@ -36,17 +38,25 @@ namespace MultiplayerRacer
         // Start is called before the first frame update
         private void Start()
         {
-            AttachUI();
+            AttachUI(MultiplayerRacerScenes.LOBBY);
         }
 
-        private void AttachUI()
+        private void AttachUI(MultiplayerRacerScenes scene)
         {
-            //setup lobby ui if not already done
-            if (lobbyUI == null)
+            switch (scene)
             {
-                lobbyUI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<LobbyUI>();
+                case MultiplayerRacerScenes.LOBBY:
+                    UI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<LobbyUI>();
+                    ((LobbyUI)UI).SetupConnectButton(OnConnectButtonClick);
+                    break;
+
+                case MultiplayerRacerScenes.GAME:
+                    UI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<GameUI>();
+                    break;
+
+                default:
+                    break;
             }
-            lobbyUI.SetupConnectButton(OnConnectButtonClick);
         }
 
         /// <summary>
@@ -59,7 +69,7 @@ namespace MultiplayerRacer
             if (connectButton == null)
                 return;
 
-            string destination = lobbyUI.ConnectDestination();
+            string destination = ((LobbyUI)UI).ConnectDestination();
 
             //check if it is null or an empty string
             if (destination == "")
@@ -162,7 +172,7 @@ namespace MultiplayerRacer
         {
             if (room.PlayerCount == MAX_PLAYERS)
             {
-                lobbyUI.ListenToReadyButton();
+                ((LobbyUI)UI).ListenToReadyButton();
             }
         }
 
@@ -200,8 +210,9 @@ namespace MultiplayerRacer
 
         private void OnGameSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            SceneManager.sceneLoaded -= OnGameSceneLoaded;
-            lobbyUI = null; //inside the game scene, for now, lobbyUI is not needed
+            SceneManager.sceneLoaded -= OnGameSceneLoaded; //unsubscribe this function from scene loaded event
+            AttachUI(MultiplayerRacerScenes.GAME); //reattach ui but based on game scene
+            UI.SetupExitButton(LeaveRoom); //setup exit button with leave room function
         }
 
         public void AttachOnGameSceneLoaded(InRoomManager instance)
@@ -221,7 +232,7 @@ namespace MultiplayerRacer
             if (!connectingToMaster)
             {
                 SetConnectingToMaster();
-                lobbyUI.SetConnectButtonInteractability(false);
+                ((LobbyUI)UI).SetConnectButtonInteractability(false);
             }
         }
 
@@ -230,6 +241,7 @@ namespace MultiplayerRacer
         /// </summary>
         private void OnConnectToRoom()
         {
+            LobbyUI lobbyUI = (LobbyUI)UI;
             //connect only if we can actually connect to the room
             if (lobbyUI.ConnectDestination() == "Room" && !connectingToRoom && PhotonNetwork.IsConnectedAndReady)
             {
@@ -257,6 +269,7 @@ namespace MultiplayerRacer
             //if we where connecting to a room we setup values and ui accordingly
             if (connectingToRoom)
             {
+                LobbyUI lobbyUI = (LobbyUI)UI;
                 Room room = PhotonNetwork.CurrentRoom;
                 SetConnectedToRoom(room);
                 lobbyUI.SetupRoomStatus(MakeNickname(), room);
@@ -281,6 +294,7 @@ namespace MultiplayerRacer
             if (connectingToMaster)
             {
                 SetConnectedToMaster();
+                LobbyUI lobbyUI = (LobbyUI)UI;
                 lobbyUI.UpdateConnectStatus(true);
                 lobbyUI.UpdateConnectColor(true);
                 lobbyUI.SetConnectButtonInteractability(true);
@@ -292,8 +306,8 @@ namespace MultiplayerRacer
         {
             base.OnLeftRoom();
             //reset ui when having left a room
-            AttachUI();
-            lobbyUI.ResetReadyButtons();
+            AttachUI(MultiplayerRacerScenes.LOBBY);
+            ((LobbyUI)UI).ResetReadyButtons();
             InRoomManager.Instance.SetToLobby();
             Application.quitting -= OnQuitEvent; //unsubsribe from quitting event
         }
@@ -302,8 +316,9 @@ namespace MultiplayerRacer
         {
             base.OnDisconnected(cause);
             //try reattaching the UI for when we where inside another scene
-            AttachUI();
+            AttachUI(MultiplayerRacerScenes.LOBBY);
             //update lobby ui after having tried reattaching it
+            LobbyUI lobbyUI = (LobbyUI)UI;
             lobbyUI.UpdateConnectStatus(false);
             lobbyUI.UpdateConnectColor(false);
             lobbyUI.ResetReadyButtons();
