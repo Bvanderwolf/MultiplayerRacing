@@ -193,7 +193,7 @@ namespace MultiplayerRacer
                 {
                     //set room manager ready settings
                     bool ready = !InRoomManager.Instance.IsReady;
-                    InRoomManager.Instance.SetReady(ready, !PhotonNetwork.IsMasterClient);
+                    InRoomManager.Instance.SetReady(ready);
 
                     //set time out for the clicked ready button
                     animations.TimeOutButton(button, InRoomManager.READY_SEND_TIMEOUT);

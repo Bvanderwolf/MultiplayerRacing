@@ -84,7 +84,7 @@ namespace MultiplayerRacer
         /// if updateMaster is true, set it to false if you are the master client
         /// </summary>
         /// <param name="value"></param>
-        public void SetReady(bool value, bool updateMaster = true)
+        public void SetReady(bool value)
         {
             if (IsReady == value)
             {
@@ -92,17 +92,7 @@ namespace MultiplayerRacer
                 return;
             }
             IsReady = value;
-            if (updateMaster)
-            {
-                GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
-            }
-            else
-            {
-                if (PhotonNetwork.IsMasterClient)
-                {
-                    Master.UpdatePlayersReady(IsReady);
-                }
-            }
+            GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
         }
 
         /// <summary>
@@ -249,7 +239,7 @@ namespace MultiplayerRacer
                 {
                     lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                     lobbyUI.UpdateReadyButtons(room.PlayerCount);
-                    SetReady(false, false);
+                    SetReady(false);
                 }
             }
             else Debug.LogError("Wont update room :: lobbyUI is null");

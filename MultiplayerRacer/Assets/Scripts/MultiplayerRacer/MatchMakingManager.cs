@@ -181,11 +181,6 @@ namespace MultiplayerRacer
                 //send the room master data to new master with newMasterNumber with leaving set to true
                 InRoomManager.Instance.SendMasterDataToNewMaster(newMasterNumber, true);
 
-                /*set ready to false with sending to master to false, because we are the master client.
-                 important we do this after switching sending room master data to make it send our old
-                 attritubes*/
-                InRoomManager.Instance.SetReady(false, false);
-
                 //We are no long the room master
                 InRoomManager.Instance.ResetIsRoomMaster();
                 //if a client is leaving send all outgoing commands to make sure the data is send
