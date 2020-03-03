@@ -302,6 +302,7 @@ namespace MultiplayerRacer
             //try reattaching the UI for when we where inside another scene
             AttachUI();
             lobbyUI.ResetReadyButtons();
+            InRoomManager.Instance.SetToLobby();
 
             print(cause);
         }

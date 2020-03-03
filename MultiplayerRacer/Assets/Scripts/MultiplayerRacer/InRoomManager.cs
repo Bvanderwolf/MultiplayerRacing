@@ -16,14 +16,14 @@ namespace MultiplayerRacer
         public int NumberInRoom { get; private set; } = 0;
         public bool IsReady { get; private set; } = false;
 
-        public int CurrentLevelIndex { get; private set; } = 0;
+        private int currentLevelIndex = 0;
 
         public int NextLevelIndex
         {
             get
             {
                 //return next value only if not out of scene count bounds, else -1
-                int next = CurrentLevelIndex + 1;
+                int next = currentLevelIndex + 1;
                 if (next <= SceneManager.sceneCountInBuildSettings)
                 {
                     return next;
@@ -32,8 +32,8 @@ namespace MultiplayerRacer
             }
         }
 
-        public bool InLobby => CurrentLevelIndex == 0;
-        public bool InGame => CurrentLevelIndex == 1;
+        public bool InLobby => currentLevelIndex == 0;
+        public bool InGame => currentLevelIndex == 1;
 
         public const int COUNTDOWN_LENGTH = 3;
         public const float READY_SEND_TIMEOUT = 0.75f;
@@ -71,6 +71,12 @@ namespace MultiplayerRacer
         private void Start()
         {
             lobbyUI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<LobbyUI>();
+        }
+
+        public void SetToLobby()
+        {
+            currentLevelIndex = 0;
+            IsReady = false;
         }
 
         /// <summary>
