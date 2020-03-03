@@ -12,6 +12,8 @@ namespace MultiplayerRacer
 
         private const int MAX_COUNTDOWN_COUNT = 5;
 
+        public bool CountingDown { get; private set; }
+
         /// <summary>
         /// Takes given Gameobject and creates a countdown effect with given count, fade and on end action
         /// </summary>
@@ -19,7 +21,7 @@ namespace MultiplayerRacer
         /// <param name="count"></param>
         /// <param name="withFade"></param>
         /// <param name="onEnd"></param>
-        public void CountDown(GameObject textGo, int count, bool withFade = false, Action onEnd = null)
+        public void CountDown(GameObject textGo, int count, bool withFade = false, Action onEnd = null, Func<bool> check = null)
         {
             //start countdown coroutine if gameobject is not null and has text component
             if (textGo != null && textGo.GetComponent<Text>() != null)
@@ -43,8 +45,9 @@ namespace MultiplayerRacer
             else Debug.LogError($"button to time out was null or time: {time} isnt greater than 0");
         }
 
-        private IEnumerator DoCountDown(GameObject go, int count, bool withFade = false, Action onEnd = null)
+        private IEnumerator DoCountDown(GameObject go, int count, bool withFade = false, Action onEnd = null, Func<bool> check = null)
         {
+            CountingDown = true;
             Text goText = go.GetComponent<Text>();
             //save original color for after fade
             Color goTextColor = goText.color;
@@ -53,7 +56,7 @@ namespace MultiplayerRacer
             {
                 count = MAX_COUNTDOWN_COUNT;
             }
-
+            bool hasCeck = check != null;
             //for each count, do a text pop with given gameobject
             for (int current = count; current > 0; current--)
             {
@@ -61,7 +64,13 @@ namespace MultiplayerRacer
                 yield return StartCoroutine(PopupTextEnumerator(go, null, withFade));
                 go.transform.localScale = Vector3.zero;
                 go.GetComponent<Text>().color = goTextColor;
+                if (hasCeck && check.Invoke())
+                {
+                    CountingDown = false;
+                    yield break;
+                }
             }
+            CountingDown = false;
             onEnd?.Invoke();
         }
 

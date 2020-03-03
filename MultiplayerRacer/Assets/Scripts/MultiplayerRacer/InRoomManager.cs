@@ -178,6 +178,22 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// Used by the master client to load the game scene
+        /// </summary>
+        private void LoadGameScene()
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                int levelIndexToLoad = NextLevelIndex;
+                if (levelIndexToLoad != -1)
+                {
+                    PhotonNetwork.LoadLevel(levelIndexToLoad);
+                }
+                else Debug.LogError("Level index to load is not valid. Check current level index");
+            }
+        }
+
         private void OnGameSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             //reset lobbyUI value since we are now in the game scene
@@ -316,7 +332,10 @@ namespace MultiplayerRacer
             {
                 //subscribe client to scene loaded event before starting the room countdown
                 SceneManager.sceneLoaded += OnGameSceneLoaded;
-                lobbyUI.StartGameCountDown();
+                lobbyUI.StartGameCountDown(LoadGameScene, () =>
+                {
+                    return PhotonNetwork.CurrentRoom.PlayerCount != MatchMakingManager.MAX_PLAYERS;
+                });
             }
         }
     }

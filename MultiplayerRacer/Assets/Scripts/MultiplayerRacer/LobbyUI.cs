@@ -233,7 +233,7 @@ namespace MultiplayerRacer
             }
         }
 
-        public void StartGameCountDown()
+        public void StartGameCountDown(Action endAction, Func<bool> check = null)
         {
             if (countdownText == null)
                 if (!FindAndSetCountdownTextReference())
@@ -245,18 +245,7 @@ namespace MultiplayerRacer
             HideOrShowExitButton();
 
             //start countdown animation and let masterclient load the game scene on end
-            animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, true, () =>
-            {
-                if (PhotonNetwork.IsMasterClient)
-                {
-                    int levelIndexToLoad = InRoomManager.Instance.NextLevelIndex;
-                    if (levelIndexToLoad != -1)
-                    {
-                        PhotonNetwork.LoadLevel(levelIndexToLoad);
-                    }
-                    else Debug.LogError("Level index to load is not valid. Check current level index");
-                }
-            });
+            animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, true, endAction, check);
         }
 
         [PunRPC]
