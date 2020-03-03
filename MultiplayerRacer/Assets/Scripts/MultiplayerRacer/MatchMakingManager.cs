@@ -1,6 +1,7 @@
 ﻿using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace MultiplayerRacer
@@ -197,6 +198,20 @@ namespace MultiplayerRacer
             DoLeavingChecks();
         }
 
+        private void OnGameSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            SceneManager.sceneLoaded -= OnGameSceneLoaded;
+            lobbyUI = null; //inside the game scene, for now, lobbyUI is not needed
+        }
+
+        public void AttachOnGameSceneLoaded(InRoomManager instance)
+        {
+            if (instance != InRoomManager.Instance)
+                return;
+
+            SceneManager.sceneLoaded += OnGameSceneLoaded;
+        }
+
         /// <summary>
         /// should be called when connect to master button is clicked
         /// </summary>
@@ -286,12 +301,11 @@ namespace MultiplayerRacer
         public override void OnDisconnected(DisconnectCause cause)
         {
             base.OnDisconnected(cause);
-            //update lobby ui when disconnected
-            lobbyUI.UpdateConnectStatus(false);
-            lobbyUI.UpdateConnectColor(false);
-
             //try reattaching the UI for when we where inside another scene
             AttachUI();
+            //update lobby ui after having tried reattaching it
+            lobbyUI.UpdateConnectStatus(false);
+            lobbyUI.UpdateConnectColor(false);
             lobbyUI.ResetReadyButtons();
             InRoomManager.Instance.SetToLobby();
 

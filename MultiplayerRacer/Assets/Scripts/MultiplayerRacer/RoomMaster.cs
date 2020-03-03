@@ -1,7 +1,4 @@
-﻿using ExitGames.Client.Photon;
-using UnityEngine.SceneManagement;
-
-namespace MultiplayerRacer
+﻿namespace MultiplayerRacer
 {
     public class RoomMaster
     {

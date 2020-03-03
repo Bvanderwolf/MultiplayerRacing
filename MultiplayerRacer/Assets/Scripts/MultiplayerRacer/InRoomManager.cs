@@ -11,19 +11,21 @@ namespace MultiplayerRacer
         public static InRoomManager Instance { get; private set; }
         public static readonly byte[] memRoomMaster = new byte[4];
 
-        private LobbyUI lobbyUI = null;
+        private enum MultiplayerRacerScenes { LOBBY, GAME }
+
+        private MultiplayerRacerUI UI = null;
 
         public int NumberInRoom { get; private set; } = 0;
         public bool IsReady { get; private set; } = false;
 
-        private int currentLevelIndex = 0;
+        private MultiplayerRacerScenes currentScene = MultiplayerRacerScenes.LOBBY;
 
         public int NextLevelIndex
         {
             get
             {
                 //return next value only if not out of scene count bounds, else -1
-                int next = currentLevelIndex + 1;
+                int next = (int)currentScene + 1;
                 if (next <= SceneManager.sceneCountInBuildSettings)
                 {
                     return next;
@@ -32,8 +34,8 @@ namespace MultiplayerRacer
             }
         }
 
-        public bool InLobby => currentLevelIndex == 0;
-        public bool InGame => currentLevelIndex == 1;
+        public bool InLobby => currentScene == MultiplayerRacerScenes.LOBBY;
+        public bool InGame => currentScene == MultiplayerRacerScenes.GAME;
 
         public const int COUNTDOWN_LENGTH = 3;
         public const float READY_SEND_TIMEOUT = 0.75f;
@@ -70,12 +72,29 @@ namespace MultiplayerRacer
 
         private void Start()
         {
-            lobbyUI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<LobbyUI>();
+            SetCanvasReference();
+        }
+
+        private void SetCanvasReference()
+        {
+            switch (currentScene)
+            {
+                case MultiplayerRacerScenes.LOBBY:
+                    UI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<LobbyUI>();
+                    break;
+
+                case MultiplayerRacerScenes.GAME:
+                    UI = GameObject.FindGameObjectWithTag("Canvas")?.GetComponent<GameUI>();
+                    break;
+
+                default:
+                    break;
+            }
         }
 
         public void SetToLobby()
         {
-            currentLevelIndex = 0;
+            currentScene = MultiplayerRacerScenes.LOBBY;
             IsReady = false;
         }
 
@@ -162,14 +181,27 @@ namespace MultiplayerRacer
         /// <param name="room"></param>
         private void FullRoomCheck(Room room)
         {
-            if (room.PlayerCount == MatchMakingManager.MAX_PLAYERS)
+            switch (currentScene)
             {
-                lobbyUI.ListenToReadyButton();
+                case MultiplayerRacerScenes.LOBBY:
+                    LobbyUI lobbyUI = UI as LobbyUI;
+                    if (room.PlayerCount == MatchMakingManager.MAX_PLAYERS)
+                    {
+                        lobbyUI.ListenToReadyButton();
+                    }
+                    break;
+
+                case MultiplayerRacerScenes.GAME:
+                    break;
+
+                default:
+                    break;
             }
         }
 
         /// <summary>
-        /// Used by the master client to load the game scene
+        /// Sets up values for client to load game scene, then lets masterclient load it.
+        /// Only the masterclient loads the scene since PhotonNetwork.AutomaticalySyncScene is set to true
         /// </summary>
         private void LoadGameScene()
         {
@@ -186,10 +218,17 @@ namespace MultiplayerRacer
 
         private void OnGameSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            //reset lobbyUI value since we are now in the game scene
-            lobbyUI = null;
-            //unsubscribe from scene loaded event
-            SceneManager.sceneLoaded += OnGameSceneLoaded;
+            if (scene.buildIndex != 1)
+            {
+                Debug.LogError("Loaded Scene that wasn't Game scene width buildIndex " + scene.buildIndex);
+                return;
+            }
+
+            currentScene = (MultiplayerRacerScenes)scene.buildIndex; //set current scene to game scene build index(should be 1)
+            SetReady(false); //reset ready value for usage in game scene
+            SetCanvasReference(); //now that currentScene is updated, we set our canvas reference based on it
+            PhotonNetwork.CurrentRoom.IsOpen = false; //New players cannot join the game if the game scene has been loaded
+            SceneManager.sceneLoaded -= OnGameSceneLoaded; //unsubscribe from scene loaded event
         }
 
         public void OnMasterClientSwitched(Player newMasterClient)
@@ -197,24 +236,40 @@ namespace MultiplayerRacer
             /*Note: photon assigns new masterclient when current one leaves.
             New one is the one with the lowest actor number, so first one to join
             should correlate to NumberInRoom*/
-            if (lobbyUI != null)
+            if (UI != null)
             {
-                lobbyUI.UpdateIsMasterclient();
+                UI.UpdateIsMasterclient();
             }
-            else Debug.LogError("Wont update room :: lobbyUI is null");
+            else Debug.LogError("Wont update room :: UI is null");
         }
 
         public void OnPlayerEnteredRoom(Player newPlayer)
         {
-            //Update Room status
-            if (lobbyUI != null)
+            if (UI == null)
             {
-                Room room = PhotonNetwork.CurrentRoom;
-                lobbyUI.UpdateRoomInfo(room);
-                lobbyUI.UpdateReadyButtons(room.PlayerCount);
-                FullRoomCheck(room); //entering player can be the one to fill the room
+                Debug.LogError("Wont update room :: UI is null");
+                return;
             }
-            else Debug.LogError("Wont update room :: lobbyUI is null");
+
+            //invoke shared functions
+            Room room = PhotonNetwork.CurrentRoom;
+            UI.UpdateRoomInfo(room);
+
+            //Update Room status based on current Scene
+            switch (currentScene)
+            {
+                case MultiplayerRacerScenes.LOBBY:
+                    LobbyUI lobbyUI = UI as LobbyUI;
+                    lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                    break;
+
+                case MultiplayerRacerScenes.GAME:
+                    break;
+
+                default:
+                    break;
+            }
+            FullRoomCheck(room); //entering player can be the one to fill the lobby
         }
 
         public void OnPlayerLeftRoom(Player otherPlayer)
@@ -228,28 +283,40 @@ namespace MultiplayerRacer
                 NumberInRoom--;
             }
 
-            //Update Room status
-            if (lobbyUI != null)
-            {
-                Room room = PhotonNetwork.CurrentRoom;
-                lobbyUI.UpdateRoomInfo(room);
-                lobbyUI.UpdateNickname(MatchMakingManager.Instance.MakeNickname());
-                //if we where in the lobby reset ready status
-                if (InLobby)
-                {
-                    lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
-                    lobbyUI.UpdateReadyButtons(room.PlayerCount);
-                    lobbyUI.ShowExitButton(); //handle edge cases where exit button is in hidden state
-                    SetReady(false);
-                }
-            }
-            else Debug.LogError("Wont update room :: lobbyUI is null");
-
             //the masterclient resets the players ready count when someone leaves
             if (PhotonNetwork.IsMasterClient)
             {
                 Master.ResetPlayersReady();
             }
+
+            if (UI == null)
+            {
+                Debug.LogError("Wont update room :: UI is null");
+                return;
+            }
+
+            //invoke shared functions
+            Room room = PhotonNetwork.CurrentRoom;
+            UI.UpdateRoomInfo(room);
+            UI.UpdateNickname(MatchMakingManager.Instance.MakeNickname());
+            UI.ShowExitButton(); //handle edge cases where exit button is in hidden state
+
+            //Update Room status based on current scene
+            switch (currentScene)
+            {
+                case MultiplayerRacerScenes.LOBBY:
+                    LobbyUI lobbyUI = UI as LobbyUI;
+                    lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
+                    lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                    break;
+
+                case MultiplayerRacerScenes.GAME:
+                    break;
+
+                default:
+                    break;
+            }
+            SetReady(false);
         }
 
         public void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
@@ -296,7 +363,7 @@ namespace MultiplayerRacer
                 //let the room master update players ready
                 Master.UpdatePlayersReady(isready);
                 //start countdown if all players are ready
-                if (Master.PlayersReady == MatchMakingManager.MAX_PLAYERS)
+                if (InLobby && Master.PlayersReady == MatchMakingManager.MAX_PLAYERS)
                 {
                     //not buffered because no players can join after the countdown has started
                     GetComponent<PhotonView>().RPC("StartCountdown", RpcTarget.AllViaServer);
@@ -322,12 +389,29 @@ namespace MultiplayerRacer
         [PunRPC]
         private void StartCountdown()
         {
-            if (lobbyUI != null)
+            if (UI == null)
             {
-                //subscribe client to scene loaded event before starting the room countdown
-                SceneManager.sceneLoaded += OnGameSceneLoaded;
-                //start countdown, loading game scene on end and checking IsReady state each count
-                lobbyUI.StartGameCountDown(LoadGameScene, () => IsReady);
+                Debug.LogError("Won't start StartCountdown :: UI is null");
+                return;
+            }
+
+            //Do countdown based on current Scene
+            switch (currentScene)
+            {
+                case MultiplayerRacerScenes.LOBBY:
+                    LobbyUI lobbyUI = UI as LobbyUI;
+                    //subscribe OnGameSceneLoaded to scene loaded event before starting the room countdown
+                    SceneManager.sceneLoaded += OnGameSceneLoaded;
+                    MatchMakingManager.Instance.AttachOnGameSceneLoaded(this);
+                    //start countdown, loading game scene on end and checking IsReady state each count
+                    lobbyUI.StartGameCountDown(LoadGameScene, () => IsReady);
+                    break;
+
+                case MultiplayerRacerScenes.GAME:
+                    break;
+
+                default:
+                    break;
             }
         }
     }
