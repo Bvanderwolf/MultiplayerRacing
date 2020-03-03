@@ -184,7 +184,7 @@ namespace MultiplayerRacer
             switch (currentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
-                    LobbyUI lobbyUI = UI as LobbyUI;
+                    LobbyUI lobbyUI = (LobbyUI)UI;
                     if (room.PlayerCount == MatchMakingManager.MAX_PLAYERS)
                     {
                         lobbyUI.ListenToReadyButton();
@@ -259,7 +259,7 @@ namespace MultiplayerRacer
             switch (currentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
-                    LobbyUI lobbyUI = UI as LobbyUI;
+                    LobbyUI lobbyUI = (LobbyUI)UI;
                     lobbyUI.UpdateReadyButtons(room.PlayerCount);
                     break;
 
@@ -305,7 +305,7 @@ namespace MultiplayerRacer
             switch (currentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
-                    LobbyUI lobbyUI = UI as LobbyUI;
+                    LobbyUI lobbyUI = (LobbyUI)UI;
                     lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                     lobbyUI.UpdateReadyButtons(room.PlayerCount);
                     break;
@@ -399,7 +399,7 @@ namespace MultiplayerRacer
             switch (currentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
-                    LobbyUI lobbyUI = UI as LobbyUI;
+                    LobbyUI lobbyUI = (LobbyUI)UI;
                     //subscribe OnGameSceneLoaded to scene loaded event before starting the room countdown
                     SceneManager.sceneLoaded += OnGameSceneLoaded;
                     MatchMakingManager.Instance.AttachOnGameSceneLoaded(this);
