@@ -19,7 +19,8 @@ namespace MultiplayerRacer
             {
                 //place the car spawns on the road for players and get our own car spawn
                 Vector3 myCarSpawnPosition = SetupCarSpawns();
-                myCar = PhotonNetwork.Instantiate("prefabs/car", myCarSpawnPosition, Quaternion.identity);
+                myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawnPosition, Quaternion.identity);
+                //probleem oplossen met meerdere camera's in 1 scene.
             }
             else Debug.LogError("Wont do car setup :: not connected to photon network");
         }
