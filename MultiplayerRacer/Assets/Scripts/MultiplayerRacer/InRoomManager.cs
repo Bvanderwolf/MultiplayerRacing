@@ -239,12 +239,11 @@ namespace MultiplayerRacer
                 {
                     lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                     lobbyUI.UpdateReadyButtons(room.PlayerCount);
-                    Debug.LogError("setting ready to false");
                     SetReady(false);
                 }
             }
             else Debug.LogError("Wont update room :: lobbyUI is null");
-            Debug.LogError("played left room");
+
             //the masterclient resets the players ready count when someone leaves
             if (PhotonNetwork.IsMasterClient)
             {
