@@ -304,7 +304,7 @@ namespace MultiplayerRacer
             {
                 //let the room master update players ready
                 Master.UpdatePlayersReady(isready);
-
+                Debug.LogError($"isready: {isready}, players ready: {Master.PlayersReady}");
                 //start countdown if all players are ready
                 if (Master.PlayersReady == MatchMakingManager.MAX_PLAYERS)
                 {

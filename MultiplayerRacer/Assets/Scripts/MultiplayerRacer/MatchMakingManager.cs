@@ -188,14 +188,9 @@ namespace MultiplayerRacer
 
                 //We are no long the room master
                 InRoomManager.Instance.ResetIsRoomMaster();
+                //if a client is leaving send all outgoing commands to make sure the data is send
+                PhotonNetwork.SendAllOutgoingCommands();
             }
-            else
-            {
-                //make sure we reset our ready value when leaving
-                InRoomManager.Instance.SetReady(false);
-            }
-            //if a client is leaving send all outgoing commands to make sure the data is send
-            PhotonNetwork.SendAllOutgoingCommands();
         }
 
         /// <summary>
@@ -289,6 +284,7 @@ namespace MultiplayerRacer
             //reset ui when having left a room
             AttachUI();
             lobbyUI.ResetReadyButtons();
+            InRoomManager.Instance.SetToLobby();
             Application.quitting -= OnQuitEvent; //unsubsribe from quitting event
         }
 
