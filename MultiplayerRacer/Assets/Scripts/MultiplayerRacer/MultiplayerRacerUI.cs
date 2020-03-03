@@ -124,6 +124,19 @@ namespace MultiplayerRacer
             });
         }
 
+        /// <summary>
+        /// Reverses active state of ExitButton
+        /// </summary>
+        public void HideOrShowExitButton()
+        {
+            if (exitButton == null)
+                if (!FindAndSetExitButtonReference())
+                    return;
+
+            GameObject go = exitButton.gameObject;
+            go.SetActive(!go.activeInHierarchy);
+        }
+
         #region FallbackFunctions
 
         /// <summary>
