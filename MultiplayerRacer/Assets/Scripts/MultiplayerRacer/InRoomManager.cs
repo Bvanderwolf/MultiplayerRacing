@@ -239,6 +239,7 @@ namespace MultiplayerRacer
                 {
                     lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                     lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                    Debug.LogError("setting ready to false");
                     SetReady(false);
                 }
             }
@@ -327,7 +328,11 @@ namespace MultiplayerRacer
             {
                 //subscribe client to scene loaded event before starting the room countdown
                 SceneManager.sceneLoaded += OnGameSceneLoaded;
-                lobbyUI.StartGameCountDown(LoadGameScene, () => IsReady);
+                lobbyUI.StartGameCountDown(LoadGameScene, () =>
+                {
+                    Debug.LogError(IsReady);
+                    return IsReady;
+                });
             }
         }
     }

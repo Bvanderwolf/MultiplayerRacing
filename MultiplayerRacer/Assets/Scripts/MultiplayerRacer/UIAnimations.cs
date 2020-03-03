@@ -66,7 +66,6 @@ namespace MultiplayerRacer
                 go.GetComponent<Text>().color = goTextColor;
                 if (hasCeck && !check.Invoke())
                 {
-                    Debug.LogError("stopped cooldown");
                     CountingDown = false;
                     yield break;
                 }
