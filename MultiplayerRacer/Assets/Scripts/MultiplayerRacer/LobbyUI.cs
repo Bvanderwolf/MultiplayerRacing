@@ -246,7 +246,7 @@ namespace MultiplayerRacer
             {
                 if (PhotonNetwork.IsMasterClient)
                 {
-                    int levelIndexToLoad = InRoomManager.Instance.Master.NextLevelIndex;
+                    int levelIndexToLoad = InRoomManager.Instance.NextLevelIndex;
                     if (levelIndexToLoad != -1)
                     {
                         PhotonNetwork.LoadLevel(levelIndexToLoad);

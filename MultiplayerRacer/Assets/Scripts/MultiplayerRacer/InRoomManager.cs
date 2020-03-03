@@ -9,12 +9,31 @@ namespace MultiplayerRacer
     public class InRoomManager : MonoBehaviour, IInRoomCallbacks
     {
         public static InRoomManager Instance { get; private set; }
-        public static readonly byte[] memRoomMaster = new byte[2 * 4];
+        public static readonly byte[] memRoomMaster = new byte[4];
 
         private LobbyUI lobbyUI = null;
 
         public int NumberInRoom { get; private set; } = 0;
         public bool IsReady { get; private set; } = false;
+
+        public int CurrentLevelIndex { get; private set; } = 0;
+
+        public int NextLevelIndex
+        {
+            get
+            {
+                //return next value only if not out of scene count bounds, else -1
+                int next = CurrentLevelIndex + 1;
+                if (next <= SceneManager.sceneCountInBuildSettings)
+                {
+                    return next;
+                }
+                else return -1;
+            }
+        }
+
+        public bool InLobby => CurrentLevelIndex == 0;
+        public bool InGame => CurrentLevelIndex == 1;
 
         public const int COUNTDOWN_LENGTH = 3;
         public const float READY_SEND_TIMEOUT = 0.75f;
@@ -228,32 +247,28 @@ namespace MultiplayerRacer
         {
             RoomMaster rm = (RoomMaster)customobject;
 
-            int index = 0;
             lock (memRoomMaster)
             {
                 byte[] bytes = memRoomMaster;
-                Protocol.Serialize(rm.PlayersReady, bytes, ref index);
-                Protocol.Serialize(rm.CurrentLevelIndex, bytes, ref index);
-                outStream.Write(bytes, 0, 2 * 4);
+                int off = 0;
+                Protocol.Serialize(rm.PlayersReady, bytes, ref off);
+                outStream.Write(bytes, 0, 4);
+                return 4;
             }
-
-            return 2 * 4;
         }
 
         private static object DeserializeRoomMaster(StreamBuffer inStream, short length)
         {
-            RoomMaster rm = new RoomMaster();
             int playersready;
-            int currentlevelindex;
             lock (memRoomMaster)
             {
-                inStream.Read(memRoomMaster, 0, 2 * 4);
-                int index = 0;
-                Protocol.Deserialize(out playersready, memRoomMaster, ref index);
-                Protocol.Deserialize(out currentlevelindex, memRoomMaster, ref index);
+                inStream.Read(memRoomMaster, 0, 4);
+                int off = 0;
+                Protocol.Deserialize(out playersready, memRoomMaster, ref off);
             }
+            RoomMaster rm = new RoomMaster(playersready);
 
-            return rm.SetAttributes(playersready, currentlevelindex);
+            return rm;
         }
 
         [PunRPC]
@@ -280,8 +295,9 @@ namespace MultiplayerRacer
             if (PhotonNetwork.LocalPlayer.ActorNumber == newRoomMasterNumber)
             {
                 Master = newMaster;
+                Debug.LogError("New master players ready gained: " + newMaster.PlayersReady);
                 //if the master client was leaving we make sure to handle that edge case
-                if (wasLeaving && Master.InLobby)
+                if (wasLeaving && InLobby)
                 {
                     Master.ResetPlayersReady();
                 }

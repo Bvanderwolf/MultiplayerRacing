@@ -7,24 +7,11 @@ namespace MultiplayerRacer
     {
         public static bool Registered { get; private set; }
         public int PlayersReady { get; private set; } = 0;
-        public int CurrentLevelIndex { get; private set; } = 0;
 
-        public int NextLevelIndex
+        public RoomMaster(int playersready = 0)
         {
-            get
-            {
-                //return next value only if not out of scene count bounds, else -1
-                int next = CurrentLevelIndex + 1;
-                if (next <= SceneManager.sceneCountInBuildSettings)
-                {
-                    return next;
-                }
-                else return -1;
-            }
+            PlayersReady = playersready;
         }
-
-        public bool InLobby => CurrentLevelIndex == 0;
-        public bool InGame => CurrentLevelIndex == 1;
 
         public static void SetRegistered()
         {
@@ -39,13 +26,6 @@ namespace MultiplayerRacer
         public void UpdatePlayersReady(bool ready)
         {
             PlayersReady += ready ? 1 : -1;
-        }
-
-        public RoomMaster SetAttributes(int playersready, int currentlevelindex)
-        {
-            PlayersReady = playersready;
-            CurrentLevelIndex = currentlevelindex;
-            return this;
         }
     }
 }
