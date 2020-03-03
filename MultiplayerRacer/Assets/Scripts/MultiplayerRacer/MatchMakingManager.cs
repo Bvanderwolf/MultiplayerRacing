@@ -114,6 +114,20 @@ namespace MultiplayerRacer
             if (PhotonNetwork.IsConnectedAndReady)
             {
                 DoLeavingChecks();
+                switch (InRoomManager.Instance.CurrentScene)
+                {
+                    case MultiplayerRacerScenes.LOBBY:
+                        break;
+
+                    case MultiplayerRacerScenes.GAME:
+                        //we load the lobby scene bofore leaving the room
+                        SceneManager.LoadScene((int)MultiplayerRacerScenes.LOBBY);
+                        break;
+
+                    default:
+                        break;
+                }
+
                 PhotonNetwork.LeaveRoom();
             }
         }

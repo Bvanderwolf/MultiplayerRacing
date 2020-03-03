@@ -145,7 +145,7 @@ namespace MultiplayerRacer
                 RectTransform rectTF = child.GetComponent<RectTransform>();
                 SetReadyButtonHeader(child.transform.Find("PlayerName")?.gameObject, $"Player {ci + 1}");
                 x += margin + buttonWidthHalf;
-                rectTF.anchoredPosition = new Vector2(x, rectTF.anchoredPosition.y);
+                rectTF.anchoredPosition = new Vector2(rectTF.anchoredPosition.x + x, rectTF.anchoredPosition.y);
                 //set it to active if not already active
                 if (!child.activeInHierarchy)
                 {
