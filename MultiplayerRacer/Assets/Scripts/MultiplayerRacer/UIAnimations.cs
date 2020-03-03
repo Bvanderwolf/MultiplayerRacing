@@ -64,7 +64,7 @@ namespace MultiplayerRacer
                 yield return StartCoroutine(PopupTextEnumerator(go, null, withFade));
                 go.transform.localScale = Vector3.zero;
                 go.GetComponent<Text>().color = goTextColor;
-                if (hasCeck && check.Invoke())
+                if (hasCeck && !check.Invoke())
                 {
                     CountingDown = false;
                     yield break;

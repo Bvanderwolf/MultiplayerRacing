@@ -244,8 +244,13 @@ namespace MultiplayerRacer
                 Room room = PhotonNetwork.CurrentRoom;
                 lobbyUI.UpdateRoomInfo(room);
                 lobbyUI.UpdateNickname(MatchMakingManager.Instance.MakeNickname());
-                lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
-                lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                //if we where in the lobby reset ready status
+                if (InLobby)
+                {
+                    lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
+                    lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                    SetReady(false, false);
+                }
             }
             else Debug.LogError("Wont update room :: lobbyUI is null");
 
@@ -332,10 +337,7 @@ namespace MultiplayerRacer
             {
                 //subscribe client to scene loaded event before starting the room countdown
                 SceneManager.sceneLoaded += OnGameSceneLoaded;
-                lobbyUI.StartGameCountDown(LoadGameScene, () =>
-                {
-                    return PhotonNetwork.CurrentRoom.PlayerCount != MatchMakingManager.MAX_PLAYERS;
-                });
+                lobbyUI.StartGameCountDown(LoadGameScene, () => IsReady);
             }
         }
     }
