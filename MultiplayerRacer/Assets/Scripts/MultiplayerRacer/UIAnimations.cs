@@ -45,6 +45,16 @@ namespace MultiplayerRacer
             else Debug.LogError($"button to time out was null or time: {time} isnt greater than 0");
         }
 
+        /// <summary>
+        /// Does countdown with given values, can take and onEnd action to invoke when done
+        /// Can also take an check Func to stop coroutine if this asserts to false after a count
+        /// </summary>
+        /// <param name="go"></param>
+        /// <param name="count"></param>
+        /// <param name="withFade"></param>
+        /// <param name="onEnd"></param>
+        /// <param name="check"></param>
+        /// <returns></returns>
         private IEnumerator DoCountDown(GameObject go, int count, bool withFade = false, Action onEnd = null, Func<bool> check = null)
         {
             CountingDown = true;
@@ -64,7 +74,6 @@ namespace MultiplayerRacer
                 yield return StartCoroutine(PopupTextEnumerator(go, null, withFade));
                 go.transform.localScale = Vector3.zero;
                 go.GetComponent<Text>().color = goTextColor;
-                Debug.LogError($"has check: {hasCeck}, check: {check.Invoke()}");
                 if (hasCeck && !check.Invoke())
                 {
                     CountingDown = false;

@@ -295,7 +295,6 @@ namespace MultiplayerRacer
             {
                 //let the room master update players ready
                 Master.UpdatePlayersReady(isready);
-                Debug.LogError($"isready: {isready}, players ready: {Master.PlayersReady}");
                 //start countdown if all players are ready
                 if (Master.PlayersReady == MatchMakingManager.MAX_PLAYERS)
                 {
@@ -312,7 +311,6 @@ namespace MultiplayerRacer
             if (PhotonNetwork.LocalPlayer.ActorNumber == newRoomMasterNumber)
             {
                 Master = newMaster;
-                Debug.LogError("New master players ready gained: " + newMaster.PlayersReady);
                 //if the master client was leaving we make sure to handle that
                 if (wasLeaving && InLobby)
                 {
@@ -328,11 +326,8 @@ namespace MultiplayerRacer
             {
                 //subscribe client to scene loaded event before starting the room countdown
                 SceneManager.sceneLoaded += OnGameSceneLoaded;
-                lobbyUI.StartGameCountDown(LoadGameScene, () =>
-                {
-                    Debug.LogError(IsReady);
-                    return IsReady;
-                });
+                //start countdown, loading game scene on end and checking IsReady state each count
+                lobbyUI.StartGameCountDown(LoadGameScene, () => IsReady);
             }
         }
     }
