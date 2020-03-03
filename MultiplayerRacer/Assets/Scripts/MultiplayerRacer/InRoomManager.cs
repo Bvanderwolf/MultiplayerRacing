@@ -244,7 +244,7 @@ namespace MultiplayerRacer
                 }
             }
             else Debug.LogError("Wont update room :: lobbyUI is null");
-
+            Debug.LogError("played left room");
             //the masterclient resets the players ready count when someone leaves
             if (PhotonNetwork.IsMasterClient)
             {
