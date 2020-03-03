@@ -26,7 +26,7 @@ namespace MultiplayerRacer
             //start countdown coroutine if gameobject is not null and has text component
             if (textGo != null && textGo.GetComponent<Text>() != null)
             {
-                StartCoroutine(DoCountDown(textGo, count, withFade, onEnd));
+                StartCoroutine(DoCountDown(textGo, count, withFade, onEnd, check));
             }
             else Debug.LogError("text game object is null or has no text component");
         }
