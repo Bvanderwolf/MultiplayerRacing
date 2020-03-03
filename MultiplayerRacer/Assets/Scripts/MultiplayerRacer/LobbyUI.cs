@@ -242,7 +242,7 @@ namespace MultiplayerRacer
             //reset ready buttons so players are not able to ready up/down
             ResetReadyButtons();
             //hide exit button
-            HideOrShowExitButton();
+            HideExitButton();
 
             //start countdown animation and let masterclient load the game scene on end
             animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, true, endAction, check);

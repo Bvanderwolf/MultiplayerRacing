@@ -239,6 +239,7 @@ namespace MultiplayerRacer
                 {
                     lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                     lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                    lobbyUI.ShowExitButton(); //handle edge cases where exit button is in hidden state
                     SetReady(false);
                 }
             }
