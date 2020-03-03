@@ -198,9 +198,9 @@ namespace MultiplayerRacer
                     //set time out for the clicked ready button
                     animations.TimeOutButton(button, InRoomManager.READY_SEND_TIMEOUT);
 
-                    //send buffered rpc through server so all players get it around the same time
+                    //send rpc through server so all players get it around the same time
                     PhotonView PV = GetComponent<PhotonView>();
-                    PV.RPC("UpdateReadyButton", RpcTarget.AllBufferedViaServer, playerNumber, ready);
+                    PV.RPC("UpdateReadyButton", RpcTarget.AllViaServer, playerNumber, ready);
                 });
             }
             else Debug.LogError($"Player number {playerNumber} is out of bounds of child array");

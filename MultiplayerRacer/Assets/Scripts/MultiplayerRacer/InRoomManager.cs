@@ -82,7 +82,7 @@ namespace MultiplayerRacer
         {
             if (IsReady == value)
             {
-                Debug.LogError("Trying to update ready value with same value :: not updating Room Master instance");
+                Debug.Log("Trying to update ready value with same value :: not updating Room Master instance");
                 return;
             }
             IsReady = value;
@@ -92,7 +92,6 @@ namespace MultiplayerRacer
             }
             else
             {
-                //check if the master client called this before updated RoomMaster instance
                 if (PhotonNetwork.IsMasterClient)
                 {
                     Master.UpdatePlayersReady(IsReady);
@@ -296,7 +295,7 @@ namespace MultiplayerRacer
             {
                 Master = newMaster;
                 Debug.LogError("New master players ready gained: " + newMaster.PlayersReady);
-                //if the master client was leaving we make sure to handle that edge case
+                //if the master client was leaving we make sure to handle that
                 if (wasLeaving && InLobby)
                 {
                     Master.ResetPlayersReady();
