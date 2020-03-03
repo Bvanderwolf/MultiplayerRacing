@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Photon.Pun;
+using UnityEngine;
 
 namespace MultiplayerRacer
 {
@@ -7,23 +8,35 @@ namespace MultiplayerRacer
         [SerializeField] private GameObject[] roads;
 
         private GameObject roadOn;
+        private GameObject myCar;
 
         private void Awake()
         {
             //the player starts on the middle road
             roadOn = roads[1];
-            //place the car spawns on the road for players
-            SetupCarSpawns();
+
+            if (PhotonNetwork.IsConnected)
+            {
+                //place the car spawns on the road for players and get our own car spawn
+                Vector3 myCarSpawnPosition = SetupCarSpawns();
+                myCar = PhotonNetwork.Instantiate("prefabs/car", myCarSpawnPosition, Quaternion.identity);
+            }
+            else Debug.LogError("Wont do car setup :: not connected to photon network");
         }
 
-        private void SetupCarSpawns()
+        /// <summary>
+        /// Sets up car spawns and returns the world position of the one
+        /// used by your car. Will return zero when failed.
+        /// </summary>
+        /// <returns></returns>
+        private Vector3 SetupCarSpawns()
         {
             Transform carSpawnTransform = roadOn.transform.Find("CarSpawns");
             Transform road = roadOn.transform.Find("Road");
             if (carSpawnTransform == null || road == null)
             {
                 Debug.LogError("Wont setup car spawns :: car spawn or road is null");
-                return;
+                return Vector3.zero;
             }
             int count = carSpawnTransform.childCount;
             float width = road.GetComponent<SpriteRenderer>().sprite.bounds.size.x;
@@ -39,6 +52,7 @@ namespace MultiplayerRacer
                 tf.localPosition = new Vector2(position.x + x, position.y);
                 tf.gameObject.SetActive(true);
             }
+            return carSpawnTransform.GetChild(InRoomManager.Instance.NumberInRoom).position;
         }
     }
 }
