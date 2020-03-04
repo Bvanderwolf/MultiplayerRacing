@@ -53,7 +53,8 @@ namespace MultiplayerRacer
                 tf.localPosition = new Vector2(position.x + x, position.y);
                 tf.gameObject.SetActive(true);
             }
-            return carSpawnTransform.GetChild(InRoomManager.Instance.NumberInRoom).position;
+            //return the position of the child based on our number in the room
+            return carSpawnTransform.GetChild(InRoomManager.Instance.NumberInRoom - 1).position;
         }
     }
 }

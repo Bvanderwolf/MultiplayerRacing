@@ -9,7 +9,7 @@ namespace MultiplayerRacer
     public class InRoomManager : MonoBehaviour, IInRoomCallbacks
     {
         public static InRoomManager Instance { get; private set; }
-        public static readonly byte[] memRoomMaster = new byte[4];
+        public static readonly byte[] memRoomMaster = new byte[2 * 4];
 
         public enum MultiplayerRacerScenes { LOBBY, GAME }
 
@@ -234,6 +234,9 @@ namespace MultiplayerRacer
             UI.SetupRoomStatus(PhotonNetwork.NickName, room);
             room.IsOpen = false; //New players cannot join the game if the game scene has been loaded
 
+            //tell the master client we have loaded the game scene
+            GetComponent<PhotonView>().RPC("UpdatePlayersInGameScene", RpcTarget.MasterClient, true);
+
             SceneManager.sceneLoaded -= OnGameSceneLoaded; //unsubscribe from scene loaded event
         }
 
@@ -340,25 +343,43 @@ namespace MultiplayerRacer
             lock (memRoomMaster)
             {
                 byte[] bytes = memRoomMaster;
-                int off = 0;
-                Protocol.Serialize(rm.PlayersReady, bytes, ref off);
-                outStream.Write(bytes, 0, 4);
-                return 4;
+                int index = 0;
+                Protocol.Serialize(rm.PlayersReady, bytes, ref index);
+                Protocol.Serialize(rm.PlayersInGameScene, bytes, ref index);
+                outStream.Write(bytes, 0, 2 * 4);
             }
+            return 2 * 4;
         }
 
         private static object DeserializeRoomMaster(StreamBuffer inStream, short length)
         {
             int playersready;
+            int playersingamescene;
             lock (memRoomMaster)
             {
-                inStream.Read(memRoomMaster, 0, 4);
-                int off = 0;
-                Protocol.Deserialize(out playersready, memRoomMaster, ref off);
+                inStream.Read(memRoomMaster, 0, 2 * 4);
+                int index = 0;
+                Protocol.Deserialize(out playersready, memRoomMaster, ref index);
+                Protocol.Deserialize(out playersingamescene, memRoomMaster, ref index);
             }
-            RoomMaster rm = new RoomMaster(playersready);
+            RoomMaster rm = new RoomMaster(playersready, playersingamescene);
 
             return rm;
+        }
+
+        [PunRPC]
+        private void UpdatePlayersInGameScene(bool join)
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                //let the room master update players in game scene
+                Master.UpdatePlayersInGameScene(join);
+                //if all players are in the game scene, the master client can start the game
+                if (Master.PlayersInGameScene == MatchMakingManager.MAX_PLAYERS)
+                {
+                    Debug.LogError("All players have loaded the game scene :: starting game");
+                }
+            }
         }
 
         [PunRPC]
