@@ -28,6 +28,7 @@ namespace MultiplayerRacer
             {
                 carCamera.SetActive(false);
             }
+            else Debug.LogError("Won't set car camera to inactive :: carCamera object is null");
         }
     }
 }

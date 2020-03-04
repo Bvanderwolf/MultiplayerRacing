@@ -224,9 +224,9 @@ namespace MultiplayerRacer
 
         private void OnMasterLoadedGameScene(Scene scene, LoadSceneMode mode)
         {
-            SceneManager.sceneLoaded -= OnMasterLoadedGameScene; //unsubscribe this function from scene loaded event
             AttachUI(MultiplayerRacerScenes.GAME); //reattach ui but based on game scene
             UI.SetupExitButton(LeaveRoom); //setup exit button with leave room function
+            SceneManager.sceneLoaded -= OnMasterLoadedGameScene; //unsubscribe this function from scene loaded event
         }
 
         public void OnGameSceneLoaded()
