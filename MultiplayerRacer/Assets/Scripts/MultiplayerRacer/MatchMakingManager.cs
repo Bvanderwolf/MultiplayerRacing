@@ -222,25 +222,19 @@ namespace MultiplayerRacer
             DoLeavingChecks();
         }
 
-        private void OnMasterLoadedGameScene(Scene scene, LoadSceneMode mode)
+        private void OnLoadedGameScene(Scene scene, LoadSceneMode mode)
         {
             AttachUI(MultiplayerRacerScenes.GAME); //reattach ui but based on game scene
             UI.SetupExitButton(LeaveRoom); //setup exit button with leave room function
-            SceneManager.sceneLoaded -= OnMasterLoadedGameScene; //unsubscribe this function from scene loaded event
-        }
-
-        public void OnGameSceneLoaded()
-        {
-            AttachUI(MultiplayerRacerScenes.GAME); //reattach ui but based on game scene
-            UI.SetupExitButton(LeaveRoom); //setup exit button with leave room function
+            SceneManager.sceneLoaded -= OnLoadedGameScene; //unsubscribe this function from scene loaded event
         }
 
         public void AttachOnGameSceneLoaded(InRoomManager instance)
         {
-            if (instance != InRoomManager.Instance || !PhotonNetwork.IsMasterClient)
+            if (instance != InRoomManager.Instance)
                 return;
 
-            SceneManager.sceneLoaded += OnMasterLoadedGameScene;
+            SceneManager.sceneLoaded += OnLoadedGameScene;
         }
 
         /// <summary>

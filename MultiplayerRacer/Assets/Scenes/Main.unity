@@ -651,7 +651,7 @@ MonoBehaviour:
   roomStatus: {fileID: 58030189}
   exitButton: {fileID: 273260610}
   readyUpInfo: {fileID: 1256389673}
-  readyUpKey: 0
+  readyUpKey: 32
 --- !u!114 &654467419
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -941,7 +941,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Press the Return key to ready up
+  m_Text: Press the Space key to ready up
 --- !u!222 &1256389676
 CanvasRenderer:
   m_ObjectHideFlags: 0
