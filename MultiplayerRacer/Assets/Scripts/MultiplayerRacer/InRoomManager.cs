@@ -92,12 +92,6 @@ namespace MultiplayerRacer
             }
         }
 
-        public void SetToLobby()
-        {
-            CurrentScene = MultiplayerRacerScenes.LOBBY;
-            IsReady = false;
-        }
-
         /// <summary>
         /// sets InroomManager its isready value and updates the master client with this value
         /// if updateMaster is true, set it to false if you are the master client
@@ -112,14 +106,6 @@ namespace MultiplayerRacer
             }
             IsReady = value;
             GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
-        }
-
-        /// <summary>
-        ///resets RoomMaster instance value
-        /// </summary>
-        public void ResetIsRoomMaster()
-        {
-            Master = null;
         }
 
         /// <summary>
@@ -320,7 +306,13 @@ namespace MultiplayerRacer
             //the masterclient resets the players ready count when someone leaves
             if (PhotonNetwork.IsMasterClient)
             {
-                Master.ResetPlayersReady();
+                /*reset players ready provided, of course, that the RoomMaster data has been transefered already.
+                 if this is not the case consistently, we need some kind of fallback for this*/
+                if (Master != null)
+                {
+                    Master.ResetPlayersReady();
+                }
+                else Debug.LogError("Failed resetting players ready on player leave :: RoomMaster instance is null");
             }
 
             if (UI == null)

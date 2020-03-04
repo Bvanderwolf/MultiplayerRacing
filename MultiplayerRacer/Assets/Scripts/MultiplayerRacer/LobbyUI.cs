@@ -34,6 +34,8 @@ namespace MultiplayerRacer
                 connectButton.gameObject.SetActive(true);
                 roomStatus.SetActive(false);
             }
+            //set connect color to default: is red for not connected
+            UpdateConnectColor(false);
             connectButton.onClick.AddListener(() => clickAction.Invoke(connectButton));
         }
 

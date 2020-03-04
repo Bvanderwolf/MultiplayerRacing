@@ -1191,14 +1191,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3cf6041d81db1d438123041606150c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  connectButton: {fileID: 660137401}
-  exitButton: {fileID: 734039220}
-  roomStatus: {fileID: 1454069317}
-  readyStatus: {fileID: 967452203}
   countdownText: {fileID: 1829037765}
+  roomStatus: {fileID: 1454069317}
+  exitButton: {fileID: 734039220}
+  connectButton: {fileID: 660137401}
+  readyStatus: {fileID: 967452203}
   connectColor: {r: 0, g: 0.75, b: 0, a: 1}
   disconnectColor: {r: 0.75, g: 0, b: 0, a: 1}
-  roomStatRoundness: 0.25
 --- !u!114 &1524450942
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -122,6 +122,8 @@ namespace MultiplayerRacer
                     case MultiplayerRacerScenes.GAME:
                         //we load the lobby scene bofore leaving the room
                         SceneManager.LoadScene((int)MultiplayerRacerScenes.LOBBY);
+                        Destroy(this.gameObject);
+                        Destroy(InRoomManager.Instance.gameObject);
                         break;
 
                     default:
@@ -206,8 +208,6 @@ namespace MultiplayerRacer
                 //send the room master data to new master with newMasterNumber with leaving set to true
                 InRoomManager.Instance.SendMasterDataToNewMaster(newMasterNumber, true);
 
-                //We are no long the room master
-                InRoomManager.Instance.ResetIsRoomMaster();
                 //if a client is leaving send all outgoing commands to make sure the data is send
                 PhotonNetwork.SendAllOutgoingCommands();
             }
@@ -295,7 +295,7 @@ namespace MultiplayerRacer
                 lobbyUI.SetupRoomStatus(MakeNickname(), room);
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
                 lobbyUI.SetupExitButton(LeaveRoom);
-                lobbyUI.SetConnectButtonInteractability(true);
+                lobbyUI.UpdateConnectColor(false); //reset color of connect button.
                 FullRoomCheck(room); //client can be the one filling up the room.
                 Application.quitting += OnQuitEvent; //setup quitting event with leaving master check
             }
@@ -310,6 +310,7 @@ namespace MultiplayerRacer
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
+
             //if we where connecting to master we set up values and ui accordingly
             if (connectingToMaster)
             {
@@ -325,11 +326,15 @@ namespace MultiplayerRacer
         public override void OnLeftRoom()
         {
             base.OnLeftRoom();
-            //reset ui when having left a room
+
+            //re attach ui for lobby usage
             AttachUI(MultiplayerRacerScenes.LOBBY);
+            //reset ready buttons to handle in ready select leaving
             ((LobbyUI)UI).ResetReadyButtons();
-            InRoomManager.Instance.SetToLobby();
-            Application.quitting -= OnQuitEvent; //unsubsribe from quitting event
+            //set connecting to master to true since we are reconnecting to master
+            connectingToMaster = true;
+            //unsubsribe from quitting event
+            Application.quitting -= OnQuitEvent;
         }
 
         public override void OnDisconnected(DisconnectCause cause)
@@ -342,7 +347,6 @@ namespace MultiplayerRacer
             lobbyUI.UpdateConnectStatus(false);
             lobbyUI.UpdateConnectColor(false);
             lobbyUI.ResetReadyButtons();
-            InRoomManager.Instance.SetToLobby();
 
             print(cause);
         }

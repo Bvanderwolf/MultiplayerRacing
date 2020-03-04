@@ -6,7 +6,7 @@ namespace MultiplayerRacer
 {
     public class RacerInput : MonoBehaviour
     {
-        private const float MAX_WAIT_FOR_PLAYER_INPUT = 10f;
+        private const float MAX_WAIT_FOR_PLAYER_INPUT = 20f;
 
         /// <summary>
         /// Starts waiting for given input to do onInput action

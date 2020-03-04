@@ -11,9 +11,12 @@ namespace MultiplayerRacer
 
         public void OnPhotonInstantiate(PhotonMessageInfo info)
         {
-            info.Sender.TagObject = this.gameObject;
             PhotonView PV = info.photonView;
-            PV.RPC("DisableCamera", RpcTarget.OthersBuffered, PV.ViewID);
+            if (PV.IsMine)
+            {
+                info.Sender.TagObject = this.gameObject;
+                PV.RPC("DisableCamera", RpcTarget.OthersBuffered, PV.ViewID);
+            }
             //kan Photonview reference hieruit halen
             //kan behouden voor references naar vanalles en nog wat
         }
@@ -27,6 +30,7 @@ namespace MultiplayerRacer
             if (carCamera != null)
             {
                 carCamera.SetActive(false);
+                Debug.LogError("setting camera of other player to inactive");
             }
             else Debug.LogError("Won't set car camera to inactive :: carCamera object is null");
         }
