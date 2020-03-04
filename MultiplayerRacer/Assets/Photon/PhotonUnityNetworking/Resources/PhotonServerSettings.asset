@@ -40,5 +40,6 @@ MonoBehaviour:
   - UpdateRoomMaster
   - DisableCamera
   - UpdatePlayersInGameScene
+  - ShowReadyUpInfo
   DisableAutoOpenWizard: 1
   ShowSettings: 0

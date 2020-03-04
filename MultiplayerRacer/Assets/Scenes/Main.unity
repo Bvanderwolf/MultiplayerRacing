@@ -733,7 +733,7 @@ MonoBehaviour:
   countdownText: {fileID: 1857146747}
   roomStatus: {fileID: 58030189}
   exitButton: {fileID: 273260610}
-  readyUpInfo: {fileID: 0}
+  readyUpInfo: {fileID: 1256389673}
 --- !u!114 &654467419
 MonoBehaviour:
   m_ObjectHideFlags: 0

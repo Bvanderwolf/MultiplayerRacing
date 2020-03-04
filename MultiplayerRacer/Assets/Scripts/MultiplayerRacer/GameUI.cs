@@ -7,6 +7,9 @@ namespace MultiplayerRacer
     public class GameUI : MultiplayerRacerUI
     {
         [SerializeField] private GameObject readyUpInfo;
+        [SerializeField] private KeyCode readyUpKey;
+
+        private const float READYUP_INFO_SHOW_DELAY = 0.75f;
 
         protected override void Awake()
         {
@@ -25,16 +28,31 @@ namespace MultiplayerRacer
             }
         }
 
-        private IEnumerator ShowReadyUpInfoWithDelay()
+        private IEnumerator SetupReadyUpWithDelay()
         {
-            yield return new WaitForSeconds(2f);
+            //after delay show ready up info
+            yield return new WaitForSeconds(READYUP_INFO_SHOW_DELAY);
             readyUpInfo.SetActive(true);
+
+            //get our car game object and if found wait for player input
+            GameObject car = (GameObject)PhotonNetwork.LocalPlayer.TagObject;
+            car.GetComponent<RacerInput>().WaitForPlayerInput(readyUpKey, (succes) =>
+            {
+                if (succes)
+                {
+                    Debug.LogError("this player has succesfully pressed " + readyUpKey);
+                }
+                else
+                {
+                    Debug.LogError("this player has not pressed " + readyUpKey);
+                }
+            });
         }
 
         [PunRPC]
         private void ShowReadyUpInfo()
         {
-            StartCoroutine(ShowReadyUpInfoWithDelay());
+            StartCoroutine(SetupReadyUpWithDelay());
         }
     }
 }
