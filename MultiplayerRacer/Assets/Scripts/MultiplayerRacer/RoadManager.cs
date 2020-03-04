@@ -6,8 +6,10 @@ namespace MultiplayerRacer
     public class RoadManager : MonoBehaviour
     {
         [SerializeField] private GameObject[] roads;
+        [SerializeField] private Color readyColor;
 
         private GameObject roadOn;
+        private GameObject myCarSpawn;
         private GameObject myCar;
 
         private void Awake()
@@ -18,26 +20,25 @@ namespace MultiplayerRacer
             if (PhotonNetwork.IsConnected)
             {
                 //place the car spawns on the road for players and get our own car spawn
-                Vector3 myCarSpawnPosition = SetupCarSpawns();
-                myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawnPosition, Quaternion.identity);
-                //probleem oplossen met meerdere camera's in 1 scene.
+                myCarSpawn = SetupCarSpawns();
+                myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawn.transform.position, Quaternion.identity);
             }
             else Debug.LogError("Wont do car setup :: not connected to photon network");
         }
 
         /// <summary>
-        /// Sets up car spawns and returns the world position of the one
-        /// used by your car. Will return zero when failed.
+        /// Sets up car spawns and returns the gameobject of the one
+        /// used by your car. Will return null when failed.
         /// </summary>
         /// <returns></returns>
-        private Vector3 SetupCarSpawns()
+        private GameObject SetupCarSpawns()
         {
             Transform carSpawnTransform = roadOn.transform.Find("CarSpawns");
             Transform road = roadOn.transform.Find("Road");
             if (carSpawnTransform == null || road == null)
             {
                 Debug.LogError("Wont setup car spawns :: car spawn or road is null");
-                return Vector3.zero;
+                return null;
             }
             int count = carSpawnTransform.childCount;
             float width = road.GetComponent<SpriteRenderer>().sprite.bounds.size.x;
@@ -54,7 +55,7 @@ namespace MultiplayerRacer
                 tf.gameObject.SetActive(true);
             }
             //return the position of the child based on our number in the room
-            return carSpawnTransform.GetChild(InRoomManager.Instance.NumberInRoom - 1).position;
+            return carSpawnTransform.GetChild(InRoomManager.Instance.NumberInRoom - 1).gameObject;
         }
     }
 }

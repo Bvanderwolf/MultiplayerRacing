@@ -724,6 +724,7 @@ MonoBehaviour:
   - {fileID: 206060073}
   - {fileID: 1032251243}
   - {fileID: 2123245659}
+  readyColor: {r: 0, g: 1, b: 0, a: 0}
 --- !u!1 &978628330
 GameObject:
   m_ObjectHideFlags: 0

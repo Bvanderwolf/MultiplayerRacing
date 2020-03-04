@@ -41,10 +41,12 @@ namespace MultiplayerRacer
                 if (succes)
                 {
                     Debug.LogError("this player has succesfully pressed " + readyUpKey);
+                    //set ready gebruiken van room manager
                 }
                 else
                 {
                     Debug.LogError("this player has not pressed " + readyUpKey);
+                    //event waarbij master client return moet drukken om nieuwe ready up te starten
                 }
             });
         }

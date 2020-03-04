@@ -377,7 +377,6 @@ namespace MultiplayerRacer
                 //if all players are in the game scene, the master client can start the game
                 if (Master.PlayersInGameScene == MatchMakingManager.MAX_PLAYERS)
                 {
-                    Debug.LogError("All players have loaded the game scene :: starting game");
                     ((GameUI)UI).SendShowReadyUpInfo(); //make the game ui send ready up info
                 }
             }
