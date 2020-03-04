@@ -378,6 +378,7 @@ namespace MultiplayerRacer
                 if (Master.PlayersInGameScene == MatchMakingManager.MAX_PLAYERS)
                 {
                     Debug.LogError("All players have loaded the game scene :: starting game");
+                    ((GameUI)UI).SendShowReadyUpInfo(); //make the game ui send ready up info
                 }
             }
         }
