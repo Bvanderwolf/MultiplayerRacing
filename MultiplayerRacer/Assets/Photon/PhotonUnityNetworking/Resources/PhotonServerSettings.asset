@@ -34,12 +34,13 @@ MonoBehaviour:
   - DestroySpaceship
   - Fire
   - RespawnSpaceship
-  - UpdateReadyButton
-  - StartCountdown
-  - UpdatePlayersReady
-  - UpdateRoomMaster
   - DisableCamera
-  - UpdatePlayersInGameScene
+  - SetupGameScene
   - ShowReadyUpInfo
+  - StartCountdown
+  - UpdatePlayersInGameScene
+  - UpdatePlayersReady
+  - UpdateReadyButton
+  - UpdateRoomMaster
   DisableAutoOpenWizard: 1
   ShowSettings: 0

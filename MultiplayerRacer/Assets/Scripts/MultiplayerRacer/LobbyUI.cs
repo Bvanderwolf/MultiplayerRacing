@@ -18,6 +18,12 @@ namespace MultiplayerRacer
         protected override void Awake()
         {
             base.Awake();
+            Debug.LogError(PhotonNetwork.PhotonServerSettings.RpcList.Count);
+
+            foreach (string function in PhotonNetwork.PhotonServerSettings.RpcList)
+            {
+                Debug.LogError(function);
+            }
         }
 
         //sets up connect button and returns if succeeded

@@ -174,7 +174,7 @@ namespace MultiplayerRacer
 
             //set photonnetwork settings and connect
             PhotonNetwork.AutomaticallySyncScene = true;
-            PhotonNetwork.GameVersion = "v1";
+            PhotonNetwork.GameVersion = "v2";
             PhotonNetwork.ConnectUsingSettings();
         }
 
@@ -222,19 +222,25 @@ namespace MultiplayerRacer
             DoLeavingChecks();
         }
 
-        private void OnGameSceneLoaded(Scene scene, LoadSceneMode mode)
+        private void OnMasterLoadedGameScene(Scene scene, LoadSceneMode mode)
         {
-            SceneManager.sceneLoaded -= OnGameSceneLoaded; //unsubscribe this function from scene loaded event
+            SceneManager.sceneLoaded -= OnMasterLoadedGameScene; //unsubscribe this function from scene loaded event
+            AttachUI(MultiplayerRacerScenes.GAME); //reattach ui but based on game scene
+            UI.SetupExitButton(LeaveRoom); //setup exit button with leave room function
+        }
+
+        public void OnGameSceneLoaded()
+        {
             AttachUI(MultiplayerRacerScenes.GAME); //reattach ui but based on game scene
             UI.SetupExitButton(LeaveRoom); //setup exit button with leave room function
         }
 
         public void AttachOnGameSceneLoaded(InRoomManager instance)
         {
-            if (instance != InRoomManager.Instance)
+            if (instance != InRoomManager.Instance || !PhotonNetwork.IsMasterClient)
                 return;
 
-            SceneManager.sceneLoaded += OnGameSceneLoaded;
+            SceneManager.sceneLoaded += OnMasterLoadedGameScene;
         }
 
         /// <summary>

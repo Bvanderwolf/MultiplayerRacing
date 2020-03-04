@@ -207,6 +207,10 @@ namespace MultiplayerRacer
         {
             if (PhotonNetwork.IsMasterClient)
             {
+                //subscribe OnGameSceneLoaded to scene loaded event before starting the room countdown
+                SceneManager.sceneLoaded += OnMasterLoadedGameScene;
+                MatchMakingManager.Instance.AttachOnGameSceneLoaded(this);
+
                 int levelIndexToLoad = NextLevelIndex;
                 if (levelIndexToLoad != -1)
                 {
@@ -216,8 +220,11 @@ namespace MultiplayerRacer
             }
         }
 
-        private void OnGameSceneLoaded(Scene scene, LoadSceneMode mode)
+        private void OnMasterLoadedGameScene(Scene scene, LoadSceneMode mode)
         {
+            if (!PhotonNetwork.IsMasterClient)
+                return;
+
             if (scene.buildIndex != 1)
             {
                 Debug.LogError("Loaded Scene that wasn't Game scene width buildIndex " + scene.buildIndex);
@@ -234,10 +241,28 @@ namespace MultiplayerRacer
             UI.SetupRoomStatus(PhotonNetwork.NickName, room);
             room.IsOpen = false; //New players cannot join the game if the game scene has been loaded
 
-            //tell the master client we have loaded the game scene
-            GetComponent<PhotonView>().RPC("UpdatePlayersInGameScene", RpcTarget.MasterClient, true);
+            //update players in game values and tell others buffered to setup game scene
+            PhotonView PV = GetComponent<PhotonView>();
+            PV.RPC("UpdatePlayersInGameScene", RpcTarget.MasterClient, true);
+            PV.RPC("SetupGameScene", RpcTarget.OthersBuffered);
 
-            SceneManager.sceneLoaded -= OnGameSceneLoaded; //unsubscribe from scene loaded event
+            SceneManager.sceneLoaded -= OnMasterLoadedGameScene; //unsubscribe from scene loaded event
+        }
+
+        private void OnGameSceneLoaded()
+        {
+            CurrentScene = MultiplayerRacerScenes.GAME; //set current scene to game scene build index(should be 1)
+            SetReady(false); //reset ready value for usage in game scene
+
+            //now that currentScene is updated, we set our canvas reference
+            SetCanvasReference();
+            //and set it up
+            Room room = PhotonNetwork.CurrentRoom;
+            UI.SetupRoomStatus(PhotonNetwork.NickName, room);
+
+            //tell the master client we have loaded the game scene
+            Debug.LogError("normal client in game scene");
+            GetComponent<PhotonView>().RPC("UpdatePlayersInGameScene", RpcTarget.MasterClient, true);
         }
 
         public void OnMasterClientSwitched(Player newMasterClient)
@@ -374,6 +399,7 @@ namespace MultiplayerRacer
             {
                 //let the room master update players in game scene
                 Master.UpdatePlayersInGameScene(join);
+
                 //if all players are in the game scene, the master client can start the game
                 if (Master.PlayersInGameScene == MatchMakingManager.MAX_PLAYERS)
                 {
@@ -415,6 +441,13 @@ namespace MultiplayerRacer
         }
 
         [PunRPC]
+        private void SetupGameScene()
+        {
+            OnGameSceneLoaded();
+            MatchMakingManager.Instance.OnGameSceneLoaded();
+        }
+
+        [PunRPC]
         private void StartCountdown()
         {
             if (UI == null)
@@ -428,9 +461,6 @@ namespace MultiplayerRacer
             {
                 case MultiplayerRacerScenes.LOBBY:
                     LobbyUI lobbyUI = (LobbyUI)UI;
-                    //subscribe OnGameSceneLoaded to scene loaded event before starting the room countdown
-                    SceneManager.sceneLoaded += OnGameSceneLoaded;
-                    MatchMakingManager.Instance.AttachOnGameSceneLoaded(this);
                     //start countdown, loading game scene on end and checking IsReady state each count
                     lobbyUI.StartGameCountDown(LoadGameScene, () => IsReady);
                     break;
