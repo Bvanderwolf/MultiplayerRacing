@@ -3,6 +3,8 @@ using UnityEngine;
 
 namespace MultiplayerRacer
 {
+    using MultiplayerRacerScenes = InRoomManager.MultiplayerRacerScenes;
+
     public class RoadManager : MonoBehaviour
     {
         [SerializeField] private GameObject[] roads;
@@ -11,6 +13,7 @@ namespace MultiplayerRacer
         private GameObject roadOn;
         private GameObject myCarSpawn;
         private GameObject myCar;
+        private Color unReadyColor;
 
         private void Awake()
         {
@@ -19,11 +22,26 @@ namespace MultiplayerRacer
 
             if (PhotonNetwork.IsConnected)
             {
+                //start listeneing to on ready status change events
+                InRoomManager.Instance.OnReadyStatusChange += OnReadyStatusChanged;
                 //place the car spawns on the road for players and get our own car spawn
                 myCarSpawn = SetupCarSpawns();
                 myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawn.transform.position, Quaternion.identity);
+                unReadyColor = myCarSpawn.GetComponent<SpriteRenderer>().color; //save default color as unready color
             }
             else Debug.LogError("Wont do car setup :: not connected to photon network");
+        }
+
+        private void OnReadyStatusChanged(MultiplayerRacerScenes scene, bool ready)
+        {
+            if (scene != MultiplayerRacerScenes.GAME)
+                return;
+
+            GetComponent<PhotonView>().RPC(
+                "UpdateReadyStatus",
+                RpcTarget.AllViaServer,
+                InRoomManager.Instance.NumberInRoom,
+                ready);
         }
 
         /// <summary>
@@ -56,6 +74,26 @@ namespace MultiplayerRacer
             }
             //return the position of the child based on our number in the room
             return carSpawnTransform.GetChild(InRoomManager.Instance.NumberInRoom - 1).gameObject;
+        }
+
+        /// <summary>
+        /// gets a car spawn in scene based on given player number
+        /// </summary>
+        /// <param name="playerNumber"></param>
+        /// <returns></returns>
+        private Transform GetCarSpawn(int playerNumber)
+        {
+            if (playerNumber < 0 || playerNumber > MatchMakingManager.MAX_PLAYERS)
+                return null;
+
+            Transform carSpawnTransform = roadOn.transform.Find("CarSpawns");
+            return carSpawnTransform.GetChild(playerNumber - 1);
+        }
+
+        [PunRPC]
+        private void UpdateReadyStatus(int playerNumber, bool ready)
+        {
+            GetCarSpawn(playerNumber).GetComponent<SpriteRenderer>().color = ready ? readyColor : unReadyColor;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -18,6 +19,8 @@ namespace MultiplayerRacer
         public int NumberInRoom { get; private set; } = 0;
         public bool IsReady { get; private set; } = false;
 
+        public event Action<MultiplayerRacerScenes, bool> OnReadyStatusChange;
+
         public MultiplayerRacerScenes CurrentScene { get; private set; } = MultiplayerRacerScenes.LOBBY;
 
         public int NextLevelIndex
@@ -33,9 +36,6 @@ namespace MultiplayerRacer
                 else return -1;
             }
         }
-
-        public bool InLobby => CurrentScene == MultiplayerRacerScenes.LOBBY;
-        public bool InGame => CurrentScene == MultiplayerRacerScenes.GAME;
 
         public const int COUNTDOWN_LENGTH = 3;
         public const float READY_SEND_TIMEOUT = 0.75f;
@@ -104,8 +104,10 @@ namespace MultiplayerRacer
                 Debug.Log("Trying to update ready value with same value :: not updating Room Master instance");
                 return;
             }
-            IsReady = value;
-            GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady);
+            IsReady = value; //set ready value
+            if (CurrentScene == MultiplayerRacerScenes.GAME) Debug.LogError(value);
+            OnReadyStatusChange?.Invoke(CurrentScene, value); //let others know if there are scripts subscribed
+            GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady); //let master client know
         }
 
         /// <summary>
@@ -199,6 +201,7 @@ namespace MultiplayerRacer
 
                 case MultiplayerRacerScenes.GAME:
                     //countdown can start for race
+                    Debug.LogError("can start countdown for race");
                     break;
 
                 default:
@@ -423,7 +426,7 @@ namespace MultiplayerRacer
             {
                 Master = newMaster;
                 //if the master client was leaving we make sure to handle that
-                if (wasLeaving && InLobby)
+                if (wasLeaving)
                 {
                     Master.ResetPlayersReady();
                 }
