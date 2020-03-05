@@ -652,6 +652,7 @@ MonoBehaviour:
   exitButton: {fileID: 273260610}
   readyUpInfo: {fileID: 1256389673}
   readyUpKey: 32
+  readyUpResetKey: 13
 --- !u!114 &654467419
 MonoBehaviour:
   m_ObjectHideFlags: 0

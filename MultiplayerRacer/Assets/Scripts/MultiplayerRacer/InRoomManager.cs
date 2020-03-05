@@ -166,6 +166,18 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
+        /// Called by the master client to let all players leave the room. Should
+        /// only be used when a big problem/error has occured
+        /// </summary>
+        public void SendAllLeaveRoom()
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                GetComponent<PhotonView>().RPC("LeaveRoomForcibly", RpcTarget.AllViaServer);
+            }
+        }
+
+        /// <summary>
         /// checks whether the room is full or not acts accordingly if so
         /// </summary>
         /// <param name="room"></param>
@@ -439,6 +451,12 @@ namespace MultiplayerRacer
         }
 
         [PunRPC]
+        private void LeaveRoomForcibly()
+        {
+            MatchMakingManager.Instance.LeaveRoomForced();
+        }
+
+        [PunRPC]
         private void StartCountdown()
         {
             if (UI == null)
@@ -452,8 +470,8 @@ namespace MultiplayerRacer
             {
                 case MultiplayerRacerScenes.LOBBY:
                     LobbyUI lobbyUI = (LobbyUI)UI;
-                    //start countdown, loading game scene on end and checking IsReady state each count
-                    lobbyUI.StartGameCountDown(LoadGameScene, () => IsReady);
+                    //start countdown, loading game scene on end and checking playercount state each count
+                    lobbyUI.StartGameCountDown(LoadGameScene, () => PhotonNetwork.CurrentRoom.PlayerCount == MatchMakingManager.MAX_PLAYERS);
                     break;
 
                 case MultiplayerRacerScenes.GAME:

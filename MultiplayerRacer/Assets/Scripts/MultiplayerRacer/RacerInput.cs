@@ -13,9 +13,9 @@ namespace MultiplayerRacer
         /// </summary>
         /// <param name="key"></param>
         /// <param name="result"></param>
-        public void WaitForPlayerInput(KeyCode key, Action<bool> result)
+        public void WaitForPlayerInput(KeyCode key, Action<bool> result, Func<bool> check = null)
         {
-            StartCoroutine(WaitForInput(key, result));
+            StartCoroutine(WaitForInput(key, result, check));
         }
 
         /// <summary>
@@ -25,10 +25,11 @@ namespace MultiplayerRacer
         /// <param name="key"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        private IEnumerator WaitForInput(KeyCode key, Action<bool> result)
+        private IEnumerator WaitForInput(KeyCode key, Action<bool> result, Func<bool> check = null)
         {
             bool input = false;
             bool waitExceed = false;
+            bool hasCheck = check != null;
             float wait = 0;
             while (!input && !waitExceed)
             {
@@ -40,9 +41,18 @@ namespace MultiplayerRacer
                     result(true);
                     yield break;
                 }
+                else if (hasCheck)
+                {
+                    if (!check.Invoke())
+                    {
+                        Debug.LogError("failed wait for input :: check was triggered");
+                        result(false);
+                        yield break;
+                    }
+                }
                 else if (waitExceed)
                 {
-                    Debug.LogError("Player waited to long for input :: waiting for master client to reset");
+                    Debug.LogError("failed wait for input :: wait time exceeded Max wait time");
                     result(false);
                     yield break;
                 }

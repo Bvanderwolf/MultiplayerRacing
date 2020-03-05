@@ -1,6 +1,7 @@
 ﻿using Photon.Pun;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace MultiplayerRacer
 {
@@ -8,12 +9,15 @@ namespace MultiplayerRacer
     {
         [SerializeField] private GameObject readyUpInfo;
         [SerializeField] private KeyCode readyUpKey;
+        [SerializeField] private KeyCode readyUpResetKey;
 
         private const float READYUP_INFO_SHOW_DELAY = 0.75f;
+        private string readyUpResetText;
 
         protected override void Awake()
         {
             base.Awake();
+            readyUpResetText = $"Press {readyUpResetKey} key to start Ready up";
         }
 
         /// <summary>
@@ -36,7 +40,10 @@ namespace MultiplayerRacer
 
             //get our car game object and if found wait for player input
             GameObject car = (GameObject)PhotonNetwork.LocalPlayer.TagObject;
-            car.GetComponent<RacerInput>().WaitForPlayerInput(readyUpKey, (succes) => SetReadyUpResult(succes));
+            car.GetComponent<RacerInput>().WaitForPlayerInput(
+                readyUpKey,
+                (succes) => SetReadyUpResult(succes),
+                () => PhotonNetwork.CurrentRoom.PlayerCount == MatchMakingManager.MAX_PLAYERS);
         }
 
         /// <summary>
@@ -45,6 +52,7 @@ namespace MultiplayerRacer
         /// <param name="succes"></param>
         private void SetReadyUpResult(bool succes)
         {
+            readyUpInfo.SetActive(false);
             if (succes)
             {
                 Debug.LogError("this player has succesfully pressed " + readyUpKey);
@@ -52,10 +60,52 @@ namespace MultiplayerRacer
             }
             else
             {
-                Debug.LogError("this player has not pressed " + readyUpKey);
-                //event waarbij master client return moet drukken om nieuwe ready up te starten
+                //either the player has not pressed the ready up key or a player has left
+                OnReadyUpFailed();
             }
-            readyUpInfo.SetActive(false);
+        }
+
+        /// <summary>
+        /// Handles setup after ready up reset based on succes or not
+        /// </summary>
+        /// <param name="succes"></param>
+        private void SetReadyUpResetResult(bool succes)
+        {
+            if (succes)
+            {
+                //start ready up process again
+                Debug.LogError("Ready up reset succesfull :: restarting readying up");
+                GetComponent<PhotonView>().RPC("ShowReadyUpInfo", RpcTarget.AllViaServer);
+            }
+            else
+            {
+                //Dead end, master client failed resetting. For now all players leave the room
+                Debug.LogError("Ready up reset failed :: all players leave room");
+                InRoomManager.Instance.SendAllLeaveRoom();
+            }
+        }
+
+        private void OnReadyUpFailed()
+        {
+            Debug.LogError("ready up failed");
+            if (PhotonNetwork.IsMasterClient)
+            {
+                //set readyUpInfo back to active
+                readyUpInfo.SetActive(true);
+
+                //Store our old ready up text and set ready up reset text
+                Text readyUp = readyUpInfo.GetComponent<Text>();
+                string readyUpText = readyUp.text;
+                readyUp.text = readyUpResetText;
+
+                //get our car game object and if found wait for player input
+                GameObject car = (GameObject)PhotonNetwork.LocalPlayer.TagObject;
+                car.GetComponent<RacerInput>().WaitForPlayerInput(readyUpResetKey, (succes) =>
+                {
+                    readyUp.text = readyUpText; //reset ready up text
+                    SetReadyUpResetResult(succes); //handle reset result
+                });
+            }
         }
 
         [PunRPC]

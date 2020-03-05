@@ -43,5 +43,6 @@ MonoBehaviour:
   - UpdateReadyButton
   - UpdateRoomMaster
   - UpdateReadyStatus
+  - LeaveRoomForcibly
   DisableAutoOpenWizard: 1
   ShowSettings: 0

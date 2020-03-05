@@ -16,6 +16,8 @@ namespace MultiplayerRacer
         private Color disconnectColor = new Color(0.75f, 0, 0);
 
         private const string ROOM_NAME = "RacingRoom";
+        /*!Important Note: maak public static get;privateset als meer dan 2, gebruik die als check en
+        geef dit een waarde als kamer wordt gesloten (Room.isopen = false)*/
         public const int MAX_PLAYERS = 2;
 
         private bool connectingToMaster = false;
@@ -114,6 +116,34 @@ namespace MultiplayerRacer
             if (PhotonNetwork.IsConnectedAndReady)
             {
                 DoLeavingChecks();
+                switch (InRoomManager.Instance.CurrentScene)
+                {
+                    case MultiplayerRacerScenes.LOBBY:
+                        break;
+
+                    case MultiplayerRacerScenes.GAME:
+                        //we load the lobby scene bofore leaving the room
+                        SceneManager.LoadScene((int)MultiplayerRacerScenes.LOBBY);
+                        Destroy(this.gameObject);
+                        Destroy(InRoomManager.Instance.gameObject);
+                        break;
+
+                    default:
+                        break;
+                }
+
+                PhotonNetwork.LeaveRoom();
+            }
+        }
+
+        /// <summary>
+        /// Leave room without leave checks. Should only be called when all players are leaving
+        /// the room because of some big error/problem
+        /// </summary>
+        public void LeaveRoomForced()
+        {
+            if (PhotonNetwork.IsConnectedAndReady)
+            {
                 switch (InRoomManager.Instance.CurrentScene)
                 {
                     case MultiplayerRacerScenes.LOBBY:
