@@ -325,6 +325,12 @@ namespace MultiplayerRacer
             //the masterclient resets the players ready count when someone leaves
             if (PhotonNetwork.IsMasterClient)
             {
+                //if the master client is the only one left in the game scene he will need to leave the room aswell
+                //if (CurrentScene == MultiplayerRacerScenes.GAME && PhotonNetwork.CurrentRoom.PlayerCount == 1)
+                //{
+                //    Debug.LogError("Last player in game scene :: Leaving Room");
+                //    MatchMakingManager.Instance.LeaveRoomForced();
+                //}
                 /*reset players ready provided, of course, that the RoomMaster data has been transefered already.
                  if this is not the case consistently, we need some kind of fallback for this*/
                 if (Master != null)

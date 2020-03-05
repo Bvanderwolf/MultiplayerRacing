@@ -85,7 +85,6 @@ namespace MultiplayerRacer
 
         private void OnReadyUpFailed()
         {
-            Debug.LogError("ready up failed");
             if (PhotonNetwork.IsMasterClient)
             {
                 //set readyUpInfo back to active
