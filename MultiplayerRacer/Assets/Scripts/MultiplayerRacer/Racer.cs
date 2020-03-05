@@ -24,13 +24,12 @@ namespace MultiplayerRacer
         [PunRPC]
         private void DisableCamera(int viewID)
         {
-            //get the camera of the car based on viewID and set it to inactive
+            //get the camera of the car in our scene based on viewID and set it to inactive
             PhotonView PV = PhotonView.Find(viewID);
             GameObject carCamera = PV.GetComponent<Racer>()?.Camera;
             if (carCamera != null)
             {
                 carCamera.SetActive(false);
-                Debug.LogError("setting camera of other player to inactive");
             }
             else Debug.LogError("Won't set car camera to inactive :: carCamera object is null");
         }

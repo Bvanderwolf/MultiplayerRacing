@@ -107,7 +107,6 @@ namespace MultiplayerRacer
                 return;
             }
             IsReady = value; //set ready value
-            if (CurrentScene == MultiplayerRacerScenes.GAME) Debug.LogError(value);
             OnReadyStatusChange?.Invoke(CurrentScene, value); //let others know if there are scripts subscribed
             GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady); //let master client know
         }
@@ -266,7 +265,7 @@ namespace MultiplayerRacer
             //update players in game values and tell others buffered to setup game scene
             PhotonView PV = GetComponent<PhotonView>();
             PV.RPC("UpdatePlayersInGameScene", RpcTarget.MasterClient, true);
-            Debug.LogError("client setup game scene");
+
             //unsubscribe from scene loaded event
             SceneManager.sceneLoaded -= OnLoadedGameScene;
         }

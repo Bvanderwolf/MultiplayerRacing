@@ -74,13 +74,11 @@ namespace MultiplayerRacer
             if (succes)
             {
                 //start ready up process again
-                Debug.LogError("Ready up reset succesfull :: restarting readying up");
                 GetComponent<PhotonView>().RPC("ShowReadyUpInfo", RpcTarget.AllViaServer);
             }
             else
             {
                 //Dead end, master client failed resetting. For now all players leave the room
-                Debug.LogError("Ready up reset failed :: all players leave room");
                 InRoomManager.Instance.SendAllLeaveRoom();
             }
         }
@@ -111,6 +109,14 @@ namespace MultiplayerRacer
         [PunRPC]
         private void ShowReadyUpInfo()
         {
+            /*it can happen that a player is already ready when setting up ready up
+             after a ready up reset. To handle this we just set his value to false*/
+            if (InRoomManager.Instance.IsReady)
+            {
+                InRoomManager.Instance.SetReady(false);
+            }
+
+            //start the setup coroutine
             StartCoroutine(SetupReadyUpWithDelay());
         }
     }

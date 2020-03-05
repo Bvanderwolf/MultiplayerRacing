@@ -27,21 +27,19 @@ namespace MultiplayerRacer
         /// <returns></returns>
         private IEnumerator WaitForInput(KeyCode key, Action<bool> result, Func<bool> check = null)
         {
-            bool input = false;
             bool waitExceed = false;
             bool hasCheck = check != null;
             float wait = 0;
-            while (!input && !waitExceed)
+            while (!waitExceed)
             {
                 wait += Time.deltaTime;
-                input = Input.GetKeyDown(key);
                 waitExceed = wait >= MAX_WAIT_FOR_PLAYER_INPUT;
-                if (input)
+                if (Input.GetKeyDown(key))
                 {
                     result(true);
                     yield break;
                 }
-                else if (hasCheck)
+                if (hasCheck)
                 {
                     if (!check.Invoke())
                     {
@@ -50,7 +48,7 @@ namespace MultiplayerRacer
                         yield break;
                     }
                 }
-                else if (waitExceed)
+                if (waitExceed)
                 {
                     Debug.LogError("failed wait for input :: wait time exceeded Max wait time");
                     result(false);
