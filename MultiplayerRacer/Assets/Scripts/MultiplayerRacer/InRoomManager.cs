@@ -12,6 +12,19 @@ namespace MultiplayerRacer
         public static InRoomManager Instance { get; private set; }
         public static readonly byte[] memRoomMaster = new byte[2 * 4];
 
+        /// <summary>
+        /// returns, based on PhotonNetwork.CurrentRoom, whether the room in is full or not
+        /// </summary>
+        public static bool IsFull
+        {
+            get
+            {
+                if (!PhotonNetwork.InRoom) return false;
+                Room r = PhotonNetwork.CurrentRoom;
+                return r.PlayerCount == r.MaxPlayers;
+            }
+        }
+
         public enum MultiplayerRacerScenes { LOBBY, GAME }
 
         private MultiplayerRacerUI UI = null;
@@ -180,13 +193,13 @@ namespace MultiplayerRacer
         /// checks whether the room is full or not acts accordingly if so
         /// </summary>
         /// <param name="room"></param>
-        private void FullRoomCheck(Room room)
+        private void FullRoomCheck()
         {
             switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
                     LobbyUI lobbyUI = (LobbyUI)UI;
-                    if (room.PlayerCount == MatchMakingManager.MAX_PLAYERS)
+                    if (IsFull)
                     {
                         lobbyUI.ListenToReadyButton();
                     }
@@ -214,12 +227,16 @@ namespace MultiplayerRacer
 
                 case MultiplayerRacerScenes.GAME:
                     //countdown can start for race
-                    Debug.LogError("can start countdown for race");
+                    GetComponent<PhotonView>().RPC("StartCountdown", RpcTarget.AllViaServer);
                     break;
 
                 default:
                     break;
             }
+        }
+
+        private void OnRaceStart()
+        {
         }
 
         /// <summary>
@@ -270,6 +287,31 @@ namespace MultiplayerRacer
             SceneManager.sceneLoaded -= OnLoadedGameScene;
         }
 
+        /// <summary>
+        /// function used by master client to deal with a player leafing the
+        /// room and so also him
+        /// </summary>
+        private void OnPlayerLeftMaster()
+        {
+            //the masterclient resets the players ready count when someone leaves
+            if (PhotonNetwork.IsMasterClient)
+            {
+                //if the master client is the only one left in the game scene he will need to leave the room as well
+                //if (CurrentScene == MultiplayerRacerScenes.GAME && PhotonNetwork.CurrentRoom.PlayerCount == 1)
+                //{
+                //    Debug.LogError("Last player in game scene :: Leaving Room");
+                //    MatchMakingManager.Instance.LeaveRoomForced();
+                //}
+                /*reset players ready provided, of course, that the RoomMaster data has been transefered already.
+                 if this is not the case consistently, we need some kind of fallback for this*/
+                if (Master != null)
+                {
+                    Master.ResetPlayersReady();
+                }
+                else Debug.LogError("Failed resetting players ready on player leave :: RoomMaster instance is null");
+            }
+        }
+
         public void OnMasterClientSwitched(Player newMasterClient)
         {
             /*Note: photon assigns new masterclient when current one leaves.
@@ -308,7 +350,7 @@ namespace MultiplayerRacer
                 default:
                     break;
             }
-            FullRoomCheck(room); //entering player can be the one to fill the lobby
+            FullRoomCheck(); //entering player can be the one to fill the lobby
         }
 
         public void OnPlayerLeftRoom(Player otherPlayer)
@@ -321,37 +363,14 @@ namespace MultiplayerRacer
             {
                 NumberInRoom--;
             }
-
-            //the masterclient resets the players ready count when someone leaves
-            if (PhotonNetwork.IsMasterClient)
-            {
-                //if the master client is the only one left in the game scene he will need to leave the room aswell
-                //if (CurrentScene == MultiplayerRacerScenes.GAME && PhotonNetwork.CurrentRoom.PlayerCount == 1)
-                //{
-                //    Debug.LogError("Last player in game scene :: Leaving Room");
-                //    MatchMakingManager.Instance.LeaveRoomForced();
-                //}
-                /*reset players ready provided, of course, that the RoomMaster data has been transefered already.
-                 if this is not the case consistently, we need some kind of fallback for this*/
-                if (Master != null)
-                {
-                    Master.ResetPlayersReady();
-                }
-                else Debug.LogError("Failed resetting players ready on player leave :: RoomMaster instance is null");
-            }
-
-            if (UI == null)
-            {
-                Debug.LogError("Wont update room :: UI is null");
-                return;
-            }
-
+            //master needs to deal with player leaving the room/him
+            OnPlayerLeftMaster();
             //invoke shared functions
             Room room = PhotonNetwork.CurrentRoom;
             UI.UpdateRoomInfo(room);
             UI.UpdateNickname(MatchMakingManager.Instance.MakeNickname());
-            UI.ShowExitButton(); //handle edge cases where exit button is in hidden state
-
+            UI.ShowExitButton();
+            UI.ShowRoomStatus();
             //Update Room status based on current scene
             switch (CurrentScene)
             {
@@ -364,6 +383,11 @@ namespace MultiplayerRacer
 
                 case MultiplayerRacerScenes.GAME:
                     //gameUI related updates
+                    if (PhotonNetwork.IsMasterClient)
+                    {
+                        //make the game ui send ready up info
+                        ((GameUI)UI).SendShowReadyUpInfo();
+                    }
                     break;
 
                 default:
@@ -469,17 +493,18 @@ namespace MultiplayerRacer
                 Debug.LogError("Won't start StartCountdown :: UI is null");
                 return;
             }
-
+            //define count and room for check in playercount differnce during countdown
+            Room room = PhotonNetwork.CurrentRoom;
+            int count = room.PlayerCount;
             //Do countdown based on current Scene
             switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
-                    LobbyUI lobbyUI = (LobbyUI)UI;
-                    //start countdown, loading game scene on end and checking playercount state each count
-                    lobbyUI.StartGameCountDown(LoadGameScene, () => PhotonNetwork.CurrentRoom.PlayerCount == MatchMakingManager.MAX_PLAYERS);
+                    ((LobbyUI)UI).StartCountDownForGameScene(LoadGameScene, () => count == room.PlayerCount);
                     break;
 
                 case MultiplayerRacerScenes.GAME:
+                    ((GameUI)UI).StartCountDownForRaceStart(OnRaceStart, () => count == room.PlayerCount);
                     break;
 
                 default:

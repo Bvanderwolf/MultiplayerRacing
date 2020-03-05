@@ -16,8 +16,6 @@ namespace MultiplayerRacer
         private Color disconnectColor = new Color(0.75f, 0, 0);
 
         private const string ROOM_NAME = "RacingRoom";
-        /*!Important Note: maak public static get;privateset als meer dan 2, gebruik die als check en
-        geef dit een waarde als kamer wordt gesloten (Room.isopen = false)*/
         public const int MAX_PLAYERS = 2;
 
         private bool connectingToMaster = false;
@@ -214,9 +212,9 @@ namespace MultiplayerRacer
         /// checks if given room is full and acts accordingly if so
         /// </summary>
         /// <param name="room"></param>
-        private void FullRoomCheck(Room room)
+        private void FullRoomCheck()
         {
-            if (room.PlayerCount == MAX_PLAYERS)
+            if (InRoomManager.IsFull)
             {
                 ((LobbyUI)UI).ListenToReadyButton();
             }
@@ -320,7 +318,7 @@ namespace MultiplayerRacer
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
                 lobbyUI.SetupExitButton(LeaveRoom);
                 lobbyUI.UpdateConnectColor(false); //reset color of connect button.
-                FullRoomCheck(room); //client can be the one filling up the room.
+                FullRoomCheck(); //client can be the one filling up the room.
                 Application.quitting += OnQuitEvent; //setup quitting event with leaving master check
             }
         }

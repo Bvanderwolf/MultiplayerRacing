@@ -136,6 +136,30 @@ namespace MultiplayerRacer
             exitButton.gameObject.SetActive(false);
         }
 
+        // <summary>
+        /// sets active state of room status to false
+        /// </summary>
+        public void HideRoomStatus()
+        {
+            if (roomStatus == null)
+                if (!FindAndSetRoomStatusReference())
+                    return;
+
+            roomStatus.SetActive(false);
+        }
+
+        // <summary>
+        /// sets active state of room status to false
+        /// </summary>
+        public void ShowRoomStatus()
+        {
+            if (roomStatus == null)
+                if (!FindAndSetRoomStatusReference())
+                    return;
+
+            roomStatus.SetActive(true);
+        }
+
         /// <summary>
         /// sets active state of ExitButton to true
         /// </summary>

@@ -76,6 +76,7 @@ namespace MultiplayerRacer
                 go.GetComponent<Text>().color = goTextColor;
                 if (hasCeck && !check.Invoke())
                 {
+                    Debug.LogError("failed countdown :: check was triggered");
                     CountingDown = false;
                     yield break;
                 }

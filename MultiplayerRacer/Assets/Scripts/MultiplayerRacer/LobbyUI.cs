@@ -235,7 +235,7 @@ namespace MultiplayerRacer
             }
         }
 
-        public void StartGameCountDown(Action endAction, Func<bool> check = null)
+        public void StartCountDownForGameScene(Action endAction, Func<bool> check = null)
         {
             if (countdownText == null)
                 if (!FindAndSetCountdownTextReference())

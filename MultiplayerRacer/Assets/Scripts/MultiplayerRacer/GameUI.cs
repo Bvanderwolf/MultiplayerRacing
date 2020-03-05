@@ -1,4 +1,6 @@
 ﻿using Photon.Pun;
+using Photon.Realtime;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -32,18 +34,31 @@ namespace MultiplayerRacer
             }
         }
 
+        public void StartCountDownForRaceStart(Action endAction, Func<bool> check)
+        {
+            //hide unnecessary UI Elements
+            HideExitButton();
+            HideRoomStatus();
+
+            animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, true, endAction, check);
+        }
+
         private IEnumerator SetupReadyUpWithDelay()
         {
             //after delay show ready up info
             yield return new WaitForSeconds(READYUP_INFO_SHOW_DELAY);
             readyUpInfo.SetActive(true);
 
+            //define count and room for check in playercount differnce during wait for player input
+            Room room = PhotonNetwork.CurrentRoom;
+            int count = room.PlayerCount;
+
             //get our car game object and if found wait for player input
             GameObject car = (GameObject)PhotonNetwork.LocalPlayer.TagObject;
             car.GetComponent<RacerInput>().WaitForPlayerInput(
                 readyUpKey,
                 (succes) => SetReadyUpResult(succes),
-                () => PhotonNetwork.CurrentRoom.PlayerCount == MatchMakingManager.MAX_PLAYERS);
+                () => count == room.PlayerCount);
         }
 
         /// <summary>
@@ -55,7 +70,6 @@ namespace MultiplayerRacer
             readyUpInfo.SetActive(false);
             if (succes)
             {
-                Debug.LogError("this player has succesfully pressed " + readyUpKey);
                 InRoomManager.Instance.SetReady(true);
             }
             else
