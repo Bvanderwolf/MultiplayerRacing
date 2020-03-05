@@ -21,6 +21,8 @@ namespace MultiplayerRacer
 
         public event Action<MultiplayerRacerScenes, bool> OnReadyStatusChange;
 
+        public event Action<MultiplayerRacerScenes> OnSceneReset;
+
         public MultiplayerRacerScenes CurrentScene { get; private set; } = MultiplayerRacerScenes.LOBBY;
 
         public int NextLevelIndex
@@ -337,18 +339,21 @@ namespace MultiplayerRacer
             switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
+                    //lobbyUI related updates
                     LobbyUI lobbyUI = (LobbyUI)UI;
                     lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                     lobbyUI.UpdateReadyButtons(room.PlayerCount);
                     break;
 
                 case MultiplayerRacerScenes.GAME:
+                    //gameUI related updates
                     break;
 
                 default:
                     break;
             }
             SetReady(false);
+            OnSceneReset?.Invoke(CurrentScene); //on scene reset gets fired after all changes have been dome
         }
 
         public void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)

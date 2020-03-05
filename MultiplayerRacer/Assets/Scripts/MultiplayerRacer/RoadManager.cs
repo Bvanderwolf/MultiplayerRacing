@@ -10,7 +10,7 @@ namespace MultiplayerRacer
         [SerializeField] private GameObject[] roads;
         [SerializeField] private Color readyColor;
 
-        private GameObject roadOn;
+        private GameObject roadOn; //changes when roads get shifted
         private GameObject myCarSpawn;
         private GameObject myCar;
         private Color unReadyColor;
@@ -22,8 +22,9 @@ namespace MultiplayerRacer
 
             if (PhotonNetwork.IsConnected)
             {
-                //start listeneing to on ready status change events
+                //start listeneing to onreadystatuschange and scenereset events
                 InRoomManager.Instance.OnReadyStatusChange += OnReadyStatusChanged;
+                InRoomManager.Instance.OnSceneReset += OnSceneHasReset;
                 //place the car spawns on the road for players and get our own car spawn
                 myCarSpawn = SetupCarSpawns();
                 myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawn.transform.position, Quaternion.identity);
@@ -32,6 +33,39 @@ namespace MultiplayerRacer
             else Debug.LogError("Wont do car setup :: not connected to photon network");
         }
 
+        private void OnSceneHasReset(MultiplayerRacerScenes scene)
+        {
+            if (scene != MultiplayerRacerScenes.GAME)
+                return;
+
+            int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
+
+            //loop through all car spawns and try resetting them
+            Transform carSpawnTransform = roadOn.transform.Find("CarSpawns");
+            for (int ci = 0; ci < carSpawnTransform.childCount; ci++)
+            {
+                GameObject carSpawn = carSpawnTransform.GetChild(ci).gameObject;
+                carSpawn.GetComponent<SpriteRenderer>().color = unReadyColor;
+                carSpawn.transform.localPosition = Vector3.zero;
+                /*if this car spawn is outside the player count bound,
+                this car spawn will not be used so it can be made inactive*/
+                if ((ci + 1) > playerCount)
+                {
+                    carSpawn.SetActive(false);
+                }
+            }
+
+            //re-setup car spawns getting our new car spawn and placing the car on it
+            myCarSpawn = SetupCarSpawns();
+            myCar.transform.position = myCarSpawn.transform.position;
+        }
+
+        /// <summary>
+        /// Subscribe this function to an onready changed event to get info on new status and scene
+        /// to act accordingly
+        /// </summary>
+        /// <param name="scene"></param>
+        /// <param name="ready"></param>
         private void OnReadyStatusChanged(MultiplayerRacerScenes scene, bool ready)
         {
             if (scene != MultiplayerRacerScenes.GAME)
@@ -58,7 +92,7 @@ namespace MultiplayerRacer
                 Debug.LogError("Wont setup car spawns :: car spawn or road is null");
                 return null;
             }
-            int count = carSpawnTransform.childCount;
+            int count = PhotonNetwork.CurrentRoom.PlayerCount;
             float width = road.GetComponent<SpriteRenderer>().sprite.bounds.size.x;
             float carSpawnWidthHalf = carSpawnTransform.GetChild(0).GetComponent<SpriteRenderer>().sprite.bounds.size.x * 0.5f;
             float margin = (width - (carSpawnWidthHalf * count)) / (count + 1);
