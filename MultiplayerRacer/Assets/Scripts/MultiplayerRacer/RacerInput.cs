@@ -12,10 +12,10 @@ namespace MultiplayerRacer
         /// Starts waiting for given input to do onInput action
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="onInput"></param>
-        public void WaitForPlayerInput(KeyCode key, Action<bool> onInput)
+        /// <param name="result"></param>
+        public void WaitForPlayerInput(KeyCode key, Action<bool> result)
         {
-            StartCoroutine(WaitForInput(key, onInput));
+            StartCoroutine(WaitForInput(key, result));
         }
 
         /// <summary>
@@ -23,9 +23,9 @@ namespace MultiplayerRacer
         /// Uses MAX_WAIT_FOR_PLAYER_INPUT to check if player waits to long
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="onInput"></param>
+        /// <param name="result"></param>
         /// <returns></returns>
-        private IEnumerator WaitForInput(KeyCode key, Action<bool> onInput)
+        private IEnumerator WaitForInput(KeyCode key, Action<bool> result)
         {
             bool input = false;
             bool waitExceed = false;
@@ -37,13 +37,13 @@ namespace MultiplayerRacer
                 waitExceed = wait >= MAX_WAIT_FOR_PLAYER_INPUT;
                 if (input)
                 {
-                    onInput(true);
+                    result(true);
                     yield break;
                 }
                 else if (waitExceed)
                 {
                     Debug.LogError("Player waited to long for input :: waiting for master client to reset");
-                    onInput(false);
+                    result(false);
                     yield break;
                 }
                 //wait for game frame so we can use getkeydown.

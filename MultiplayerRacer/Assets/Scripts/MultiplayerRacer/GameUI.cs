@@ -36,19 +36,26 @@ namespace MultiplayerRacer
 
             //get our car game object and if found wait for player input
             GameObject car = (GameObject)PhotonNetwork.LocalPlayer.TagObject;
-            car.GetComponent<RacerInput>().WaitForPlayerInput(readyUpKey, (succes) =>
+            car.GetComponent<RacerInput>().WaitForPlayerInput(readyUpKey, (succes) => SetReadyUpResult(succes));
+        }
+
+        /// <summary>
+        /// Handles setup after ready up result based on succes or not
+        /// </summary>
+        /// <param name="succes"></param>
+        private void SetReadyUpResult(bool succes)
+        {
+            if (succes)
             {
-                if (succes)
-                {
-                    Debug.LogError("this player has succesfully pressed " + readyUpKey);
-                    //set ready gebruiken van room manager
-                }
-                else
-                {
-                    Debug.LogError("this player has not pressed " + readyUpKey);
-                    //event waarbij master client return moet drukken om nieuwe ready up te starten
-                }
-            });
+                Debug.LogError("this player has succesfully pressed " + readyUpKey);
+                InRoomManager.Instance.SetReady(true);
+            }
+            else
+            {
+                Debug.LogError("this player has not pressed " + readyUpKey);
+                //event waarbij master client return moet drukken om nieuwe ready up te starten
+            }
+            readyUpInfo.SetActive(false);
         }
 
         [PunRPC]

@@ -185,6 +185,27 @@ namespace MultiplayerRacer
             }
         }
 
+        private void MaxPlayersReadyCheck(MultiplayerRacerScenes scene)
+        {
+            if (Master.PlayersReady != MatchMakingManager.MAX_PLAYERS)
+                return;
+
+            switch (scene)
+            {
+                case MultiplayerRacerScenes.LOBBY:
+                    //Start countdown for game scene via server so a players start countdown at the same time
+                    GetComponent<PhotonView>().RPC("StartCountdown", RpcTarget.AllViaServer);
+                    break;
+
+                case MultiplayerRacerScenes.GAME:
+                    //countdown can start for race
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
         /// <summary>
         /// Sets up values for client to load game scene, then lets masterclient load it.
         /// Only the masterclient loads the scene since PhotonNetwork.AutomaticalySyncScene is set to true
@@ -389,12 +410,8 @@ namespace MultiplayerRacer
             {
                 //let the room master update players ready
                 Master.UpdatePlayersReady(isready);
-                //start countdown if all players are ready
-                if (InLobby && Master.PlayersReady == MatchMakingManager.MAX_PLAYERS)
-                {
-                    //not buffered because no players can join after the countdown has started
-                    GetComponent<PhotonView>().RPC("StartCountdown", RpcTarget.AllViaServer);
-                }
+                //check if all players are ready
+                MaxPlayersReadyCheck(CurrentScene);
             }
         }
 
