@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace MultiplayerRacer
 {
+    using System;
     using MultiplayerRacerScenes = InRoomManager.MultiplayerRacerScenes;
 
     public class RoadManager : MonoBehaviour
@@ -25,12 +26,23 @@ namespace MultiplayerRacer
                 //start listeneing to onreadystatuschange and scenereset events
                 InRoomManager.Instance.OnReadyStatusChange += OnReadyStatusChanged;
                 InRoomManager.Instance.OnSceneReset += OnSceneHasReset;
+                InRoomManager.Instance.OnGameStart += OnRaceStarted;
                 //place the car spawns on the road for players and get our own car spawn
                 myCarSpawn = SetupCarSpawns();
                 myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawn.transform.position, Quaternion.identity);
                 unReadyColor = myCarSpawn.GetComponent<SpriteRenderer>().color; //save default color as unready color
             }
             else Debug.LogError("Wont do car setup :: not connected to photon network");
+        }
+
+        private void OnRaceStarted()
+        {
+            //set all car spawns to an inactive state
+            Transform carSpawnTransform = roadOn.transform.Find("CarSpawns");
+            for (int ci = 0; ci < carSpawnTransform.childCount; ci++)
+            {
+                carSpawnTransform.GetChild(ci).gameObject.SetActive(false);
+            }
         }
 
         private void OnSceneHasReset(MultiplayerRacerScenes scene)

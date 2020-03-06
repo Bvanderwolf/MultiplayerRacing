@@ -34,6 +34,8 @@ namespace MultiplayerRacer
 
         public event Action<MultiplayerRacerScenes, bool> OnReadyStatusChange;
 
+        public event Action OnGameStart;
+
         public event Action<MultiplayerRacerScenes> OnSceneReset;
 
         public MultiplayerRacerScenes CurrentScene { get; private set; } = MultiplayerRacerScenes.LOBBY;
@@ -237,6 +239,9 @@ namespace MultiplayerRacer
 
         private void OnRaceStart()
         {
+            //make car spawns inactive
+            //make car controls available to players
+            OnGameStart?.Invoke();
         }
 
         /// <summary>
