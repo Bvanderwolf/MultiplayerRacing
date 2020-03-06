@@ -14,34 +14,30 @@ namespace MultiplayerRacer
         public GameObject Camera => carCamera;
         public bool CanRace => canRace;
 
+        private const float SMOOTH_DELAY = 10f;
+
         private Quaternion cameraRotation;
         private Rigidbody2D rb;
         private PhotonView PV;
 
         private Vector2 remotePosition;
         private float remoteRotation;
-        private float distance;
-        private float angle;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
             //store camera rotation for reset in late update
             cameraRotation = carCamera.transform.rotation;
-            //PhotonNetwork.SendRate = 40;
-            //PhotonNetwork.SerializationRate = 20;
         }
 
         //Update during render frames
-        private void FixedUpdate()
+        private void Update()
         {
             //update other clients their car
             if (!PV.IsMine)
             {
-                float maxDistanceDelta = distance * (1.0f / PhotonNetwork.SerializationRate);//drawline gebruiken voor visual?
-                rb.position = Vector2.MoveTowards(rb.position, remotePosition, maxDistanceDelta);
-                float maxRotationDelta = angle * (1.0f / PhotonNetwork.SerializationRate);
-                rb.rotation = Mathf.MoveTowards(rb.rotation, remoteRotation, maxRotationDelta);
+                rb.position = Vector2.Lerp(rb.position, remotePosition, Time.deltaTime * SMOOTH_DELAY);
+                rb.rotation = Mathf.Lerp(rb.rotation, remoteRotation, Time.deltaTime * SMOOTH_DELAY);
             }
         }
 
@@ -61,8 +57,6 @@ namespace MultiplayerRacer
                 //if this is our script we send the position and rotation
                 stream.SendNext(rb.position);
                 stream.SendNext(rb.rotation);
-                stream.SendNext(rb.velocity);
-                stream.SendNext(rb.angularVelocity);
             }
             else
             {
@@ -75,16 +69,6 @@ namespace MultiplayerRacer
                 {
                     rb.position = remotePosition;
                 }
-
-                float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
-
-                rb.velocity = (Vector2)stream.ReceiveNext();
-                remotePosition += rb.velocity * lag;
-                distance = Vector2.Distance(rb.position, remotePosition);
-
-                rb.angularVelocity = (float)stream.ReceiveNext();
-                remoteRotation += rb.angularVelocity * lag;
-                angle = Mathf.Abs(rb.rotation - remoteRotation);
             }
         }
 
@@ -104,6 +88,8 @@ namespace MultiplayerRacer
                 //make others disable our camera
                 _PV.RPC("DisableCamera", RpcTarget.OthersBuffered, _PV.ViewID);
             }
+            float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
+            Debug.LogError(lag);
             //kan gebruikt worden voor timestamp
         }
 
