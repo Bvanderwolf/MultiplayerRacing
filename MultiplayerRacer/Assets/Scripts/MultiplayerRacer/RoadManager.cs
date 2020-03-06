@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace MultiplayerRacer
 {
-    using System;
     using MultiplayerRacerScenes = InRoomManager.MultiplayerRacerScenes;
 
     public class RoadManager : MonoBehaviour
@@ -15,11 +14,13 @@ namespace MultiplayerRacer
         private GameObject myCarSpawn;
         private GameObject myCar;
         private Color unReadyColor;
+        private float roadLength;
 
         private void Awake()
         {
             //the player starts on the middle road
             roadOn = roads[1];
+            roadLength = roadOn.transform.Find("Road").GetComponent<SpriteRenderer>().bounds.size.y;
 
             if (PhotonNetwork.IsConnected)
             {
@@ -30,6 +31,7 @@ namespace MultiplayerRacer
                 //place the car spawns on the road for players and get our own car spawn
                 myCarSpawn = SetupCarSpawns();
                 myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawn.transform.position, Quaternion.identity);
+                myCar.GetComponent<Racer>().OnRoadBoundHit += OnRoadBoundHit; //subscribe to road bound hit event
                 unReadyColor = myCarSpawn.GetComponent<SpriteRenderer>().color; //save default color as unready color
             }
             else Debug.LogError("Wont do car setup :: not connected to photon network");
@@ -88,6 +90,41 @@ namespace MultiplayerRacer
                 RpcTarget.AllViaServer,
                 InRoomManager.Instance.NumberInRoom,
                 ready);
+        }
+
+        /// <summary>
+        /// should be called when our car hits a road bound
+        /// </summary>
+        private void OnRoadBoundHit(GameObject road)
+        {
+            ShiftRoad(road);
+        }
+
+        /// <summary>
+        /// shifts roads based on bound hit
+        /// </summary>
+        private void ShiftRoad(GameObject road)
+        {
+            //the bound hit can only be of the road on or the one below it
+            bool roadOnHit = road == roadOn;
+            int roadIndex = roadOnHit ? roads.Length - 1 : 0;
+            GameObject shiftingRoad = roads[roadIndex];
+            shiftingRoad.transform.localPosition += new Vector3(0, roads.Length * (roadOnHit ? roadLength : -roadLength));
+
+            if (roadOnHit)
+            {
+                roadIndex = roads.Length - 1;
+                roads[roadIndex--] = roads[roadIndex];
+                roads[roadIndex--] = roads[roadIndex];
+                roads[roadIndex] = shiftingRoad;
+            }
+            else
+            {
+                roads[roadIndex++] = roads[roadIndex];
+                roads[roadIndex++] = roads[roadIndex];
+                roads[roadIndex] = shiftingRoad;
+            }
+            roadOn = roads[1];
         }
 
         /// <summary>

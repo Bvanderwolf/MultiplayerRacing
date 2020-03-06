@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Photon.Pun;
+using System;
 
 namespace MultiplayerRacer
 {
@@ -14,10 +15,12 @@ namespace MultiplayerRacer
         public GameObject Camera => carCamera;
         public bool CanRace => canRace;
 
+        public event Action<GameObject> OnRoadBoundHit;
+
         private const float SMOOTH_DELAY = 10f;
 
         private Quaternion cameraRotation;
-        private Rigidbody2D rb;
+        private Rigidbody2D RB;
         private PhotonView PV;
 
         private Vector2 remotePosition;
@@ -25,7 +28,7 @@ namespace MultiplayerRacer
 
         private void Awake()
         {
-            rb = GetComponent<Rigidbody2D>();
+            RB = GetComponent<Rigidbody2D>();
             //store camera rotation for reset in late update
             cameraRotation = carCamera.transform.rotation;
         }
@@ -36,8 +39,8 @@ namespace MultiplayerRacer
             //update other clients their car
             if (!PV.IsMine)
             {
-                rb.position = Vector2.Lerp(rb.position, remotePosition, Time.deltaTime * SMOOTH_DELAY);
-                rb.rotation = Mathf.Lerp(rb.rotation, remoteRotation, Time.deltaTime * SMOOTH_DELAY);
+                RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime * SMOOTH_DELAY);
+                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, Time.deltaTime * SMOOTH_DELAY);
             }
         }
 
@@ -55,8 +58,8 @@ namespace MultiplayerRacer
             if (stream.IsWriting)
             {
                 //if this is our script we send the position and rotation
-                stream.SendNext(rb.position);
-                stream.SendNext(rb.rotation);
+                stream.SendNext(RB.position);
+                stream.SendNext(RB.rotation);
             }
             else
             {
@@ -65,9 +68,9 @@ namespace MultiplayerRacer
                 remoteRotation = (float)stream.ReceiveNext();
 
                 //if the distance to the remote position is to far, teleport to it
-                if (Vector2.Distance(rb.position, remotePosition) > minDistanceToTeleportAt)
+                if (Vector2.Distance(RB.position, remotePosition) > minDistanceToTeleportAt)
                 {
-                    rb.position = remotePosition;
+                    RB.position = remotePosition;
                 }
             }
         }
@@ -88,9 +91,6 @@ namespace MultiplayerRacer
                 //make others disable our camera
                 _PV.RPC("DisableCamera", RpcTarget.OthersBuffered, _PV.ViewID);
             }
-            float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
-            Debug.LogError(lag);
-            //kan gebruikt worden voor timestamp
         }
 
         /// <summary>
@@ -102,9 +102,9 @@ namespace MultiplayerRacer
             if (scene != MultiplayerRacerScenes.GAME)
                 return;
 
-            rb.velocity = Vector2.zero;
-            rb.angularVelocity = 0;
-            rb.rotation = 0;
+            RB.velocity = Vector2.zero;
+            RB.angularVelocity = 0;
+            RB.rotation = 0;
         }
 
         /// <summary>
@@ -113,6 +113,18 @@ namespace MultiplayerRacer
         private void OnRacerCanStart()
         {
             canRace = true;
+        }
+
+        private void OnTriggerEnter2D(Collider2D collision)
+        {
+            if (!PV.IsMine)
+                return;
+
+            if (collision.tag == "RoadBound")
+            {
+                //fire event returning the parent gameobject which is the RoadPiece
+                OnRoadBoundHit(collision.transform.parent.gameObject);
+            }
         }
 
         [PunRPC]
