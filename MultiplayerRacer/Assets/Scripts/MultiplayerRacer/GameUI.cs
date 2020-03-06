@@ -16,9 +16,12 @@ namespace MultiplayerRacer
         private const float READYUP_INFO_SHOW_DELAY = 0.75f;
         private string readyUpResetText;
 
+        private PhotonView PV;
+
         protected override void Awake()
         {
             base.Awake();
+            PV = GetComponent<PhotonView>();
             readyUpResetText = $"Press {readyUpResetKey} key to start Ready up";
         }
 
@@ -30,7 +33,7 @@ namespace MultiplayerRacer
         {
             if (PhotonNetwork.IsMasterClient)
             {
-                GetComponent<PhotonView>().RPC("ShowReadyUpInfo", RpcTarget.AllViaServer);
+                PV.RPC("ShowReadyUpInfo", RpcTarget.AllViaServer);
             }
         }
 
@@ -88,7 +91,7 @@ namespace MultiplayerRacer
             if (succes)
             {
                 //start ready up process again
-                GetComponent<PhotonView>().RPC("ShowReadyUpInfo", RpcTarget.AllViaServer);
+                PV.RPC("ShowReadyUpInfo", RpcTarget.AllViaServer);
             }
             else
             {

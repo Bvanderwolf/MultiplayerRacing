@@ -13,11 +13,13 @@ namespace MultiplayerRacer
         private GameObject roadOn; //changes when roads get shifted
         private GameObject myCarSpawn;
         private GameObject myCar;
+        private PhotonView PV;
         private Color unReadyColor;
         private float roadLength;
 
         private void Awake()
         {
+            PV = GetComponent<PhotonView>();
             //the player starts on the middle road
             roadOn = roads[1];
             roadLength = roadOn.transform.Find("Road").GetComponent<SpriteRenderer>().bounds.size.y;
@@ -85,11 +87,7 @@ namespace MultiplayerRacer
             if (scene != MultiplayerRacerScenes.GAME)
                 return;
 
-            GetComponent<PhotonView>().RPC(
-                "UpdateReadyStatus",
-                RpcTarget.AllViaServer,
-                InRoomManager.Instance.NumberInRoom,
-                ready);
+            PV.RPC("UpdateReadyStatus", RpcTarget.AllViaServer, InRoomManager.Instance.NumberInRoom, ready);
         }
 
         /// <summary>
@@ -105,15 +103,15 @@ namespace MultiplayerRacer
         /// </summary>
         private void ShiftRoad(GameObject road)
         {
-            //the bound hit can only be of the road on or the one below it
+            //based on if bound hit was on road on setup shift values
             bool roadOnHit = road == roadOn;
             int roadIndex = roadOnHit ? roads.Length - 1 : 0;
             GameObject shiftingRoad = roads[roadIndex];
             shiftingRoad.transform.localPosition += new Vector3(0, roads.Length * (roadOnHit ? roadLength : -roadLength));
 
+            //shift roads array based on roadOnHit value
             if (roadOnHit)
             {
-                roadIndex = roads.Length - 1;
                 roads[roadIndex--] = roads[roadIndex];
                 roads[roadIndex--] = roads[roadIndex];
                 roads[roadIndex] = shiftingRoad;
@@ -124,6 +122,7 @@ namespace MultiplayerRacer
                 roads[roadIndex++] = roads[roadIndex];
                 roads[roadIndex] = shiftingRoad;
             }
+            //road on is always the middle one of the 3
             roadOn = roads[1];
         }
 

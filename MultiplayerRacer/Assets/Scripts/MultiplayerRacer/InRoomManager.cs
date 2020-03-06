@@ -57,6 +57,8 @@ namespace MultiplayerRacer
         public const int COUNTDOWN_LENGTH = 3;
         public const float READY_SEND_TIMEOUT = 0.75f;
 
+        private PhotonView PV;
+
         /*
          master client attributes are stored inside the room master instance
          this defaults to null and is set for the client creating the room
@@ -78,7 +80,7 @@ namespace MultiplayerRacer
             {
                 Instance = this;
             }
-
+            PV = GetComponent<PhotonView>();
             DontDestroyOnLoad(this.gameObject);
         }
 
@@ -123,7 +125,7 @@ namespace MultiplayerRacer
             }
             IsReady = value; //set ready value
             OnReadyStatusChange?.Invoke(CurrentScene, value); //let others know if there are scripts subscribed
-            GetComponent<PhotonView>().RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady); //let master client know
+            PV.RPC("UpdatePlayersReady", RpcTarget.MasterClient, IsReady); //let master client know
         }
 
         /// <summary>
@@ -176,7 +178,7 @@ namespace MultiplayerRacer
                 return;
 
             //send RPC call with master client data to new master client
-            GetComponent<PhotonView>().RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber, Master, wasLeaving);
+            PV.RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber, Master, wasLeaving);
         }
 
         /// <summary>
@@ -187,7 +189,7 @@ namespace MultiplayerRacer
         {
             if (PhotonNetwork.IsMasterClient)
             {
-                GetComponent<PhotonView>().RPC("LeaveRoomForcibly", RpcTarget.AllViaServer);
+                PV.RPC("LeaveRoomForcibly", RpcTarget.AllViaServer);
             }
         }
 
@@ -224,12 +226,12 @@ namespace MultiplayerRacer
             {
                 case MultiplayerRacerScenes.LOBBY:
                     //Start countdown for game scene via server so a players start countdown at the same time
-                    GetComponent<PhotonView>().RPC("StartCountdown", RpcTarget.AllViaServer);
+                    PV.RPC("StartCountdown", RpcTarget.AllViaServer);
                     break;
 
                 case MultiplayerRacerScenes.GAME:
                     //countdown can start for race
-                    GetComponent<PhotonView>().RPC("StartCountdown", RpcTarget.AllViaServer);
+                    PV.RPC("StartCountdown", RpcTarget.AllViaServer);
                     break;
 
                 default:
@@ -284,7 +286,6 @@ namespace MultiplayerRacer
             room.IsOpen = false; //New players cannot join the game if the game scene has been loaded
 
             //update players in game values and tell others buffered to setup game scene
-            PhotonView PV = GetComponent<PhotonView>();
             PV.RPC("UpdatePlayersInGameScene", RpcTarget.MasterClient, true);
 
             //unsubscribe from scene loaded event
