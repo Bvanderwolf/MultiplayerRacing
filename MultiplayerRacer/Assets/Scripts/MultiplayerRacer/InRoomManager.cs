@@ -239,7 +239,6 @@ namespace MultiplayerRacer
 
         private void OnRaceStart()
         {
-            //make car spawns inactive
             //make car controls available to players
             OnGameStart?.Invoke();
         }

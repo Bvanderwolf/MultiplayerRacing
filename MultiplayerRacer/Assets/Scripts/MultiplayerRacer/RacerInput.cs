@@ -8,6 +8,26 @@ namespace MultiplayerRacer
     {
         private const float MAX_WAIT_FOR_PLAYER_INPUT = 20f;
 
+        private Racer racer;
+
+        private void Awake()
+        {
+            racer = GetComponent<Racer>();
+        }
+
+        //Game frame update
+        private void Update()
+        {
+            //we can only check input if we can race
+            if (!racer.CanRace)
+                return;
+
+            if (Input.GetKeyDown(KeyCode.W))
+            {
+                Debug.LogError("W input worked");
+            }
+        }
+
         /// <summary>
         /// Starts waiting for given input to do onInput action
         /// </summary>
