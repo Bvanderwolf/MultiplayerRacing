@@ -9,13 +9,10 @@ namespace MultiplayerRacer
     {
         [SerializeField] private GameObject carCamera;
         [SerializeField] private bool canRace;
+        [SerializeField] private float minDistanceToTeleportAt;
 
         public GameObject Camera => carCamera;
         public bool CanRace => canRace;
-
-        private const float MIN_DISTANCE_TO_SEND = 0.05f;
-        private const float MIN_ROTATIONDIFFERENCE_TO_SEND = 0.05f;
-        private const float SMOOTHING_DELAY = 5f;
 
         private Quaternion cameraRotation;
         private Rigidbody2D rb;
@@ -23,35 +20,28 @@ namespace MultiplayerRacer
 
         private Vector2 remotePosition;
         private float remoteRotation;
+        private float distance;
+        private float angle;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
             //store camera rotation for reset in late update
             cameraRotation = carCamera.transform.rotation;
+            //PhotonNetwork.SendRate = 40;
+            //PhotonNetwork.SerializationRate = 20;
         }
 
-        //Update during game frames
-        private void Update()
+        //Update during render frames
+        private void FixedUpdate()
         {
             //update other clients their car
             if (!PV.IsMine)
             {
-                /*if the differnce between stored remote position and actual position is great
-                enough the car will smoothly linearly interpolate its position towards it*/
-                float positionDiff = (remotePosition - rb.position).magnitude;
-                if (positionDiff > MIN_DISTANCE_TO_SEND)
-                {
-                    rb.position = Vector2.Lerp(rb.position, remotePosition, Time.deltaTime * SMOOTHING_DELAY);
-                }
-
-                /*If the difference between stored remote rotation and actual rotation is great
-                enough the car will smoothly linearly interpolate its rotation toward it*/
-                float rotationDiff = Mathf.Abs(remoteRotation - rb.rotation);
-                if (rotationDiff > MIN_ROTATIONDIFFERENCE_TO_SEND)
-                {
-                    rb.rotation = Mathf.Lerp(rb.rotation, remoteRotation, Time.deltaTime * SMOOTHING_DELAY);
-                }
+                float maxDistanceDelta = distance * (1.0f / PhotonNetwork.SerializationRate);//drawline gebruiken voor visual?
+                rb.position = Vector2.MoveTowards(rb.position, remotePosition, maxDistanceDelta);
+                float maxRotationDelta = angle * (1.0f / PhotonNetwork.SerializationRate);
+                rb.rotation = Mathf.MoveTowards(rb.rotation, remoteRotation, maxRotationDelta);
             }
         }
 
@@ -71,12 +61,30 @@ namespace MultiplayerRacer
                 //if this is our script we send the position and rotation
                 stream.SendNext(rb.position);
                 stream.SendNext(rb.rotation);
+                stream.SendNext(rb.velocity);
+                stream.SendNext(rb.angularVelocity);
             }
             else
             {
                 //if this is not our script we set the position and rotation of the racer
                 remotePosition = (Vector2)stream.ReceiveNext();
                 remoteRotation = (float)stream.ReceiveNext();
+
+                //if the distance to the remote position is to far, teleport to it
+                if (Vector2.Distance(rb.position, remotePosition) > minDistanceToTeleportAt)
+                {
+                    rb.position = remotePosition;
+                }
+
+                float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
+
+                rb.velocity = (Vector2)stream.ReceiveNext();
+                remotePosition += rb.velocity * lag;
+                distance = Vector2.Distance(rb.position, remotePosition);
+
+                rb.angularVelocity = (float)stream.ReceiveNext();
+                remoteRotation += rb.angularVelocity * lag;
+                angle = Mathf.Abs(rb.rotation - remoteRotation);
             }
         }
 
