@@ -9,23 +9,29 @@ namespace MultiplayerRacer
         private const float MAX_WAIT_FOR_PLAYER_INPUT = 20f;
 
         private Racer racer;
+        private RacerMotor motor;
 
         private void Awake()
         {
             racer = GetComponent<Racer>();
+            motor = GetComponent<RacerMotor>();
         }
 
-        //Game frame update
-        private void Update()
+        //Render frames
+        private void FixedUpdate()
         {
             //we can only check input if we can race
             if (!racer.CanRace)
                 return;
+            //left (1.0) to right (-1.0)
+            float h = -Input.GetAxis("Horizontal");
+            //up (1.0) to down (-1.0)
+            float v = Input.GetAxis("Vertical");
 
-            if (Input.GetKeyDown(KeyCode.W))
-            {
-                Debug.LogError("W input worked");
-            }
+            //update motor values
+            motor.AddSpeed(v);
+            motor.Steer(h);
+            motor.ClampVelocity();
         }
 
         /// <summary>

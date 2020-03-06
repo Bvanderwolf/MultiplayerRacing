@@ -11,6 +11,20 @@ namespace MultiplayerRacer
         public GameObject Camera => carCamera;
         public bool CanRace => canRace;
 
+        private Quaternion cameraRotation;
+
+        private void Awake()
+        {
+            //store camera rotation for reset in late update
+            cameraRotation = carCamera.transform.rotation;
+        }
+
+        private void LateUpdate()
+        {
+            //for now simply reset camera rotation after all updates
+            carCamera.transform.rotation = cameraRotation;
+        }
+
         public void OnPhotonInstantiate(PhotonMessageInfo info)
         {
             PhotonView PV = info.photonView;
