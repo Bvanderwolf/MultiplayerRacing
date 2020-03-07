@@ -9,6 +9,7 @@ namespace MultiplayerRacer
         [SerializeField] private float maxVelocity;
 
         private Rigidbody2D rb;
+        private const float HORIZONTAL_INPUT_THRESHOLD = 0.01f;
 
         private void Awake()
         {
@@ -23,6 +24,10 @@ namespace MultiplayerRacer
 
         public void Steer(float inputH)
         {
+            //only rotatate if player has input
+            if (inputH > -HORIZONTAL_INPUT_THRESHOLD && inputH < HORIZONTAL_INPUT_THRESHOLD)
+                return;
+
             //based on going forward or backward do rotation
             float direction = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.up));
             if (direction >= 0.0f)
