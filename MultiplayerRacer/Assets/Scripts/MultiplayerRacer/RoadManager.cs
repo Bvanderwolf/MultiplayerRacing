@@ -12,6 +12,8 @@ namespace MultiplayerRacer
         [SerializeField] private RaceTrack[] tracks;
         [SerializeField] private Color readyColor;
 
+        public enum RoadType { DEFAULT, START, END }
+
         private Road roadOn; //changes when roads get shifted
         private GameObject myCarSpawn;
         private GameObject myCar;
@@ -27,12 +29,43 @@ namespace MultiplayerRacer
         {
             PV = GetComponent<PhotonView>();
 
+            SetupRoadValues();
+            SetupSceneRelations();
+        }
+
+        private void OnValidate()
+        {
+            //check for all tracks if their values are meeting requirements
+            for (int i = 0; i < tracks.Length; i++)
+            {
+                tracks[i].CheckMaxRoadTypes();
+                tracks[i].CheckForStartAndEnd();
+            }
+        }
+
+        /// <summary>
+        /// Sets up values related to the track and road
+        /// </summary>
+        private void SetupRoadValues()
+        {
             raceTrackDict = new Dictionary<string, RaceTrack>();
             foreach (RaceTrack track in tracks) raceTrackDict.Add(track.Name, track);
 
+            for (int i = 0; i < tracks.Length; i++)
+            {
+                tracks[i].CheckMaxRoadTypes();
+                tracks[i].CheckForStartAndEnd();
+            }
+
             roadOn = roads[1];
             roadLength = roadOn.MainBounds.size.y;
+        }
 
+        /// <summary>
+        /// Sets up road manager values related to scene interactions
+        /// </summary>
+        private void SetupSceneRelations()
+        {
             if (PhotonNetwork.IsConnected)
             {
                 //start listeneing to onreadystatuschange and scenereset events
@@ -48,6 +81,9 @@ namespace MultiplayerRacer
             else Debug.LogError("Wont do car setup :: not connected to photon network");
         }
 
+        /// <summary>
+        /// sets up values related to the connection with our car
+        /// </summary>
         private void SetupRacerConnection()
         {
             //subscribe to road bound enter and exit events
