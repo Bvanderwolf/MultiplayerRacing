@@ -722,7 +722,7 @@ MonoBehaviour:
   - {fileID: 2123245659}
   tracks:
   - name: Default
-    shifts: 12
+    roadTypes: 010000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000
   readyColor: {r: 0, g: 1, b: 0, a: 1}
 --- !u!114 &721308948
 MonoBehaviour:

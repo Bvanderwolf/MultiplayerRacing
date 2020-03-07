@@ -23,7 +23,7 @@ namespace MultiplayerRacer
 
         private Dictionary<string, RaceTrack> raceTrackDict;
         private RaceTrack trackPlaying;
-        private int shiftAt = 0;
+        private int trackIndex = 0;
 
         private void Awake()
         {
