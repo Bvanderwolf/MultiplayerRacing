@@ -9,23 +9,31 @@ namespace MultiplayerRacer
         [SerializeField] private float maxVelocity;
 
         private Rigidbody2D rb;
-        private const float HORIZONTAL_INPUT_THRESHOLD = 0.01f;
+        private float steerFriction;
+        private float weelFriction;
+        private const float INPUT_THRESHOLD = 0.01f;
+        private const float DRIFT_DAMP = 4f;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
+            steerFriction = rb.angularDrag;
+            weelFriction = rb.drag;
         }
 
         public void AddSpeed(float inputV)
         {
+            if (NoGas(inputV))
+                return;
+
             Vector2 speed = transform.up * (inputV * acceleration);
             rb.AddForce(speed);
         }
 
-        public void Steer(float inputH)
+        public void Steer(float inputH, bool drift)
         {
             //only rotatate if player has input
-            if (inputH > -HORIZONTAL_INPUT_THRESHOLD && inputH < HORIZONTAL_INPUT_THRESHOLD)
+            if (NoSteer(inputH))
                 return;
 
             //based on going forward or backward do rotation
@@ -38,11 +46,43 @@ namespace MultiplayerRacer
             {
                 rb.rotation -= inputH * steering * (rb.velocity.magnitude / maxVelocity);
             }
+            //if no drifting input is given the car will be forced to not drift
+            if (!drift)
+            {
+                float force = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.left));
+                Vector2 relativeForce = Vector2.right * force;
+                rb.AddForce(rb.GetRelativeVector(relativeForce * DRIFT_DAMP));
+            }
+        }
 
-            float driftForce = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.left));
-            Vector2 relativeForce = Vector2.right * driftForce;
+        /// <summary>
+        /// checks for gas input, if none, increases drag
+        /// </summary>
+        /// <param name="inputV"></param>
+        /// <returns></returns>
+        private bool NoGas(float inputV)
+        {
+            if (inputV > -INPUT_THRESHOLD && inputV < INPUT_THRESHOLD)
+            {
+                rb.drag = weelFriction * 2f;
+                return true;
+            }
+            return false;
+        }
 
-            rb.AddForce(rb.GetRelativeVector(relativeForce));
+        /// <summary>
+        /// checks for steering input, if none increase angular drag
+        /// </summary>
+        /// <param name="inputH"></param>
+        /// <returns></returns>
+        private bool NoSteer(float inputH)
+        {
+            if (inputH > -INPUT_THRESHOLD && inputH < INPUT_THRESHOLD)
+            {
+                rb.angularDrag = steerFriction * 2f;
+                return true;
+            }
+            return false;
         }
 
         public void ClampVelocity()

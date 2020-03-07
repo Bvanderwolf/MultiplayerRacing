@@ -23,14 +23,16 @@ namespace MultiplayerRacer
             //we can only check input if we can race
             if (!racer.CanRace)
                 return;
+
             //left (1.0) to right (-1.0)
             float h = -Input.GetAxis("Horizontal");
             //up (1.0) to down (-1.0)
             float v = Input.GetAxis("Vertical");
+            bool drift = Input.GetKey(KeyCode.LeftShift);
 
             //update motor values
             motor.AddSpeed(v);
-            motor.Steer(h);
+            motor.Steer(h, drift);
             motor.ClampVelocity();
         }
 

@@ -27,7 +27,7 @@ namespace MultiplayerRacer
 
         private Vector2 remotePosition;
         private float remoteRotation;
-        private const float SMOOTH_DELAY = 10f;
+        private const float SMOOTH_DELAY = 5f;
 
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
