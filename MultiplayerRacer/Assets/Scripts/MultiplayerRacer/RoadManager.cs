@@ -1,4 +1,5 @@
 ﻿using Photon.Pun;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MultiplayerRacer
@@ -8,6 +9,7 @@ namespace MultiplayerRacer
     public class RoadManager : MonoBehaviour
     {
         [SerializeField] private Road[] roads;
+        [SerializeField] private RaceTrack[] tracks;
         [SerializeField] private Color readyColor;
 
         private Road roadOn; //changes when roads get shifted
@@ -17,10 +19,17 @@ namespace MultiplayerRacer
         private Color unReadyColor;
         private float roadLength;
 
+        private Dictionary<string, RaceTrack> raceTrackDict;
+        private RaceTrack trackPlaying;
+        private int shiftAt = 0;
+
         private void Awake()
         {
             PV = GetComponent<PhotonView>();
-            //the player starts on the middle road
+
+            raceTrackDict = new Dictionary<string, RaceTrack>();
+            foreach (RaceTrack track in tracks) raceTrackDict.Add(track.Name, track);
+
             roadOn = roads[1];
             roadLength = roadOn.MainBounds.size.y;
 
@@ -48,6 +57,7 @@ namespace MultiplayerRacer
 
         private void OnRaceStarted()
         {
+            trackPlaying = raceTrackDict["Default"]; //for now use default track. In future get from parameter
             roadOn.SetCarSpawnsInactive();
         }
 

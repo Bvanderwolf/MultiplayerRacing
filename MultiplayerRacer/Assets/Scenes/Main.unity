@@ -720,6 +720,9 @@ MonoBehaviour:
   - {fileID: 3864603602976301682}
   - {fileID: 1032251243}
   - {fileID: 2123245659}
+  tracks:
+  - name: Default
+    shifts: 12
   readyColor: {r: 0, g: 1, b: 0, a: 1}
 --- !u!114 &721308948
 MonoBehaviour:
