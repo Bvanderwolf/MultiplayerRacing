@@ -15,9 +15,11 @@ namespace MultiplayerRacer
         public GameObject Camera => carCamera;
         public bool CanRace => canRace;
 
-        public event Action<GameObject> OnRoadBoundHit;
-
-        private const float SMOOTH_DELAY = 10f;
+        /// <summary>
+        /// event that will be called on road bound enter and on
+        /// same entry as exit
+        /// </summary>
+        public event Action<GameObject> OnRoadBoundInteraction;
 
         private Quaternion cameraRotation;
         private Rigidbody2D RB;
@@ -25,6 +27,10 @@ namespace MultiplayerRacer
 
         private Vector2 remotePosition;
         private float remoteRotation;
+        private const float SMOOTH_DELAY = 10f;
+
+        private float boundEnterAxisValue;
+        private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
 
         private void Awake()
         {
@@ -122,8 +128,30 @@ namespace MultiplayerRacer
 
             if (collision.tag == "RoadBound")
             {
+                //store y value (can be x to depending on orientation of bound)
+                boundEnterAxisValue = transform.position.y;
                 //fire event returning the parent gameobject which is the RoadPiece
-                OnRoadBoundHit(collision.transform.parent.gameObject);
+                OnRoadBoundInteraction(collision.transform.parent.gameObject);
+            }
+        }
+
+        private void OnTriggerExit2D(Collider2D collision)
+        {
+            if (!PV.IsMine)
+                return;
+
+            if (collision.tag == "RoadBound")
+            {
+                //get exit y value (can be x to depending on orientation of bound)
+                float boundExitAxisValue = transform.position.y;
+                float diff = boundEnterAxisValue - boundExitAxisValue;
+                //define whether the exit direction is the same as the direction of entry
+                bool sameExitAsEntry = diff >= -BOUND_AXIS_ERROR_MARGIN && diff <= BOUND_AXIS_ERROR_MARGIN;
+                //if the exit is the same as the entry we need to shift the road back
+                if (sameExitAsEntry)
+                {
+                    OnRoadBoundInteraction(collision.transform.parent.gameObject);
+                }
             }
         }
 

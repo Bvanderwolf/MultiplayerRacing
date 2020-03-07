@@ -33,10 +33,17 @@ namespace MultiplayerRacer
                 //place the car spawns on the road for players and get our own car spawn
                 myCarSpawn = SetupCarSpawns();
                 myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawn.transform.position, Quaternion.identity);
-                myCar.GetComponent<Racer>().OnRoadBoundHit += OnRoadBoundHit; //subscribe to road bound hit event
                 unReadyColor = myCarSpawn.GetComponent<SpriteRenderer>().color; //save default color as unready color
+                SetupRacerConnection();
             }
             else Debug.LogError("Wont do car setup :: not connected to photon network");
+        }
+
+        private void SetupRacerConnection()
+        {
+            //subscribe to road bound enter and exit events
+            Racer racer = myCar.GetComponent<Racer>();
+            racer.OnRoadBoundInteraction += OnRoadNeedsShift;
         }
 
         private void OnRaceStarted()
@@ -91,9 +98,9 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
-        /// should be called when our car hits a road bound
+        /// should be called when our car enters a road bound
         /// </summary>
-        private void OnRoadBoundHit(GameObject road)
+        private void OnRoadNeedsShift(GameObject road)
         {
             ShiftRoad(road);
         }
