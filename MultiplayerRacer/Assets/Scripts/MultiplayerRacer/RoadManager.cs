@@ -7,10 +7,10 @@ namespace MultiplayerRacer
 
     public class RoadManager : MonoBehaviour
     {
-        [SerializeField] private GameObject[] roads;
+        [SerializeField] private Road[] roads;
         [SerializeField] private Color readyColor;
 
-        private GameObject roadOn; //changes when roads get shifted
+        private Road roadOn; //changes when roads get shifted
         private GameObject myCarSpawn;
         private GameObject myCar;
         private PhotonView PV;
@@ -22,7 +22,7 @@ namespace MultiplayerRacer
             PV = GetComponent<PhotonView>();
             //the player starts on the middle road
             roadOn = roads[1];
-            roadLength = roadOn.transform.Find("Road").GetComponent<SpriteRenderer>().bounds.size.y;
+            roadLength = roadOn.MainBounds.size.y;
 
             if (PhotonNetwork.IsConnected)
             {
@@ -48,12 +48,7 @@ namespace MultiplayerRacer
 
         private void OnRaceStarted()
         {
-            //set all car spawns to an inactive state
-            Transform carSpawnTransform = roadOn.transform.Find("CarSpawns");
-            for (int ci = 0; ci < carSpawnTransform.childCount; ci++)
-            {
-                carSpawnTransform.GetChild(ci).gameObject.SetActive(false);
-            }
+            roadOn.SetCarSpawnsInactive();
         }
 
         private void OnSceneHasReset(MultiplayerRacerScenes scene)
@@ -63,20 +58,8 @@ namespace MultiplayerRacer
 
             int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
 
-            //loop through all car spawns and try resetting them
-            Transform carSpawnTransform = roadOn.transform.Find("CarSpawns");
-            for (int ci = 0; ci < carSpawnTransform.childCount; ci++)
-            {
-                GameObject carSpawn = carSpawnTransform.GetChild(ci).gameObject;
-                carSpawn.GetComponent<SpriteRenderer>().color = unReadyColor;
-                carSpawn.transform.localPosition = Vector3.zero;
-                /*if this car spawn is outside the player count bound,
-                this car spawn will not be used so it can be made inactive*/
-                if ((ci + 1) > playerCount)
-                {
-                    carSpawn.SetActive(false);
-                }
-            }
+            //reset car spawns according to new playercount
+            roadOn.ResetCarSpawns(playerCount, unReadyColor);
 
             //re-setup car spawns getting our new car spawn and placing the car on it
             myCarSpawn = SetupCarSpawns();
@@ -111,10 +94,10 @@ namespace MultiplayerRacer
         private void ShiftRoad(GameObject road)
         {
             //based on if bound hit was on road on setup shift values
-            bool roadOnHit = road == roadOn;
+            bool roadOnHit = road == roadOn.gameObject;
             int roadIndex = roadOnHit ? roads.Length - 1 : 0;
-            GameObject shiftingRoad = roads[roadIndex];
-            shiftingRoad.transform.localPosition += new Vector3(0, roads.Length * (roadOnHit ? roadLength : -roadLength));
+            Road shiftingRoad = roads[roadIndex];
+            shiftingRoad.Shift(roads.Length * (roadOnHit ? roadLength : -roadLength));
 
             //shift roads array based on roadOnHit value
             if (roadOnHit)
@@ -134,39 +117,19 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
-        /// Sets up car spawns and returns the gameobject of the one
+        /// Sets up car spawns on road on and returns the gameobject of the one
         /// used by your car. Will return null when failed.
         /// </summary>
         /// <returns></returns>
         private GameObject SetupCarSpawns()
         {
-            Transform carSpawnTransform = roadOn.transform.Find("CarSpawns");
-            Transform road = roadOn.transform.Find("Road");
-            if (carSpawnTransform == null || road == null)
-            {
-                Debug.LogError("Wont setup car spawns :: car spawn or road is null");
-                return null;
-            }
-            int count = PhotonNetwork.CurrentRoom.PlayerCount;
-            float width = road.GetComponent<SpriteRenderer>().sprite.bounds.size.x;
-            float carSpawnWidthHalf = carSpawnTransform.GetChild(0).GetComponent<SpriteRenderer>().sprite.bounds.size.x * 0.5f;
-            float margin = (width - (carSpawnWidthHalf * count)) / (count + 1);
-            float x = -(width * 0.5f) - (carSpawnWidthHalf * 0.5f);
-            //loop through children based on count and place them on given position
-            for (int ci = 0; ci < count; ci++)
-            {
-                x += margin + carSpawnWidthHalf;
-                Transform tf = carSpawnTransform.GetChild(ci);
-                Vector3 position = tf.localPosition;
-                tf.localPosition = new Vector2(position.x + x, position.y);
-                tf.gameObject.SetActive(true);
-            }
-            //return the position of the child based on our number in the room
-            return carSpawnTransform.GetChild(InRoomManager.Instance.NumberInRoom - 1).gameObject;
+            int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
+            int numberInRoom = InRoomManager.Instance.NumberInRoom;
+            return roadOn.SetupCarSpawns(playerCount, numberInRoom);
         }
 
         /// <summary>
-        /// gets a car spawn in scene based on given player number
+        /// gets a car spawn on road on based on given player number
         /// </summary>
         /// <param name="playerNumber"></param>
         /// <returns></returns>
@@ -175,8 +138,7 @@ namespace MultiplayerRacer
             if (playerNumber < 0 || playerNumber > MatchMakingManager.MAX_PLAYERS)
                 return null;
 
-            Transform carSpawnTransform = roadOn.transform.Find("CarSpawns");
-            return carSpawnTransform.GetChild(playerNumber - 1);
+            return roadOn.CarSpawns.transform.GetChild(playerNumber - 1);
         }
 
         [PunRPC]
