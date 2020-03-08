@@ -52,9 +52,6 @@ namespace MultiplayerRacer
 
         private void LateUpdate()
         {
-            if (!canRace)
-                return;
-
             //for now simply reset camera rotation after all updates
             carCamera.transform.rotation = cameraRotation;
         }
@@ -111,6 +108,7 @@ namespace MultiplayerRacer
             RB.velocity = Vector2.zero;
             RB.angularVelocity = 0;
             RB.rotation = 0;
+            canRace = false;
         }
 
         /// <summary>
@@ -142,13 +140,15 @@ namespace MultiplayerRacer
 
             if (collision.tag == "RoadBound")
             {
+                //it is possible that when resetting we exit a bound. we want to account for this
+                bool boundExitAfterReset = !canRace;
                 //get exit y value (can be x to depending on orientation of bound)
                 float boundExitAxisValue = transform.position.y;
                 float diff = boundEnterAxisValue - boundExitAxisValue;
                 //define whether the exit direction is the same as the direction of entry
                 bool sameExitAsEntry = diff >= -BOUND_AXIS_ERROR_MARGIN && diff <= BOUND_AXIS_ERROR_MARGIN;
                 //if the exit is the same as the entry we need to shift the road back
-                OnRoadBoundInteraction(collision.transform.parent.gameObject, true, sameExitAsEntry);
+                OnRoadBoundInteraction(collision.transform.parent.gameObject, true, sameExitAsEntry || boundExitAfterReset);
             }
         }
 

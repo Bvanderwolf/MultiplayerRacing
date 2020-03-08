@@ -6,6 +6,8 @@
         public int PlayersReady { get; private set; } = 0;
         public int PlayersInGameScene { get; private set; } = 0;
 
+        public const float LAST_MAN_LEAVE_DELAY = 4f;
+
         public RoomMaster(int playersready = 0, int playersingamescene = 0)
         {
             PlayersReady = playersready;

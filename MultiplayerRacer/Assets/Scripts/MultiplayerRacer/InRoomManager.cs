@@ -7,6 +7,8 @@ using UnityEngine.SceneManagement;
 
 namespace MultiplayerRacer
 {
+    using IEnumerator = System.Collections.IEnumerator;
+
     public class InRoomManager : MonoBehaviour, IInRoomCallbacks
     {
         public static InRoomManager Instance { get; private set; }
@@ -189,7 +191,7 @@ namespace MultiplayerRacer
         {
             if (PhotonNetwork.IsMasterClient)
             {
-                PV.RPC("LeaveRoomForcibly", RpcTarget.AllViaServer);
+                PV.RPC("LeaveRoomForcibly", RpcTarget.Others);
             }
         }
 
@@ -302,11 +304,11 @@ namespace MultiplayerRacer
             if (PhotonNetwork.IsMasterClient)
             {
                 //if the master client is the only one left in the game scene he will need to leave the room as well
-                //if (CurrentScene == MultiplayerRacerScenes.GAME && PhotonNetwork.CurrentRoom.PlayerCount == 1)
-                //{
-                //    Debug.LogError("Last player in game scene :: Leaving Room");
-                //    MatchMakingManager.Instance.LeaveRoomForced();
-                //}
+                if (CurrentScene == MultiplayerRacerScenes.GAME && PhotonNetwork.CurrentRoom.PlayerCount == 1)
+                {
+                    Debug.LogError("Last player in game scene :: Leaving Room");
+                    StartCoroutine(LastManLeaveWithDelay());
+                }
                 /*reset players ready provided, of course, that the RoomMaster data has been transefered already.
                  if this is not the case consistently, we need some kind of fallback for this*/
                 if (Master != null)
@@ -315,6 +317,12 @@ namespace MultiplayerRacer
                 }
                 else Debug.LogError("Failed resetting players ready on player leave :: RoomMaster instance is null");
             }
+        }
+
+        private IEnumerator LastManLeaveWithDelay()
+        {
+            yield return new WaitForSeconds(RoomMaster.LAST_MAN_LEAVE_DELAY);
+            MatchMakingManager.Instance.LeaveRoomForced();
         }
 
         public void OnMasterClientSwitched(Player newMasterClient)
