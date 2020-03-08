@@ -176,6 +176,9 @@ MonoBehaviour:
   - {fileID: 837893686}
   - {fileID: 2139339822}
   - {fileID: 1640398169}
+  tracks:
+  - name: Default
+    roadTypes: 01000000000000000000000002000000
   readyColor: {r: 0, g: 1, b: 0, a: 1}
 --- !u!4 &237555533
 Transform:

@@ -19,7 +19,7 @@ namespace MultiplayerRacer
         /// event that will be called on road bound enter and on
         /// same entry as exit
         /// </summary>
-        public event Action<GameObject> OnRoadBoundInteraction;
+        public event Action<GameObject, bool, bool> OnRoadBoundInteraction;
 
         private Quaternion cameraRotation;
         private Rigidbody2D RB;
@@ -131,7 +131,7 @@ namespace MultiplayerRacer
                 //store y value (can be x to depending on orientation of bound)
                 boundEnterAxisValue = transform.position.y;
                 //fire event returning the parent gameobject which is the RoadPiece
-                OnRoadBoundInteraction(collision.transform.parent.gameObject);
+                OnRoadBoundInteraction(collision.transform.parent.gameObject, false, false);
             }
         }
 
@@ -148,10 +148,7 @@ namespace MultiplayerRacer
                 //define whether the exit direction is the same as the direction of entry
                 bool sameExitAsEntry = diff >= -BOUND_AXIS_ERROR_MARGIN && diff <= BOUND_AXIS_ERROR_MARGIN;
                 //if the exit is the same as the entry we need to shift the road back
-                if (sameExitAsEntry)
-                {
-                    OnRoadBoundInteraction(collision.transform.parent.gameObject);
-                }
+                OnRoadBoundInteraction(collision.transform.parent.gameObject, true, sameExitAsEntry);
             }
         }
 

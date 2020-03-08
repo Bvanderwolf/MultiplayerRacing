@@ -14,7 +14,7 @@ namespace MultiplayerRacer
 
         public enum RoadType { DEFAULT, START, END }
 
-        private Road roadOn; //changes when roads get shifted
+        private Road roadOn;
         private GameObject myCarSpawn;
         private GameObject myCar;
         private PhotonView PV;
@@ -23,14 +23,20 @@ namespace MultiplayerRacer
 
         private Dictionary<string, RaceTrack> raceTrackDict;
         private RaceTrack trackPlaying;
-        private int trackIndex = 0;
+        private int trackIndexOn;
 
         private void Awake()
         {
             PV = GetComponent<PhotonView>();
-
             SetupRoadValues();
             SetupSceneRelations();
+            //Testing();
+        }
+
+        private void Testing()
+        {
+            GameObject.Find("Car").GetComponent<Racer>().OnRoadBoundInteraction += DoRoadShift;
+            trackPlaying = raceTrackDict["Default"];
         }
 
         private void OnValidate()
@@ -57,6 +63,7 @@ namespace MultiplayerRacer
                 tracks[i].CheckForStartAndEnd();
             }
 
+            trackIndexOn = 1;
             roadOn = roads[1];
             roadLength = roadOn.MainBounds.size.y;
         }
@@ -88,7 +95,7 @@ namespace MultiplayerRacer
         {
             //subscribe to road bound enter and exit events
             Racer racer = myCar.GetComponent<Racer>();
-            racer.OnRoadBoundInteraction += OnRoadNeedsShift;
+            racer.OnRoadBoundInteraction += DoRoadShift;
         }
 
         private void OnRaceStarted()
@@ -129,24 +136,66 @@ namespace MultiplayerRacer
         /// <summary>
         /// should be called when our car enters a road bound
         /// </summary>
-        private void OnRoadNeedsShift(GameObject road)
+        private void DoRoadShift(GameObject roadCollidedOn, bool onExit, bool sameExitAsEntry)
         {
-            ShiftRoad(road);
+            TryShiftRoad(roadCollidedOn, onExit, sameExitAsEntry);
         }
 
         /// <summary>
-        /// shifts roads based on bound hit
+        /// Very complex function, shifts a road based on direction of car if the car enters
+        /// (onExit = false) the road bound or if the car exits (onExit = true) the road bound
+        /// but unsuccesfully. Exceptions are when the car on enter (onExit=false) is entering
+        /// or leaving the start road or the end road.
         /// </summary>
-        private void ShiftRoad(GameObject road)
+        private void TryShiftRoad(GameObject roadCollidedOn, bool onExit, bool sameExitAsEntry)
         {
-            //based on if bound hit was on road on setup shift values
-            bool roadOnHit = road == roadOn.gameObject;
-            int roadIndex = roadOnHit ? roads.Length - 1 : 0;
-            Road shiftingRoad = roads[roadIndex];
-            shiftingRoad.Shift(roads.Length * (roadOnHit ? roadLength : -roadLength));
+            //define wheter we are going forward by checking if we hit bound on our road
+            bool roadOnHit = roadCollidedOn == roadOn.gameObject;
 
-            //shift roads array based on roadOnHit value
-            if (roadOnHit)
+            //Dont shift the road if the car is on entering bound(onExit = false) we are entering or leaving a start or end
+            if (EnteringStartOrEnd(onExit, roadOnHit) || LeavingStartOrEnd(onExit, roadOnHit))
+                return;
+
+            //define succesfull exit by whether the car was exiting the bound not on the same side as the entry
+            bool succesFullExit = onExit && !sameExitAsEntry;
+
+            /*if the car had a succesfull exit of the bound, we can increase
+            or decrease our trackIndexOn and check for start or end reached
+            but don't shift the road*/
+            if (succesFullExit)
+            {
+                trackIndexOn += roadOnHit ? 1 : -1;
+                //if we are on the last road and are moving backward, we set road on to bottom one
+                if ((trackIndexOn == 0 && !roadOnHit))
+                {
+                    roadOn = roads[2];
+                } //if we are on the last road of the track and are moving forward we set road on to top one
+                else if ((trackIndexOn == trackPlaying.RoadCount - 1 && roadOnHit))
+                {
+                    roadOn = roads[0];
+                }
+                else
+                {
+                    //on default, road on is always the middle one of the 3
+                    roadOn = roads[1];
+                }
+                Debug.LogError(trackIndexOn);
+                return;
+            }
+            /*forward shift is defined by whether the car is moving forward (roadOnHit=true) or
+             the car had an unsuccesfull exit towards start and the car did not have an unsuccesfull
+             exit towards the end*/
+            bool unSuccesfullExitTowardsStart = !roadOnHit && (onExit && !succesFullExit);
+            bool unSuccesfullExitTowardsEnd = roadOnHit && (onExit && !succesFullExit);
+            bool forwardShift = (roadOnHit || unSuccesfullExitTowardsStart) && !unSuccesfullExitTowardsEnd;
+
+            //shift top or bottom road based on forward shift value
+            int roadIndex = forwardShift ? roads.Length - 1 : 0;
+            Road shiftingRoad = roads[roadIndex];
+            shiftingRoad.Shift(roads.Length * (forwardShift ? roadLength : -roadLength));
+
+            //shift roads array based on whether we are going forward or not
+            if (forwardShift)
             {
                 roads[roadIndex--] = roads[roadIndex];
                 roads[roadIndex--] = roads[roadIndex];
@@ -158,8 +207,20 @@ namespace MultiplayerRacer
                 roads[roadIndex++] = roads[roadIndex];
                 roads[roadIndex] = shiftingRoad;
             }
-            //road on is always the middle one of the 3
-            roadOn = roads[1];
+        }
+
+        private bool EnteringStartOrEnd(bool onExit, bool forward)
+        {
+            bool enteringStart = (trackIndexOn - 1 == 0) && !forward;
+            bool enteringEnd = (trackIndexOn + 2 == trackPlaying.RoadCount) && forward;
+            return !onExit && (enteringStart || enteringEnd);
+        }
+
+        private bool LeavingStartOrEnd(bool onExit, bool forward)
+        {
+            bool leavingStart = (trackIndexOn == 0) && forward;
+            bool leavingEnd = (trackIndexOn + 1 == trackPlaying.RoadCount) && !forward;
+            return !onExit && (leavingStart || leavingEnd);
         }
 
         /// <summary>

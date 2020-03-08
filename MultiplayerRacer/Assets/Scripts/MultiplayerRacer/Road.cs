@@ -9,10 +9,10 @@ namespace MultiplayerRacer
         [SerializeField] private GameObject sidewalkFlex;
 
         public GameObject Main => main;
-        public Bounds MainBounds => main.GetComponent<SpriteRenderer>().sprite.bounds;
+        public Bounds MainBounds => main.GetComponent<SpriteRenderer>().bounds;
 
         public GameObject CarSpawns => carSpawns;
-        public Bounds carSpawnBounds => carSpawns.transform.GetChild(0).GetComponent<SpriteRenderer>().sprite.bounds;
+        public Bounds carSpawnBounds => carSpawns.transform.GetChild(0).GetComponent<SpriteRenderer>().bounds;
 
         /// <summary>
         /// sets all car spawns to an inactive state

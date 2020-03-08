@@ -14,7 +14,7 @@ namespace MultiplayerRacer
         private const int MAX_SHIFTS = 20;
 
         public string Name => name;
-        public int Shifts => roadTypes.Length;
+        public int RoadCount => roadTypes.Length;
         public RoadType[] RoadTypes => roadTypes;
 
         /// <summary>
