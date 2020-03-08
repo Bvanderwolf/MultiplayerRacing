@@ -23,7 +23,7 @@ namespace MultiplayerRacer
 
         private Dictionary<string, RaceTrack> raceTrackDict;
         private RaceTrack trackPlaying;
-        private int trackIndexOn;
+        private int trackIndexOn = 0;
 
         private void Awake()
         {
@@ -37,6 +37,9 @@ namespace MultiplayerRacer
         {
             GameObject.Find("Car").GetComponent<Racer>().OnRoadBoundInteraction += DoRoadShift;
             trackPlaying = raceTrackDict["Default"];
+            //set other roads their type based on next road types to come
+            roads[1].Type = trackPlaying.RoadTypes[1];
+            roads[0].Type = trackPlaying.RoadTypes[2];
         }
 
         private void OnValidate()
@@ -63,8 +66,8 @@ namespace MultiplayerRacer
                 tracks[i].CheckForStartAndEnd();
             }
 
-            trackIndexOn = 0;
-            roadOn = roads[2];
+            roadOn = roads[roads.Length - 1];
+            roadOn.Type = RoadType.START;
             roadLength = roadOn.MainBounds.size.y;
         }
 
@@ -101,6 +104,11 @@ namespace MultiplayerRacer
         private void OnRaceStarted()
         {
             trackPlaying = raceTrackDict["Default"]; //for now use default track. In future get from parameter
+
+            //set other roads their type based on next road types to come
+            roads[1].Type = trackPlaying.RoadTypes[trackIndexOn + 1];
+            roads[0].Type = trackPlaying.RoadTypes[trackIndexOn + 2];
+
             roadOn.SetCarSpawnsInactive();
         }
 
@@ -152,16 +160,8 @@ namespace MultiplayerRacer
             //define wheter we are going forward by checking if we hit bound on our road
             bool roadOnHit = roadCollidedOn == roadOn.gameObject;
 
-            //Dont shift the road if the car is on entering bound(onExit = false) we are entering or leaving a start or end
-            if (EnteringStartOrEnd(onExit, roadOnHit) || LeavingStartOrEnd(onExit, roadOnHit))
-                return;
-
             //define succesfull exit by whether the car was exiting the bound not on the same side as the entry
             bool succesFullExit = onExit && !sameExitAsEntry;
-
-            //define whether we are on start or end
-            bool onStart = trackIndexOn == 0;
-            bool onEnd = trackIndexOn == trackPlaying.RoadCount - 1;
 
             /*if the car had a succesfull exit of the bound, we can increase
             or decrease our trackIndexOn and check for start or end reached
@@ -171,6 +171,14 @@ namespace MultiplayerRacer
                 UpdateRoadOn(roadOnHit);
                 return;
             }
+
+            //define whether we are on start or end
+            bool onStart = trackIndexOn == 0;
+            bool onEnd = trackIndexOn == trackPlaying.RoadCount - 1;
+
+            //Dont shift the road if the car is on entering bound(onExit = false) we are entering or leaving a start or end
+            if (EnteringStartOrEnd(onExit, roadOnHit) || LeavingStartOrEnd(onExit, roadOnHit))
+                return;
 
             bool unSuccesfullExitTowardsStart = !roadOnHit && (onExit && !succesFullExit);
             bool unSuccesfullExitTowardsEnd = roadOnHit && (onExit && !succesFullExit);
@@ -184,20 +192,25 @@ namespace MultiplayerRacer
              the car had an unsuccesfull exit towards start and the car did not have an unsuccesfull
              exit towards the end*/
             bool forwardShift = (roadOnHit || unSuccesfullExitTowardsStart) && !unSuccesfullExitTowardsEnd;
-            DoRoadShift(forwardShift);
+            UpdateRoads(forwardShift, onExit);
         }
 
         /// <summary>
         /// Shifts the road by moving the bottom road to the front or the front road to
-        /// the bottom based on given forwardShift value
+        /// the bottom based on given forwardShift value and updates roads array
         /// </summary>
-        /// <param name="forwardShift"></param>
-        private void DoRoadShift(bool forwardShift)
+        private void UpdateRoads(bool forwardShift, bool onExit)
         {
             //shift top or bottom road based on forward shift value
             int roadIndex = forwardShift ? roads.Length - 1 : 0;
             Road shiftingRoad = roads[roadIndex];
-            shiftingRoad.Shift(roads.Length * (forwardShift ? roadLength : -roadLength));
+
+            //new y position for shifting road is based on it being a forward shift or not
+            float y = roads.Length * (forwardShift ? roadLength : -roadLength);
+            shiftingRoad.Shift(y);
+
+            //update the type of this shifting road
+            UpdateShiftedRoadType(shiftingRoad, forwardShift, onExit);
 
             //shift roads array based on whether we are going forward or not
             if (forwardShift)
@@ -215,6 +228,20 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
+        /// Tries updating the road type of given road based on forward Shift,
+        /// keeping in account the road count of the track playing
+        /// </summary>
+        /// <param name="shiftedRoad"></param>
+        private void UpdateShiftedRoadType(Road shiftingRoad, bool forwardShift, bool onExit)
+        {
+            //if the road was shifted on exit, the offset is smaller than if it was on entering
+            int offset = onExit ? 1 : 2;
+            //index of the type for shifting road is either 2 indexes ahead or behind, based on forwardshift or not
+            int newShiftingRoadTypeIndex = forwardShift ? trackIndexOn + offset : trackIndexOn - offset;
+            shiftingRoad.Type = trackPlaying.RoadTypes[newShiftingRoadTypeIndex];
+        }
+
+        /// <summary>
         /// Updateds roadOn value and trackIndexOn based on given forward value
         /// </summary>
         /// <param name="forward"></param>
@@ -222,14 +249,14 @@ namespace MultiplayerRacer
         {
             trackIndexOn += forward ? 1 : -1;
             //define whether we are on start or end
-            bool onStart2 = trackIndexOn == 0;
-            bool onEnd2 = trackIndexOn == trackPlaying.RoadCount - 1;
+            bool onStart = trackIndexOn == 0;
+            bool onEnd = trackIndexOn == trackPlaying.RoadCount - 1;
             //if we are on the starting road and are moving backward, we set road on to bottom one
-            if (onStart2 && !forward)
+            if (onStart && !forward)
             {
                 roadOn = roads[2];
             } //if we are on the end of the road and are moving forward we set road on to top one
-            else if (onEnd2 && forward)
+            else if (onEnd && forward)
             {
                 roadOn = roads[0];
             }
@@ -238,7 +265,6 @@ namespace MultiplayerRacer
                 //on default, road on is always the middle one of the 3
                 roadOn = roads[1];
             }
-            Debug.LogError(trackIndexOn);
         }
 
         /// <summary>

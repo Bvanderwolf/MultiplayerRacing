@@ -29,20 +29,32 @@ namespace MultiplayerRacer
             {
                 switch (value)
                 {
-                    case RoadType.DEFAULT:
-                        sidewalkFlex.transform.localPosition = Vector3.zero;
-                        sidewalkFlex.SetActive(false);
-                        break;
-
-                    case RoadType.START:
-                        sidewalkFlex.transform.localPosition = -SideWalkFlexUpPosition;
-                        break;
-
-                    case RoadType.END:
-                        sidewalkFlex.transform.localPosition = SideWalkFlexUpPosition;
-                        break;
+                    case RoadType.DEFAULT: SetDefaultType(); break;
+                    case RoadType.START: SetStartType(); break;
+                    case RoadType.END: SetEndType(); break;
                 }
             }
+        }
+
+        private void SetDefaultType()
+        {
+            sidewalkFlex.transform.localPosition = Vector3.zero;
+            sidewalkFlex.SetActive(false);
+            roadBound.SetActive(true);
+        }
+
+        private void SetStartType()
+        {
+            sidewalkFlex.transform.localPosition = -SideWalkFlexUpPosition;
+            sidewalkFlex.SetActive(true);
+            roadBound.SetActive(true);
+        }
+
+        private void SetEndType()
+        {
+            sidewalkFlex.transform.localPosition = SideWalkFlexUpPosition;
+            sidewalkFlex.SetActive(true);
+            roadBound.SetActive(false);
         }
 
         /// <summary>
@@ -115,9 +127,9 @@ namespace MultiplayerRacer
         /// <summary>
         /// Shifts the road based on given values (for now y increase/decrease only)
         /// </summary>
-        public void Shift(float y)
+        public void Shift(float newY)
         {
-            transform.localPosition += new Vector3(0, y);
+            transform.localPosition += new Vector3(0, newY);
         }
     }
 }
