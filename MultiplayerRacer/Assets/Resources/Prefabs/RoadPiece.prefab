@@ -695,6 +695,7 @@ MonoBehaviour:
   main: {fileID: 3864603602961914422}
   carSpawns: {fileID: 7909304707564648935}
   sidewalkFlex: {fileID: 5952758328288981025}
+  roadBound: {fileID: 1989301388355483749}
 --- !u!1 &3864603602961914422
 GameObject:
   m_ObjectHideFlags: 0

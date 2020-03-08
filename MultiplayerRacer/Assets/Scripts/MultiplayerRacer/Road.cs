@@ -2,17 +2,48 @@
 
 namespace MultiplayerRacer
 {
+    using RoadType = RoadManager.RoadType;
+
     public class Road : MonoBehaviour
     {
         [SerializeField] private GameObject main;
         [SerializeField] private GameObject carSpawns;
         [SerializeField] private GameObject sidewalkFlex;
+        [SerializeField] private GameObject roadBound;
 
         public GameObject Main => main;
         public Bounds MainBounds => main.GetComponent<SpriteRenderer>().bounds;
 
         public GameObject CarSpawns => carSpawns;
         public Bounds carSpawnBounds => carSpawns.transform.GetChild(0).GetComponent<SpriteRenderer>().bounds;
+
+        public Bounds SideWalkFlexBounds => sidewalkFlex.GetComponent<SpriteRenderer>().bounds;
+        private Vector3 SideWalkFlexUpPosition => new Vector3(0, (MainBounds.size.y * 0.5f) - (SideWalkFlexBounds.size.y * 0.5f));
+
+        private RoadType type;
+
+        public RoadType Type
+        {
+            get => type;
+            set
+            {
+                switch (value)
+                {
+                    case RoadType.DEFAULT:
+                        sidewalkFlex.transform.localPosition = Vector3.zero;
+                        sidewalkFlex.SetActive(false);
+                        break;
+
+                    case RoadType.START:
+                        sidewalkFlex.transform.localPosition = -SideWalkFlexUpPosition;
+                        break;
+
+                    case RoadType.END:
+                        sidewalkFlex.transform.localPosition = SideWalkFlexUpPosition;
+                        break;
+                }
+            }
+        }
 
         /// <summary>
         /// sets all car spawns to an inactive state

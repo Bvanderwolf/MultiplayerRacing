@@ -63,8 +63,8 @@ namespace MultiplayerRacer
                 tracks[i].CheckForStartAndEnd();
             }
 
-            trackIndexOn = 1;
-            roadOn = roads[1];
+            trackIndexOn = 0;
+            roadOn = roads[2];
             roadLength = roadOn.MainBounds.size.y;
         }
 
@@ -159,36 +159,41 @@ namespace MultiplayerRacer
             //define succesfull exit by whether the car was exiting the bound not on the same side as the entry
             bool succesFullExit = onExit && !sameExitAsEntry;
 
+            //define whether we are on start or end
+            bool onStart = trackIndexOn == 0;
+            bool onEnd = trackIndexOn == trackPlaying.RoadCount - 1;
+
             /*if the car had a succesfull exit of the bound, we can increase
             or decrease our trackIndexOn and check for start or end reached
             but don't shift the road*/
             if (succesFullExit)
             {
-                trackIndexOn += roadOnHit ? 1 : -1;
-                //if we are on the last road and are moving backward, we set road on to bottom one
-                if ((trackIndexOn == 0 && !roadOnHit))
-                {
-                    roadOn = roads[2];
-                } //if we are on the last road of the track and are moving forward we set road on to top one
-                else if ((trackIndexOn == trackPlaying.RoadCount - 1 && roadOnHit))
-                {
-                    roadOn = roads[0];
-                }
-                else
-                {
-                    //on default, road on is always the middle one of the 3
-                    roadOn = roads[1];
-                }
-                Debug.LogError(trackIndexOn);
+                UpdateRoadOn(roadOnHit);
                 return;
             }
+
+            bool unSuccesfullExitTowardsStart = !roadOnHit && (onExit && !succesFullExit);
+            bool unSuccesfullExitTowardsEnd = roadOnHit && (onExit && !succesFullExit);
+
+            /*if we are unsuccesfully exiting toward start when on
+            start or unsuccesfully exiting towards end when on end we dont have to shift roads*/
+            if ((unSuccesfullExitTowardsEnd && onStart) || (unSuccesfullExitTowardsStart && onEnd))
+                return;
+
             /*forward shift is defined by whether the car is moving forward (roadOnHit=true) or
              the car had an unsuccesfull exit towards start and the car did not have an unsuccesfull
              exit towards the end*/
-            bool unSuccesfullExitTowardsStart = !roadOnHit && (onExit && !succesFullExit);
-            bool unSuccesfullExitTowardsEnd = roadOnHit && (onExit && !succesFullExit);
             bool forwardShift = (roadOnHit || unSuccesfullExitTowardsStart) && !unSuccesfullExitTowardsEnd;
+            DoRoadShift(forwardShift);
+        }
 
+        /// <summary>
+        /// Shifts the road by moving the bottom road to the front or the front road to
+        /// the bottom based on given forwardShift value
+        /// </summary>
+        /// <param name="forwardShift"></param>
+        private void DoRoadShift(bool forwardShift)
+        {
             //shift top or bottom road based on forward shift value
             int roadIndex = forwardShift ? roads.Length - 1 : 0;
             Road shiftingRoad = roads[roadIndex];
@@ -209,18 +214,55 @@ namespace MultiplayerRacer
             }
         }
 
-        private bool EnteringStartOrEnd(bool onExit, bool forward)
+        /// <summary>
+        /// Updateds roadOn value and trackIndexOn based on given forward value
+        /// </summary>
+        /// <param name="forward"></param>
+        private void UpdateRoadOn(bool forward)
         {
-            bool enteringStart = (trackIndexOn - 1 == 0) && !forward;
-            bool enteringEnd = (trackIndexOn + 2 == trackPlaying.RoadCount) && forward;
-            return !onExit && (enteringStart || enteringEnd);
+            trackIndexOn += forward ? 1 : -1;
+            //define whether we are on start or end
+            bool onStart2 = trackIndexOn == 0;
+            bool onEnd2 = trackIndexOn == trackPlaying.RoadCount - 1;
+            //if we are on the starting road and are moving backward, we set road on to bottom one
+            if (onStart2 && !forward)
+            {
+                roadOn = roads[2];
+            } //if we are on the end of the road and are moving forward we set road on to top one
+            else if (onEnd2 && forward)
+            {
+                roadOn = roads[0];
+            }
+            else
+            {
+                //on default, road on is always the middle one of the 3
+                roadOn = roads[1];
+            }
+            Debug.LogError(trackIndexOn);
         }
 
+        /// <summary>
+        /// returns, based on direction, if we are entering start or end
+        /// </summary>
+        /// <returns></returns>
+        private bool EnteringStartOrEnd(bool onExit, bool forward)
+        {
+            bool enteringStart_Enter = !onExit && (trackIndexOn - 1 == 0) && !forward;
+            bool enteringEnd_Enter = !onExit && (trackIndexOn + 2 == trackPlaying.RoadCount) && forward;
+            return enteringStart_Enter || enteringEnd_Enter;
+        }
+
+        /// <summary>
+        /// returns, based on direction whether we are leaving start or end
+        /// </summary>
+        /// <returns></returns>
         private bool LeavingStartOrEnd(bool onExit, bool forward)
         {
-            bool leavingStart = (trackIndexOn == 0) && forward;
-            bool leavingEnd = (trackIndexOn + 1 == trackPlaying.RoadCount) && !forward;
-            return !onExit && (leavingStart || leavingEnd);
+            bool leavingStart_Enter = !onExit && trackIndexOn == 0 && forward;
+            bool leavingStart_Exit = onExit && trackIndexOn == 1 && !forward;
+            bool leavingEnd_Enter = !onExit && trackIndexOn == trackPlaying.RoadCount - 1 && !forward;
+            bool leavingEnd_Exit = onExit && trackIndexOn + 1 == trackPlaying.RoadCount - 1 && forward;
+            return leavingStart_Enter || leavingEnd_Enter || leavingStart_Exit || leavingEnd_Exit;
         }
 
         /// <summary>
