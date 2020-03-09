@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Photon.Pun;
 using System;
+using ExitGames.Client.Photon;
 
 namespace MultiplayerRacer
 {
@@ -119,6 +120,13 @@ namespace MultiplayerRacer
             canRace = true;
         }
 
+        private void AddFinishInfoToHashTable(string time)
+        {
+            Hashtable table = new Hashtable();
+            table.Add("FinishTime", time);
+            PhotonNetwork.LocalPlayer.SetCustomProperties(table);
+        }
+
         private void OnTriggerEnter2D(Collider2D collision)
         {
             if (!PV.IsMine)
@@ -135,8 +143,8 @@ namespace MultiplayerRacer
             {
                 //get universal time of day on our pc
                 string time = DateTime.UtcNow.TimeOfDay.ToString("c");
-                //send finished rpc with name and time stamp to masterclient
-                PV.RPC("SetFinished", RpcTarget.MasterClient, PhotonNetwork.NickName, time);
+                //add finish time to hash table
+                AddFinishInfoToHashTable(time);
                 //set canRace to false so the player can't input but the car can ease out
                 canRace = false;
             }
@@ -172,15 +180,6 @@ namespace MultiplayerRacer
                 carCamera.SetActive(false);
             }
             else Debug.LogError("Won't set car camera to inactive :: carCamera object is null");
-        }
-
-        [PunRPC]
-        private void SetFinished(string playerName, string time)
-        {
-            if (PhotonNetwork.IsMasterClient)
-            {
-                InRoomManager.Instance.SetRacerFinished(playerName, time);
-            }
         }
     }
 }

@@ -339,7 +339,7 @@ namespace MultiplayerRacer
         /// Call this when a racer has finished to make the room manager
         /// handle this with his resources at hand
         /// </summary>
-        public void SetRacerFinished(string playerName, string time)
+        private void SetRacerFinished(string playerName, string time)
         {
             if (CurrentScene != MultiplayerRacerScenes.GAME || !PhotonNetwork.IsMasterClient)
                 return;
@@ -440,6 +440,10 @@ namespace MultiplayerRacer
 
         public void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
         {
+            if (changedProps.ContainsKey("FinishTime") && PhotonNetwork.IsMasterClient)
+            {
+                SetRacerFinished(targetPlayer.NickName, (string)changedProps["FinishTime"]);
+            }
         }
 
         public void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
