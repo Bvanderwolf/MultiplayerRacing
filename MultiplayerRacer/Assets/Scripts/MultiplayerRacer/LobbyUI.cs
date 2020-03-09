@@ -245,6 +245,7 @@ namespace MultiplayerRacer
             ResetReadyButtons();
             //hide exit button
             HideExitButton();
+            HideRoomStatus();
 
             //start countdown animation and let masterclient load the game scene on end
             animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, true, endAction, check);

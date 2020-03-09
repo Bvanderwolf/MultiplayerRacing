@@ -234,7 +234,7 @@ namespace MultiplayerRacer
                 int newMasterNumber = PhotonNetwork.LocalPlayer.GetNext().ActorNumber;
 
                 //send the room master data to new master with newMasterNumber with leaving set to true
-                InRoomManager.Instance.SendMasterDataToNewMaster(newMasterNumber, true);
+                InRoomManager.Instance.SendMasterDataToNewMaster(newMasterNumber);
 
                 //if a client is leaving send all outgoing commands to make sure the data is send
                 PhotonNetwork.SendAllOutgoingCommands();

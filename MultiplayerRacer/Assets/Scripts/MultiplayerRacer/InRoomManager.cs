@@ -30,7 +30,7 @@ namespace MultiplayerRacer
 
         public enum MultiplayerRacerScenes { LOBBY, GAME }
 
-        private MultiplayerRacerUI UI = null;
+        public enum GamePhase { NONE, SETUP, RACING, FINISH }
 
         public int NumberInRoom { get; private set; } = 0;
         public bool IsReady { get; private set; } = false;
@@ -42,6 +42,7 @@ namespace MultiplayerRacer
         public event Action<MultiplayerRacerScenes> OnSceneReset;
 
         public MultiplayerRacerScenes CurrentScene { get; private set; } = MultiplayerRacerScenes.LOBBY;
+        private GamePhase CurrentGamePhase = GamePhase.NONE;
 
         public int NextLevelIndex
         {
@@ -61,6 +62,8 @@ namespace MultiplayerRacer
         public const float READY_SEND_TIMEOUT = 0.75f;
 
         private PhotonView PV;
+        private MultiplayerRacerUI UI = null;
+        private bool IsResetAble => CurrentScene == MultiplayerRacerScenes.LOBBY || CurrentGamePhase == GamePhase.SETUP;
 
         /*
          master client attributes are stored inside the room master instance
@@ -139,7 +142,7 @@ namespace MultiplayerRacer
         {
             if (matchMakingManager == MatchMakingManager.Instance)
             {
-                Master = new RoomMaster(new int[MatchMakingManager.MAX_PLAYERS]);
+                Master = new RoomMaster();
             }
             else Debug.LogError("matchmaking manager reference is null or not the singleton instance");
         }
@@ -175,13 +178,13 @@ namespace MultiplayerRacer
         /// the roomMaster data to the newly assigned master client
         /// </summary>
         /// <param name="newMasterNumber"></param>
-        public void SendMasterDataToNewMaster(int newMasterNumber, bool wasLeaving)
+        public void SendMasterDataToNewMaster(int newMasterNumber)
         {
             if (newMasterNumber < 0 || !RoomMaster.Registered)
                 return;
 
             //send RPC call with master client data to new master client
-            PV.RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber, Master, wasLeaving);
+            PV.RPC("UpdateRoomMaster", RpcTarget.All, newMasterNumber, Master);
         }
 
         /// <summary>
@@ -244,6 +247,7 @@ namespace MultiplayerRacer
 
         private void OnRaceStart()
         {
+            CurrentGamePhase = GamePhase.RACING;
             //make car controls available to players
             OnGameStart?.Invoke();
         }
@@ -278,6 +282,7 @@ namespace MultiplayerRacer
             }
 
             CurrentScene = (MultiplayerRacerScenes)scene.buildIndex; //set current scene to game scene build index(should be 1)
+            CurrentGamePhase = GamePhase.SETUP;
             SetReady(false); //reset ready value for usage in game scene
 
             //now that currentScene is updated, we set our canvas reference
@@ -304,19 +309,19 @@ namespace MultiplayerRacer
             //the masterclient resets the players ready count when someone leaves
             if (PhotonNetwork.IsMasterClient)
             {
-                //if the master client is the only one left in the game scene he will need to leave the room as well
-                if (CurrentScene == MultiplayerRacerScenes.GAME && PhotonNetwork.CurrentRoom.PlayerCount == 1)
+                if (CurrentScene == MultiplayerRacerScenes.GAME)
                 {
-                    Debug.LogError("Last player in game scene :: Leaving Room");
-                    StartCoroutine(LastManLeaveWithDelay());
+                    //if the master client is the only one left he leaves the room
+                    if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
+                    {
+                        Debug.LogError("Last player in game scene :: Leaving Room");
+                        StartCoroutine(LastManLeaveWithDelay());
+                        return;
+                    }
+                    Master.UpdatePlayersInGameScene(false);
+                    ((GameUI)UI).SendShowReadyUpInfo();
                 }
-                /*reset players ready provided, of course, that the RoomMaster data has been transefered already.
-                 if this is not the case consistently, we need some kind of fallback for this*/
-                if (Master != null)
-                {
-                    Master.ResetPlayersReady();
-                }
-                else Debug.LogError("Failed resetting players ready on player leave :: RoomMaster instance is null");
+                Master.ResetPlayersReady();
             }
         }
 
@@ -339,13 +344,13 @@ namespace MultiplayerRacer
             if (CurrentScene != MultiplayerRacerScenes.GAME || !PhotonNetwork.IsMasterClient)
                 return;
             //define whether the racer is the winning racer by checking player finished count
-            bool winningRacer = Master.PlayersFinished.Length == 0;
+            bool winningRacer = Master.PlayersFinished == 0;
             //update players finished
-            Master.UpdatePlayersFinished(NumberInRoom);
-            if (Master.RaceIsFinished())
+            Master.UpdatePlayersFinished();
+            if (Master.RaceIsFinished)
             {
-                //if the race is finished, show the leaderboard showing players the rankings
-                PV.RPC("ShowLeaderBoard", RpcTarget.AllViaServer);
+                //if the race is finished, tell all players this
+                PV.RPC("OnRaceEnded", RpcTarget.AllViaServer);
             }
             else
             {
@@ -411,32 +416,26 @@ namespace MultiplayerRacer
             Room room = PhotonNetwork.CurrentRoom;
             UI.UpdateRoomInfo(room);
             UI.UpdateNickname(MatchMakingManager.Instance.MakeNickname());
-            UI.ShowExitButton();
-            UI.ShowRoomStatus();
             //Update Room status based on current scene
             switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
-                    //lobbyUI related updates
                     LobbyUI lobbyUI = (LobbyUI)UI;
                     lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                     lobbyUI.UpdateReadyButtons(room.PlayerCount);
                     break;
 
                 case MultiplayerRacerScenes.GAME:
-                    //gameUI related updates
-                    if (PhotonNetwork.IsMasterClient)
-                    {
-                        //make the game ui send ready up info
-                        ((GameUI)UI).SendShowReadyUpInfo();
-                    }
-                    break;
-
-                default:
                     break;
             }
             SetReady(false);
-            OnSceneReset?.Invoke(CurrentScene); //on scene reset gets fired after all changes have been dome
+            //if resetable, on scene reset gets fired after all changes have been dome
+            if (IsResetAble)
+            {
+                UI.ShowExitButton();
+                UI.ShowRoomStatus();
+                OnSceneReset?.Invoke(CurrentScene);
+            }
         }
 
         public void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
@@ -457,10 +456,7 @@ namespace MultiplayerRacer
                 int index = 0;
                 Protocol.Serialize(rm.PlayersReady, bytes, ref index);
                 Protocol.Serialize(rm.PlayersInGameScene, bytes, ref index);
-                for (int i = 0; i < MatchMakingManager.MAX_PLAYERS; i++)
-                {
-                    Protocol.Serialize(rm.PlayersFinished[i], bytes, ref index);
-                }
+                Protocol.Serialize(rm.PlayersFinished, bytes, ref index);
                 outStream.Write(bytes, 0, RoomMaster.BYTESIZE);
             }
             return RoomMaster.BYTESIZE;
@@ -470,17 +466,14 @@ namespace MultiplayerRacer
         {
             int playersready;
             int playersingamescene;
-            int[] playersfinished = new int[MatchMakingManager.MAX_PLAYERS];
+            int playersfinished;
             lock (memRoomMaster)
             {
                 inStream.Read(memRoomMaster, 0, RoomMaster.BYTESIZE);
                 int index = 0;
                 Protocol.Deserialize(out playersready, memRoomMaster, ref index);
                 Protocol.Deserialize(out playersingamescene, memRoomMaster, ref index);
-                for (int i = 0; i < MatchMakingManager.MAX_PLAYERS; i++)
-                {
-                    Protocol.Deserialize(out playersfinished[i], memRoomMaster, ref index);
-                }
+                Protocol.Deserialize(out playersfinished, memRoomMaster, ref index);
             }
             RoomMaster rm = new RoomMaster(playersfinished, playersready, playersingamescene);
 
@@ -499,8 +492,9 @@ namespace MultiplayerRacer
         }
 
         [PunRPC]
-        private void ShowLeaderBoard()
+        private void OnRaceEnded()
         {
+            CurrentGamePhase = GamePhase.FINISH;
             ((GameUI)UI).ShowLeaderboard();
         }
 
@@ -533,17 +527,12 @@ namespace MultiplayerRacer
         }
 
         [PunRPC]
-        private void UpdateRoomMaster(int newRoomMasterNumber, RoomMaster newMaster, bool wasLeaving)
+        private void UpdateRoomMaster(int newRoomMasterNumber, RoomMaster newMaster)
         {
             //if your actornumber matches the new room master number you get the data
             if (PhotonNetwork.LocalPlayer.ActorNumber == newRoomMasterNumber)
             {
                 Master = newMaster;
-                //if the master client was leaving we make sure to handle that
-                if (wasLeaving)
-                {
-                    Master.ResetPlayersReady();
-                }
             }
         }
 

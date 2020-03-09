@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using Photon.Pun;
+using Photon.Realtime;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace MultiplayerRacer
 {
@@ -7,58 +10,34 @@ namespace MultiplayerRacer
         public static bool Registered { get; private set; } = false;
         public int PlayersReady { get; private set; } = 0;
         public int PlayersInGameScene { get; private set; } = 0;
-        public int[] PlayersFinished;
+        public int PlayersFinished { get; private set; } = 0;
 
         public const float LAST_MAN_LEAVE_DELAY = 4f;
 
-        public const int BYTESIZE = (2 * 4) + (4 + 16 - 2);
+        public const int BYTESIZE = 3 * 4;
 
-        public RoomMaster(int[] finishedPlayers, int playersready = 0, int playersingamescene = 0)
+        public RoomMaster(int playersfinished = 0, int playersready = 0, int playersingamescene = 0)
         {
             PlayersReady = playersready;
             PlayersInGameScene = playersingamescene;
-            PlayersFinished = finishedPlayers;
+            PlayersFinished = playersfinished;
         }
 
-        public bool RaceIsFinished()
-        {
-            if (PlayersFinished == null)
-                return false;
-
-            int count = 0;
-            for (int i = 0; i < PlayersFinished.Length; i++)
-            {
-                if (PlayersFinished[i] != 0)
-                    count++;
-            }
-            return count == PlayersInGameScene;
-        }
+        public bool RaceIsFinished => PlayersFinished == PlayersInGameScene;
 
         public static void SetRegistered()
         {
             Registered = true;
         }
 
-        public void UpdatePlayersFinished(int numberInRoom)
-        {
-            if (PlayersFinished == null)
-                return;
-
-            for (int i = 0; i < PlayersFinished.Length; i++)
-            {
-                if (PlayersFinished[i] == 0)
-                {
-                    PlayersFinished[i] = numberInRoom;
-                    break;
-                }
-                if (i == PlayersFinished.Length)
-                    Debug.LogError("tried adding number in room to full players finished array");
-            }
-        }
-
         public void ResetPlayersReady()
         {
             PlayersReady = 0;
+        }
+
+        public void UpdatePlayersFinished()
+        {
+            PlayersFinished++;
         }
 
         public void UpdatePlayersReady(bool ready)
