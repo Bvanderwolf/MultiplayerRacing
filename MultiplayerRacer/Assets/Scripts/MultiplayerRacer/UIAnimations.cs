@@ -34,8 +34,6 @@ namespace MultiplayerRacer
         /// <summary>
         /// Makes given button uninteractable for given ammount of time
         /// </summary>
-        /// <param name="button"></param>
-        /// <param name="time"></param>
         public void TimeOutButton(Button button, float time)
         {
             if (button != null && time > 0)
@@ -46,14 +44,27 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
+        /// Does a popup op of given text. If given text is null or empty, uses text
+        /// component its text;
+        /// </summary>
+        public void PopupText(GameObject textGo, string text, float fadeDelay = 0, bool withFade = true)
+        {
+            if (textGo != null && textGo.GetComponent<Text>() != null)
+            {
+                if (!string.IsNullOrEmpty(text))
+                {
+                    Text textComp = textGo.GetComponent<Text>();
+                    textComp.text = text;
+                }
+                StartCoroutine(PopupTextEnumerator(textGo, null, withFade));
+            }
+            else Debug.LogError("text game object or Text component is null");
+        }
+
+        /// <summary>
         /// Does countdown with given values, can take and onEnd action to invoke when done
         /// Can also take an check Func to stop coroutine if this asserts to false after a count
         /// </summary>
-        /// <param name="go"></param>
-        /// <param name="count"></param>
-        /// <param name="withFade"></param>
-        /// <param name="onEnd"></param>
-        /// <param name="check"></param>
         /// <returns></returns>
         private IEnumerator DoCountDown(GameObject go, int count, bool withFade = false, Action onEnd = null, Func<bool> check = null)
         {
@@ -85,7 +96,7 @@ namespace MultiplayerRacer
             onEnd?.Invoke();
         }
 
-        private IEnumerator PopupTextEnumerator(GameObject go, Action callback, bool withFade = false)
+        private IEnumerator PopupTextEnumerator(GameObject go, Action callback, bool withFade = false, float fadeDelay = 0)
         {
             //scale text
             yield return StartCoroutine(ScaleText(go.transform));
@@ -93,6 +104,7 @@ namespace MultiplayerRacer
             //fade text if needed
             if (withFade)
             {
+                yield return new WaitForSeconds(fadeDelay);
                 Text textComp = go.GetComponent<Text>();
                 yield return StartCoroutine(FadeText(textComp, textComp.color));
             }

@@ -10,10 +10,13 @@ namespace MultiplayerRacer
     public class GameUI : MultiplayerRacerUI
     {
         [SerializeField] private GameObject readyUpInfo;
+        [SerializeField] private GameObject eventText;
+        [SerializeField] private GameObject leaderBoard;
         [SerializeField] private KeyCode readyUpKey;
         [SerializeField] private KeyCode readyUpResetKey;
 
         private const float READYUP_INFO_SHOW_DELAY = 0.75f;
+        private const float EVENT_TEXT_FADE_DELAY = 2f;
         private string readyUpResetText;
 
         private PhotonView PV;
@@ -23,6 +26,39 @@ namespace MultiplayerRacer
             base.Awake();
             PV = GetComponent<PhotonView>();
             readyUpResetText = $"Press {readyUpResetKey} key to start Ready up";
+        }
+
+        /// <summary>
+        /// Shows text on screen
+        /// </summary>
+        /// <param name="text"></param>
+        public void ShowText(string text)
+        {
+            animations.PopupText(eventText, text, EVENT_TEXT_FADE_DELAY);
+        }
+
+        /// <summary>
+        /// tries showing the leaderboard
+        /// </summary>
+        public void ShowLeaderboard()
+        {
+            if (leaderBoard != null)
+            {
+                leaderBoard.SetActive(true);
+            }
+            else Debug.LogError("wont show leaderboard :: is null");
+        }
+
+        /// <summary>
+        /// tries hiding the leaderboard
+        /// </summary>
+        public void HideLeaderBoard()
+        {
+            if (leaderBoard != null)
+            {
+                leaderBoard.SetActive(false);
+            }
+            else Debug.LogError("wont hide leaderboard :: is null");
         }
 
         /// <summary>

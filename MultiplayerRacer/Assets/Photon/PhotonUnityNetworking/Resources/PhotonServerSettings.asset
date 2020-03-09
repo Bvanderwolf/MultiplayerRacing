@@ -44,5 +44,9 @@ MonoBehaviour:
   - UpdateRoomMaster
   - UpdateReadyStatus
   - LeaveRoomForcibly
+  - SendFinished
+  - SetFinished
+  - ShowPlayerFinishedInfo
+  - ShowLeaderBoard
   DisableAutoOpenWizard: 1
   ShowSettings: 0

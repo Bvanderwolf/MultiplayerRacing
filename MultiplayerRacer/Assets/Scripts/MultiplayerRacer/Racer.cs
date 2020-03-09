@@ -131,6 +131,15 @@ namespace MultiplayerRacer
                 //fire event returning the parent gameobject which is the RoadPiece
                 OnRoadBoundInteraction(collision.transform.parent.gameObject, false, false);
             }
+            else if (collision.tag == "Finish")
+            {
+                //get universal time of day on our pc
+                string time = DateTime.UtcNow.TimeOfDay.ToString("c");
+                //send finished rpc with name and time stamp to masterclient
+                PV.RPC("SetFinished", RpcTarget.MasterClient, PhotonNetwork.NickName, time);
+                //set canRace to false so the player can't input but the car can ease out
+                canRace = false;
+            }
         }
 
         private void OnTriggerExit2D(Collider2D collision)
@@ -163,6 +172,15 @@ namespace MultiplayerRacer
                 carCamera.SetActive(false);
             }
             else Debug.LogError("Won't set car camera to inactive :: carCamera object is null");
+        }
+
+        [PunRPC]
+        private void SetFinished(string playerName, string time)
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                InRoomManager.Instance.SetRacerFinished(playerName, time);
+            }
         }
     }
 }

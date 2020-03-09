@@ -12,7 +12,8 @@ namespace MultiplayerRacer
     public class InRoomManager : MonoBehaviour, IInRoomCallbacks
     {
         public static InRoomManager Instance { get; private set; }
-        public static readonly byte[] memRoomMaster = new byte[2 * 4];
+
+        public static readonly byte[] memRoomMaster = new byte[RoomMaster.BYTESIZE];
 
         /// <summary>
         /// returns, based on PhotonNetwork.CurrentRoom, whether the room in is full or not
@@ -138,7 +139,7 @@ namespace MultiplayerRacer
         {
             if (matchMakingManager == MatchMakingManager.Instance)
             {
-                Master = new RoomMaster();
+                Master = new RoomMaster(new int[MatchMakingManager.MAX_PLAYERS]);
             }
             else Debug.LogError("matchmaking manager reference is null or not the singleton instance");
         }
@@ -319,10 +320,38 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// Use this for the masterclient, when he leaves after the room is empty
+        /// </summary>
+        /// <returns></returns>
         private IEnumerator LastManLeaveWithDelay()
         {
             yield return new WaitForSeconds(RoomMaster.LAST_MAN_LEAVE_DELAY);
             MatchMakingManager.Instance.LeaveRoomForced();
+        }
+
+        /// <summary>
+        /// Call this when a racer has finished to make the room manager
+        /// handle this with his resources at hand
+        /// </summary>
+        public void SetRacerFinished(string playerName, string time)
+        {
+            if (CurrentScene != MultiplayerRacerScenes.GAME || !PhotonNetwork.IsMasterClient)
+                return;
+            //define whether the racer is the winning racer by checking player finished count
+            bool winningRacer = Master.PlayersFinished.Length == 0;
+            //update players finished
+            Master.UpdatePlayersFinished(NumberInRoom);
+            if (Master.RaceIsFinished())
+            {
+                //if the race is finished, show the leaderboard showing players the rankings
+                PV.RPC("ShowLeaderBoard", RpcTarget.AllViaServer);
+            }
+            else
+            {
+                //if race is not finished, tell all clients to show information on player finishing
+                PV.RPC("ShowPlayerFinishedInfo", RpcTarget.AllViaServer, playerName, time, winningRacer);
+            }
         }
 
         public void OnMasterClientSwitched(Player newMasterClient)
@@ -428,25 +457,51 @@ namespace MultiplayerRacer
                 int index = 0;
                 Protocol.Serialize(rm.PlayersReady, bytes, ref index);
                 Protocol.Serialize(rm.PlayersInGameScene, bytes, ref index);
-                outStream.Write(bytes, 0, 2 * 4);
+                for (int i = 0; i < MatchMakingManager.MAX_PLAYERS; i++)
+                {
+                    Protocol.Serialize(rm.PlayersFinished[i], bytes, ref index);
+                }
+                outStream.Write(bytes, 0, RoomMaster.BYTESIZE);
             }
-            return 2 * 4;
+            return RoomMaster.BYTESIZE;
         }
 
         private static object DeserializeRoomMaster(StreamBuffer inStream, short length)
         {
             int playersready;
             int playersingamescene;
+            int[] playersfinished = new int[MatchMakingManager.MAX_PLAYERS];
             lock (memRoomMaster)
             {
-                inStream.Read(memRoomMaster, 0, 2 * 4);
+                inStream.Read(memRoomMaster, 0, RoomMaster.BYTESIZE);
                 int index = 0;
                 Protocol.Deserialize(out playersready, memRoomMaster, ref index);
                 Protocol.Deserialize(out playersingamescene, memRoomMaster, ref index);
+                for (int i = 0; i < MatchMakingManager.MAX_PLAYERS; i++)
+                {
+                    Protocol.Deserialize(out playersfinished[i], memRoomMaster, ref index);
+                }
             }
-            RoomMaster rm = new RoomMaster(playersready, playersingamescene);
+            RoomMaster rm = new RoomMaster(playersfinished, playersready, playersingamescene);
 
             return rm;
+        }
+
+        [PunRPC]
+        private void ShowPlayerFinishedInfo(string playerName, string time, bool winnerPlayer)
+        {
+            //if we where the racer finishing, we dont have the see the information
+            if (PhotonNetwork.NickName == playerName)
+                return;
+
+            string text = $"{playerName} finished{(winnerPlayer ? " first " : " ")}at {time}";
+            ((GameUI)UI).ShowText(text);
+        }
+
+        [PunRPC]
+        private void ShowLeaderBoard()
+        {
+            ((GameUI)UI).ShowLeaderboard();
         }
 
         [PunRPC]

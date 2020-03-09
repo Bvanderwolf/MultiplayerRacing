@@ -10,6 +10,7 @@ namespace MultiplayerRacer
         [SerializeField] private GameObject carSpawns;
         [SerializeField] private GameObject sidewalkFlex;
         [SerializeField] private GameObject roadBound;
+        [SerializeField] private GameObject finish;
 
         public GameObject Main => main;
         public Bounds MainBounds => main.GetComponent<SpriteRenderer>().bounds;
@@ -41,6 +42,7 @@ namespace MultiplayerRacer
             sidewalkFlex.transform.localPosition = Vector3.zero;
             sidewalkFlex.SetActive(false);
             roadBound.SetActive(true);
+            finish.SetActive(false);
         }
 
         private void SetStartType()
@@ -48,6 +50,7 @@ namespace MultiplayerRacer
             sidewalkFlex.transform.localPosition = -SideWalkFlexUpPosition;
             sidewalkFlex.SetActive(true);
             roadBound.SetActive(true);
+            finish.SetActive(false);
         }
 
         private void SetEndType()
@@ -55,6 +58,7 @@ namespace MultiplayerRacer
             sidewalkFlex.transform.localPosition = SideWalkFlexUpPosition;
             sidewalkFlex.SetActive(true);
             roadBound.SetActive(false);
+            finish.SetActive(true);
         }
 
         /// <summary>
