@@ -160,9 +160,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bf0a5be74bfb94439065da0a7e93691, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  acceleration: 3.5
-  steering: 4
-  maxVelocity: 10
+  acceleration: 3
+  steering: 3.5
+  maxVelocity: 8
 --- !u!50 &4944676356826775653
 Rigidbody2D:
   serializedVersion: 4
