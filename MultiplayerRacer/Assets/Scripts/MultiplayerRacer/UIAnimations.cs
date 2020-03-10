@@ -21,12 +21,12 @@ namespace MultiplayerRacer
         /// <param name="count"></param>
         /// <param name="withFade"></param>
         /// <param name="onEnd"></param>
-        public void CountDown(GameObject textGo, int count, bool withFade = false, Action onEnd = null, Func<bool> check = null)
+        public void CountDown(GameObject textGo, int count, Action onEnd = null, Func<bool> check = null)
         {
             //start countdown coroutine if gameobject is not null and has text component
             if (textGo != null && textGo.GetComponent<Text>() != null)
             {
-                StartCoroutine(DoCountDown(textGo, count, withFade, onEnd, check));
+                StartCoroutine(DoCountDown(textGo, count, onEnd, check));
             }
             else Debug.LogError("text game object is null or has no text component");
         }
@@ -44,19 +44,20 @@ namespace MultiplayerRacer
         }
 
         /// <summary>
-        /// Does a popup op of given text. If given text is null or empty, uses text
+        /// Does a popup op of given text with fade. If given text is null or empty, uses text
         /// component its text;
         /// </summary>
-        public void PopupText(GameObject textGo, string text, float fadeDelay = 0, bool withFade = true)
+        public void PopupText(GameObject textGo, string text, float fadeDelay = 0)
         {
             if (textGo != null && textGo.GetComponent<Text>() != null)
             {
+                Text textComp = textGo.GetComponent<Text>();
+                Color color = textComp.color;
                 if (!string.IsNullOrEmpty(text))
                 {
-                    Text textComp = textGo.GetComponent<Text>();
                     textComp.text = text;
                 }
-                StartCoroutine(PopupTextEnumerator(textGo, null, withFade));
+                StartCoroutine(PopupTextWithReset(textGo, color, fadeDelay));
             }
             else Debug.LogError("text game object or Text component is null");
         }
@@ -66,7 +67,7 @@ namespace MultiplayerRacer
         /// Can also take an check Func to stop coroutine if this asserts to false after a count
         /// </summary>
         /// <returns></returns>
-        private IEnumerator DoCountDown(GameObject go, int count, bool withFade = false, Action onEnd = null, Func<bool> check = null)
+        private IEnumerator DoCountDown(GameObject go, int count, Action onEnd = null, Func<bool> check = null)
         {
             CountingDown = true;
             Text goText = go.GetComponent<Text>();
@@ -82,7 +83,7 @@ namespace MultiplayerRacer
             for (int current = count; current > 0; current--)
             {
                 goText.text = current.ToString();
-                yield return StartCoroutine(PopupTextEnumerator(go, null, withFade));
+                yield return StartCoroutine(PopupTextWithoutReset(go, null));
                 go.transform.localScale = Vector3.zero;
                 go.GetComponent<Text>().color = goTextColor;
                 if (hasCeck && !check.Invoke())
@@ -96,20 +97,28 @@ namespace MultiplayerRacer
             onEnd?.Invoke();
         }
 
-        private IEnumerator PopupTextEnumerator(GameObject go, Action callback, bool withFade = false, float fadeDelay = 0)
+        private IEnumerator PopupTextWithoutReset(GameObject go, Action callback, float fadeDelay = 0)
         {
             //scale text
             yield return StartCoroutine(ScaleText(go.transform));
 
-            //fade text if needed
-            if (withFade)
-            {
-                yield return new WaitForSeconds(fadeDelay);
-                Text textComp = go.GetComponent<Text>();
-                yield return StartCoroutine(FadeText(textComp, textComp.color));
-            }
+            //fade text
+            yield return new WaitForSeconds(fadeDelay);
+            Text textComp = go.GetComponent<Text>();
+            yield return StartCoroutine(FadeText(textComp, textComp.color));
 
             callback?.Invoke();
+        }
+
+        private IEnumerator PopupTextWithReset(GameObject go, Color resetColor, float fadeDelay = 0)
+        {
+            //scale text
+            yield return StartCoroutine(ScaleText(go.transform));
+            yield return new WaitForSeconds(fadeDelay);
+            Text textComp = go.GetComponent<Text>();
+            yield return StartCoroutine(FadeText(textComp, textComp.color));
+            go.transform.localScale = Vector3.zero;
+            textComp.color = resetColor;
         }
 
         private IEnumerator ScaleText(Transform transform)

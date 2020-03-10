@@ -16,6 +16,7 @@ namespace MultiplayerRacer
         [SerializeField] private KeyCode readyUpResetKey;
 
         private const float READYUP_INFO_SHOW_DELAY = 0.75f;
+        private const float RACE_END_OPTIONS_SHOW_DELAY = 4f;
         private const float EVENT_TEXT_FADE_DELAY = 2f;
         private string readyUpResetText;
 
@@ -85,13 +86,51 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// should be called by the master client when the race has ended
+        /// and the game can be reset or cleared
+        /// </summary>
+        public void ShowRaceEndedOptionsWithDelay()
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                StartCoroutine(ShowRaceEndedOptionsDelayed());
+            }
+        }
+
         public void StartCountDownForRaceStart(Action endAction, Func<bool> check)
         {
             //hide unnecessary UI Elements
             HideExitButton();
             HideRoomStatus();
 
-            animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, true, endAction, check);
+            animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, endAction, check);
+        }
+
+        private IEnumerator ShowRaceEndedOptionsDelayed()
+        {
+            //after delay show event text
+            yield return new WaitForSeconds(RACE_END_OPTIONS_SHOW_DELAY);
+            eventText.transform.localScale = Vector3.one;
+
+            //define our restart key and our end game key
+            KeyCode restartKey = readyUpKey;
+            KeyCode endGameKey = readyUpResetKey;
+
+            //set text to show the player the options
+            string text = $"Press {restartKey} to restart the game or {endGameKey} to end the game";
+            eventText.GetComponent<Text>().text = text;
+
+            /*define our check as the player not pressing the end game key, so that
+            if pressed our result is turned in with succes=false which means game end*/
+            Func<bool> check = () => !Input.GetKeyDown(endGameKey);
+
+            //get our car game object and wait for player input
+            GameObject car = (GameObject)PhotonNetwork.LocalPlayer.TagObject;
+            car.GetComponent<RacerInput>().WaitForPlayerInput(
+                restartKey,
+                (succes) => SetRaceEndOptionChoosenResult(succes),
+                check);
         }
 
         private IEnumerator SetupReadyUpWithDelay()
@@ -104,12 +143,22 @@ namespace MultiplayerRacer
             Room room = PhotonNetwork.CurrentRoom;
             int count = room.PlayerCount;
 
-            //get our car game object and if found wait for player input
+            //get our car game object and wait for player input
             GameObject car = (GameObject)PhotonNetwork.LocalPlayer.TagObject;
             car.GetComponent<RacerInput>().WaitForPlayerInput(
                 readyUpKey,
                 (succes) => SetReadyUpResult(succes),
                 () => count == room.PlayerCount);
+        }
+
+        /// <summary>
+        /// Handles setup after master client choose from his race end options
+        /// </summary>
+        /// <param name="succes"></param>
+        private void SetRaceEndOptionChoosenResult(bool succes)
+        {
+            eventText.transform.localScale = Vector3.zero;
+            Debug.LogError("race end options ended with result " + succes);
         }
 
         /// <summary>

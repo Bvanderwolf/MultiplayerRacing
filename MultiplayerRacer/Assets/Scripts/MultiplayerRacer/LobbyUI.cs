@@ -248,7 +248,7 @@ namespace MultiplayerRacer
             HideRoomStatus();
 
             //start countdown animation and let masterclient load the game scene on end
-            animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, true, endAction, check);
+            animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, endAction, check);
         }
 
         [PunRPC]

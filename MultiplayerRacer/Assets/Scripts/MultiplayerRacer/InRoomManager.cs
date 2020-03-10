@@ -432,7 +432,14 @@ namespace MultiplayerRacer
         private void OnRaceEnded(Player[] finishedPlayersOrdered)
         {
             CurrentGamePhase = GamePhase.FINISH;
-            ((GameUI)UI).ShowLeaderboard(finishedPlayersOrdered);
+
+            GameUI gameUI = (GameUI)UI;
+            gameUI.ShowLeaderboard(finishedPlayersOrdered);
+            if (PhotonNetwork.IsMasterClient)
+            {
+                //the masterclient will have options to choose from on end
+                gameUI.ShowRaceEndedOptionsWithDelay();
+            }
         }
 
         [PunRPC]
