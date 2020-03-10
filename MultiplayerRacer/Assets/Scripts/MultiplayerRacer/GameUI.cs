@@ -232,8 +232,8 @@ namespace MultiplayerRacer
         [PunRPC]
         private void ShowReadyUpInfo()
         {
-            /*it can happen that a player is already ready when setting up ready up
-             after a ready up reset. To handle this we just set his value to false*/
+            /*it can happen that a player is already ready when setting up ready up,
+             after a reset. To handle this we just set this value to false*/
             if (InRoomManager.Instance.IsReady)
             {
                 InRoomManager.Instance.SetReady(false);
