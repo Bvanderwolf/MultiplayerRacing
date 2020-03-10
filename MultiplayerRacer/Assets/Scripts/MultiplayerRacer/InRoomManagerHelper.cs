@@ -1,5 +1,10 @@
 ﻿using ExitGames.Client.Photon;
 using MultiplayerRacerEnums;
+using Photon.Pun;
+using Photon.Realtime;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace MultiplayerRacer
@@ -26,6 +31,33 @@ namespace MultiplayerRacer
             return null;
         }
 
+        /// <summary>
+        /// Returns an ordered array based on what time
+        /// players have finished where index 0 is first
+        /// and length - 1 is last
+        /// </summary>
+        /// <returns></returns>
+        public Player[] GetFinishedPlayersOrdered()
+        {
+            Dictionary<int, Player> players = PhotonNetwork.CurrentRoom.Players;
+            Player[] playersOrdered = new Player[players.Count];
+            //fill times dictionary with unordered values
+            foreach (KeyValuePair<int, Player> pair in players)
+            {
+                playersOrdered[pair.Key - 1] = pair.Value;
+            }
+            //return an order list based on the finish time
+            return playersOrdered.OrderBy((p) =>
+            {
+                string timeString = (string)p.CustomProperties["FinishTime"];
+                return TimeSpan.Parse(timeString);
+            }).ToArray();
+        }
+
+        /// <summary>
+        /// registers RoomMaster as custom type and returns the result
+        /// </summary>
+        /// <returns></returns>
         public bool RegisterRoomMaster()
         {
             return PhotonPeer.RegisterType(typeof(RoomMaster), (byte)RoomMaster.CODE, SerializeRoomMaster, DeserializeRoomMaster);

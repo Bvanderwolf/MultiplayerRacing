@@ -40,10 +40,22 @@ namespace MultiplayerRacer
         /// <summary>
         /// tries showing the leaderboard
         /// </summary>
-        public void ShowLeaderboard()
+        public void ShowLeaderboard(Player[] finishedPlayersOrdered)
         {
             if (leaderBoard != null)
             {
+                Transform itemsTF = leaderBoard.transform.Find("Items");
+                //loop through "finishedPlayersOrdered length" ammount of children and set them up
+                for (int ci = 0; ci < finishedPlayersOrdered.Length; ci++)
+                {
+                    Transform child = itemsTF.GetChild(ci);
+
+                    Text nickname = child.Find("Name").GetComponent<Text>();
+                    nickname.text = finishedPlayersOrdered[ci].NickName;
+
+                    Text time = child.Find("Time").GetComponent<Text>();
+                    time.text = (string)finishedPlayersOrdered[ci].CustomProperties["FinishTime"];
+                }
                 leaderBoard.SetActive(true);
             }
             else Debug.LogError("wont show leaderboard :: is null");

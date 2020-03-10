@@ -266,32 +266,39 @@ namespace MultiplayerRacer
         /// </summary>
         private void OnPlayerLeftMaster()
         {
-            //the masterclient resets the players ready count when someone leaves
-            if (PhotonNetwork.IsMasterClient)
+            if (!PhotonNetwork.IsMasterClient)
+                return;
+
+            //if the master client is the only one left he leaves the room
+            if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
             {
-                //if the master client is the only one left he leaves the room
-                if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
-                {
-                    Debug.LogError("Last player in game scene :: Leaving Room");
-                    StartCoroutine(LastManLeaveWithDelay());
-                    return;
-                }
-                switch (CurrentScene)
-                {
-                    //in the lobby scene we just reset the players ready
-                    case MultiplayerRacerScenes.LOBBY:
-                        Master.ResetPlayersReady();
-                        break;
-                    //in the game scene, we update players in game scene
-                    case MultiplayerRacerScenes.GAME:
-                        Master.UpdatePlayersInGameScene(false);
-                        //if we where in game setup we show ready up info again.
-                        if (CurrentGamePhase == GamePhase.SETUP)
-                        {
-                            ((GameUI)UI).SendShowReadyUpInfo();
-                        }
-                        break;
-                }
+                Debug.LogError("Last player in game scene :: Leaving Room");
+                StartCoroutine(LastManLeaveWithDelay());
+                return;
+            }
+            switch (CurrentScene)
+            {
+                //in the lobby scene we just reset the players ready
+                case MultiplayerRacerScenes.LOBBY:
+                    Master.ResetPlayersReady();
+                    break;
+                //in the game scene, we update players in game scene
+                case MultiplayerRacerScenes.GAME:
+                    Master.UpdatePlayersInGameScene(false);
+                    switch (CurrentGamePhase)
+                    {
+                        //in the setup gamephase send all players ready up info again
+                        case GamePhase.SETUP: ((GameUI)UI).SendShowReadyUpInfo(); break;
+                        case GamePhase.RACING:
+                            //the race can be finished if the last player left to finish, left the room
+                            if (Master.RaceIsFinished)
+                            {
+                                Player[] finishedPlayersOrdered = helper.GetFinishedPlayersOrdered();
+                                PV.RPC("OnRaceEnded", RpcTarget.AllViaServer, finishedPlayersOrdered);
+                            }
+                            break;
+                    }
+                    break;
             }
         }
 
@@ -319,8 +326,10 @@ namespace MultiplayerRacer
             Master.UpdatePlayersFinished();
             if (Master.RaceIsFinished)
             {
+                //get a list of players ordered based on finish time
+                Player[] finishedPlayersOrdered = helper.GetFinishedPlayersOrdered();
                 //if the race is finished, tell all players this
-                PV.RPC("OnRaceEnded", RpcTarget.AllViaServer);
+                PV.RPC("OnRaceEnded", RpcTarget.AllViaServer, finishedPlayersOrdered);
             }
             else
             {
@@ -420,10 +429,10 @@ namespace MultiplayerRacer
         }
 
         [PunRPC]
-        private void OnRaceEnded()
+        private void OnRaceEnded(Player[] finishedPlayersOrdered)
         {
             CurrentGamePhase = GamePhase.FINISH;
-            ((GameUI)UI).ShowLeaderboard();
+            ((GameUI)UI).ShowLeaderboard(finishedPlayersOrdered);
         }
 
         [PunRPC]
