@@ -1,18 +1,15 @@
 ﻿using Photon.Pun;
 using System.Collections.Generic;
+using MultiplayerRacerEnums;
 using UnityEngine;
 
 namespace MultiplayerRacer
 {
-    using MultiplayerRacerScenes = InRoomManager.MultiplayerRacerScenes;
-
     public class RoadManager : MonoBehaviour
     {
         [SerializeField] private Road[] roads;
         [SerializeField] private RaceTrack[] tracks;
         [SerializeField] private Color readyColor;
-
-        public enum RoadType { DEFAULT, START, END }
 
         private Road roadOn;
         private GameObject myCarSpawn;

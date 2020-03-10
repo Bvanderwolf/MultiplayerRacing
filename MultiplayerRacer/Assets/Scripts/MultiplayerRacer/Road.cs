@@ -1,9 +1,8 @@
-﻿using UnityEngine;
+﻿using MultiplayerRacerEnums;
+using UnityEngine;
 
 namespace MultiplayerRacer
 {
-    using RoadType = RoadManager.RoadType;
-
     public class Road : MonoBehaviour
     {
         [SerializeField] private GameObject main;

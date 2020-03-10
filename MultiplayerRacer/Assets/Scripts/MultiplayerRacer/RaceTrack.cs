@@ -1,10 +1,9 @@
 ﻿using System;
+using MultiplayerRacerEnums;
 using UnityEngine;
 
 namespace MultiplayerRacer
 {
-    using RoadType = RoadManager.RoadType;
-
     [Serializable]
     public struct RaceTrack
     {

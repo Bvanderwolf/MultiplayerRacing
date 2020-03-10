@@ -1,9 +1,4 @@
-﻿using Photon.Pun;
-using Photon.Realtime;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace MultiplayerRacer
+﻿namespace MultiplayerRacer
 {
     public class RoomMaster
     {
@@ -15,6 +10,7 @@ namespace MultiplayerRacer
         public const float LAST_MAN_LEAVE_DELAY = 4f;
 
         public const int BYTESIZE = 3 * 4;
+        public const char CODE = 'R';
 
         public RoomMaster(int playersfinished = 0, int playersready = 0, int playersingamescene = 0)
         {

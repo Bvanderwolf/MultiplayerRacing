@@ -1,12 +1,11 @@
 ﻿using UnityEngine;
 using Photon.Pun;
 using System;
+using MultiplayerRacerEnums;
 using ExitGames.Client.Photon;
 
 namespace MultiplayerRacer
 {
-    using MultiplayerRacerScenes = InRoomManager.MultiplayerRacerScenes;
-
     public class Racer : MonoBehaviour, IPunInstantiateMagicCallback, IPunObservable
     {
         [SerializeField] private GameObject carCamera;

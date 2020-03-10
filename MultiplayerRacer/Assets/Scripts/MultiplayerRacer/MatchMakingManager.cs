@@ -1,13 +1,12 @@
 ﻿using Photon.Pun;
 using Photon.Realtime;
+using MultiplayerRacerEnums;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace MultiplayerRacer
 {
-    using MultiplayerRacerScenes = InRoomManager.MultiplayerRacerScenes;
-
     public class MatchMakingManager : MonoBehaviourPunCallbacks
     {
         public static MatchMakingManager Instance { get; private set; }
