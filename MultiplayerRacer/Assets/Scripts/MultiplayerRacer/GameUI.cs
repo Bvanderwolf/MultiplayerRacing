@@ -158,7 +158,17 @@ namespace MultiplayerRacer
         private void SetRaceEndOptionChoosenResult(bool succes)
         {
             eventText.transform.localScale = Vector3.zero;
-            Debug.LogError("race end options ended with result " + succes);
+            if (succes)
+            {
+                //if succes is true, the player pressed the restart key and we can restart the game
+                InRoomManager.Instance.SendGameRestart();
+            }
+            else
+            {
+                /*if succes is fals, either the master client pressed the end game
+                key or waited to long which results in us clearing the room*/
+                InRoomManager.Instance.SendAllLeaveRoom();
+            }
         }
 
         /// <summary>

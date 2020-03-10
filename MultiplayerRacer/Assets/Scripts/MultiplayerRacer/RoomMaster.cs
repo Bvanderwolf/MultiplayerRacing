@@ -31,6 +31,11 @@
             PlayersReady = 0;
         }
 
+        public void ResetPlayersFinished()
+        {
+            PlayersFinished = 0;
+        }
+
         public void UpdatePlayersFinished()
         {
             PlayersFinished++;

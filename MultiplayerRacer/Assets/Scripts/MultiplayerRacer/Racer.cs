@@ -87,7 +87,7 @@ namespace MultiplayerRacer
                 //to stuff with photon message info
                 info.Sender.TagObject = this.gameObject;
 
-                //subcribe to game start event
+                //subcribe to in room events
                 InRoomManager.Instance.OnGameStart += OnRacerCanStart;
                 InRoomManager.Instance.OnSceneReset += OnRacerReset;
 

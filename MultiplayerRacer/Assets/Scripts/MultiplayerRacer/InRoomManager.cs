@@ -36,6 +36,11 @@ namespace MultiplayerRacer
 
         public event Action OnGameStart;
 
+        /// <summary>
+        /// called before OnGameStart in case of a game reset
+        /// </summary>
+        public event Action OnGameRestart;
+
         public event Action<MultiplayerRacerScenes> OnSceneReset;
 
         public MultiplayerRacerScenes CurrentScene { get; private set; } = MultiplayerRacerScenes.LOBBY;
@@ -176,6 +181,18 @@ namespace MultiplayerRacer
             if (PhotonNetwork.IsMasterClient)
             {
                 PV.RPC("LeaveRoomForcibly", RpcTarget.Others);
+            }
+        }
+
+        /// <summary>
+        /// Called by the master client to let all players restart and reset their
+        /// scenes for another game play round
+        /// </summary>
+        public void SendGameRestart()
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                PV.RPC("RestartGameScene", RpcTarget.AllViaServer);
             }
         }
 
@@ -484,6 +501,28 @@ namespace MultiplayerRacer
         private void LeaveRoomForcibly()
         {
             MatchMakingManager.Instance.LeaveRoomForced();
+        }
+
+        [PunRPC]
+        private void RestartGameScene()
+        {
+            //set current game phase back to setup
+            CurrentGamePhase = GamePhase.SETUP;
+
+            //call on restart and then on scene reset
+            OnGameRestart();
+            OnSceneReset(CurrentScene);
+
+            //update game UI
+            GameUI gameUI = (GameUI)UI;
+            gameUI.HideLeaderBoard();
+
+            //master client has its own additional updates
+            if (PhotonNetwork.IsMasterClient)
+            {
+                gameUI.SendShowReadyUpInfo();
+                Master.ResetPlayersFinished();
+            }
         }
 
         [PunRPC]

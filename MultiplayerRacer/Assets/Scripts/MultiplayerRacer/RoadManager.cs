@@ -63,7 +63,7 @@ namespace MultiplayerRacer
                 tracks[i].CheckForStartAndEnd();
             }
 
-            roadOn = roads[roads.Length - 1];
+            roadOn = roads[2];
             roadOn.Type = RoadType.START;
             roadLength = roadOn.MainBounds.size.y;
         }
@@ -75,10 +75,11 @@ namespace MultiplayerRacer
         {
             if (PhotonNetwork.IsConnected)
             {
-                //start listeneing to onreadystatuschange and scenereset events
+                //start listeneing to room manager events
                 InRoomManager.Instance.OnReadyStatusChange += OnReadyStatusChanged;
                 InRoomManager.Instance.OnSceneReset += OnSceneHasReset;
                 InRoomManager.Instance.OnGameStart += OnRaceStarted;
+                InRoomManager.Instance.OnGameRestart += OnGameHasRestart;
                 //place the car spawns on the road for players and get our own car spawn
                 myCarSpawn = SetupCarSpawns();
                 myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawn.transform.position, Quaternion.identity);
@@ -107,6 +108,23 @@ namespace MultiplayerRacer
             roads[0].Type = trackPlaying.RoadTypes[trackIndexOn + 2];
 
             roadOn.SetCarSpawnsInactive();
+        }
+
+        private void OnGameHasRestart()
+        {
+            //reset track index on to start of track
+            trackIndexOn = 0;
+            //reset positions of roads
+            roads[0].transform.localPosition = new Vector3(0, roadLength);
+            roads[1].transform.localPosition = new Vector3(0, 0);
+            roads[2].transform.localPosition = new Vector3(0, -roadLength);
+
+            //set roads their type based on next road types to come
+            roads[2].Type = trackPlaying.RoadTypes[trackIndexOn];
+            roads[1].Type = trackPlaying.RoadTypes[trackIndexOn + 1];
+            roads[0].Type = trackPlaying.RoadTypes[trackIndexOn + 2];
+
+            roadOn = roads[2];
         }
 
         private void OnSceneHasReset(MultiplayerRacerScenes scene)

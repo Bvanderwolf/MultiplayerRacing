@@ -50,5 +50,6 @@ MonoBehaviour:
   - ShowLeaderBoard
   - UpdateFinishedPlayer
   - OnRaceEnded
+  - RestartGameScene
   DisableAutoOpenWizard: 1
   ShowSettings: 0
