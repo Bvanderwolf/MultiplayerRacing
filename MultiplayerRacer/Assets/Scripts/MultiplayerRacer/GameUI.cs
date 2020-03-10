@@ -50,12 +50,15 @@ namespace MultiplayerRacer
                 for (int ci = 0; ci < finishedPlayersOrdered.Length; ci++)
                 {
                     Transform child = itemsTF.GetChild(ci);
-
+                    //set nickname
                     Text nickname = child.Find("Name").GetComponent<Text>();
                     nickname.text = finishedPlayersOrdered[ci].NickName;
-
+                    //split miliseconds from finish time
+                    string finishTime = (string)finishedPlayersOrdered[ci].CustomProperties["FinishTime"];
+                    finishTime = finishTime.Split('.')[0];
+                    //set time
                     Text time = child.Find("Time").GetComponent<Text>();
-                    time.text = (string)finishedPlayersOrdered[ci].CustomProperties["FinishTime"];
+                    time.text = finishTime;
                 }
                 leaderBoard.SetActive(true);
             }

@@ -32,6 +32,8 @@ namespace MultiplayerRacer
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
 
+        private TimeSpan startTime;
+
         private void Awake()
         {
             RB = GetComponent<Rigidbody2D>();
@@ -117,6 +119,7 @@ namespace MultiplayerRacer
         private void OnRacerCanStart()
         {
             canRace = true;
+            startTime = DateTime.UtcNow.TimeOfDay;
         }
 
         private void AddFinishInfoToHashTable(string time)
@@ -140,8 +143,10 @@ namespace MultiplayerRacer
             }
             else if (collision.tag == "Finish")
             {
-                //get universal time of day on our pc
-                string time = DateTime.UtcNow.TimeOfDay.ToString("c");
+                //get the difference between end and start time
+                TimeSpan endTime = DateTime.UtcNow.TimeOfDay;
+                string time = endTime.Subtract(startTime).ToString("c");
+
                 //add finish time to hash table
                 AddFinishInfoToHashTable(time);
                 //set canRace to false so the player can't input but the car can ease out

@@ -350,6 +350,8 @@ namespace MultiplayerRacer
             }
             else
             {
+                //format string so unnecessary miliseconds is not shown
+                time = time.Split('.')[0];
                 //if race is not finished, tell all clients to show information on player finishing
                 PV.RPC("ShowPlayerFinishedInfo", RpcTarget.AllViaServer, playerName, time, winningRacer);
             }
@@ -441,7 +443,7 @@ namespace MultiplayerRacer
             if (PhotonNetwork.NickName == playerName)
                 return;
 
-            string text = $"{playerName} finished{(winnerPlayer ? " first " : " ")}at {time}";
+            string text = $"{playerName} finished{(winnerPlayer ? " first " : " ")}after {time}";
             ((GameUI)UI).ShowText(text);
         }
 
