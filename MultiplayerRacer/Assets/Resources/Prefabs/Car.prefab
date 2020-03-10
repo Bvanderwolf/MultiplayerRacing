@@ -134,8 +134,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carCamera: {fileID: 5173830234699297827}
+  remoteTarget: {fileID: 0}
   canRace: 0
-  minDistanceToTeleportAt: 3
 --- !u!114 &5419838646975346472
 MonoBehaviour:
   m_ObjectHideFlags: 0

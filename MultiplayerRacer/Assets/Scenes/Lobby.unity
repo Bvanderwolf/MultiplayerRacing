@@ -334,7 +334,7 @@ MonoBehaviour:
     width: 120
     height: 100
   WindowId: 101
-  Visible: 0
+  Visible: 1
 --- !u!1 &660137399
 GameObject:
   m_ObjectHideFlags: 0

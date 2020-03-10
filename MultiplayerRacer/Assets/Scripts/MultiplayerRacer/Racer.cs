@@ -10,7 +10,6 @@ namespace MultiplayerRacer
     {
         [SerializeField] private GameObject carCamera;
         [SerializeField] private bool canRace;
-        [SerializeField] private float minDistanceToTeleportAt;
 
         public GameObject Camera => carCamera;
         public bool CanRace => canRace;
@@ -27,10 +26,14 @@ namespace MultiplayerRacer
 
         private Vector2 remotePosition;
         private float remoteRotation;
-        private const float SMOOTH_DELAY = 5f;
+        private float moveTime;
+        private float moveSpeed = 5f;
+        private float lastMoveSpeed;
 
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
+        private const float MAX_DISTANCE_TO_REMOTE = 1.0f;
+        private const float MAX_ANGLE_DIFFERENCE = 20f;
 
         private TimeSpan startTime;
 
@@ -42,13 +45,16 @@ namespace MultiplayerRacer
         }
 
         //Update during render frames
-        private void Update()
+        private void FixedUpdate()
         {
             //update other clients their car
             if (!PV.IsMine)
             {
-                RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime * SMOOTH_DELAY);
-                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, Time.deltaTime * SMOOTH_DELAY);
+                //increase movetime so that the remote car keeps moving towards predicted location
+                moveTime += Time.deltaTime * moveSpeed;
+                //linearly interpolate between position and predicted remote position
+                RB.position = Vector2.Lerp(RB.position, remotePosition, moveTime);
+                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, moveTime);
             }
         }
 
@@ -65,18 +71,31 @@ namespace MultiplayerRacer
                 //if this is our script we send the position and rotation
                 stream.SendNext(RB.position);
                 stream.SendNext(RB.rotation);
+                stream.SendNext(RB.velocity);
+                stream.SendNext(RB.angularVelocity);
             }
             else
             {
-                //if this is not our script we set the position and rotation of the racer
+                //get difference in photon's current server time and its time when sending as lag
+                float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
+                //store the remote position and rotation of other car
                 remotePosition = (Vector2)stream.ReceiveNext();
                 remoteRotation = (float)stream.ReceiveNext();
-
+                //add to remote position the received velocity times the lag
+                remotePosition += ((Vector2)stream.ReceiveNext() * lag);
+                remoteRotation += ((float)stream.ReceiveNext() * lag);
                 //if the distance to the remote position is to far, teleport to it
-                if (Vector2.Distance(RB.position, remotePosition) > minDistanceToTeleportAt)
+                if (Vector2.Distance(RB.position, remotePosition) > MAX_DISTANCE_TO_REMOTE)
                 {
                     RB.position = remotePosition;
                 }
+                //if the difference between remote rotation and ours is to big, snap to it
+                if ((Mathf.Abs(remoteRotation - RB.rotation) > MAX_ANGLE_DIFFERENCE))
+                {
+                    RB.rotation = remoteRotation;
+                }
+
+                moveTime = 0;
             }
         }
 
