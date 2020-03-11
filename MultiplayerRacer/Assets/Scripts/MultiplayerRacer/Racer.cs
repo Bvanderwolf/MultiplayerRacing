@@ -27,11 +27,10 @@ namespace MultiplayerRacer
 
         private RacerInput remoteRacerInput;
         private Vector2 remotePosition;
+        private float remoteRotation;
         private float remoteInputV;
         private float remoteInputH;
-
-        private double lastSnapShot;
-        private float delta;
+        private bool remoteDrift;
 
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
@@ -52,9 +51,14 @@ namespace MultiplayerRacer
             //update other clients their car
             if (!PV.IsMine)
             {
-                remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH);
+                //simulate remote car based on remote inputs
+                remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH, remoteDrift);
+                //correct any errors by delayed remote input by linear interpolation towards remote position and rotation
                 RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime);
+                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, Time.deltaTime);
+                //show remote car as ghost with remote position and remote rotation
                 remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
+                remoteCar.eulerAngles = new Vector3(0, 0, transform.eulerAngles.z + (transform.eulerAngles.z - remoteRotation));
             }
         }
 
@@ -69,21 +73,18 @@ namespace MultiplayerRacer
             if (stream.IsWriting)
             {
                 stream.SendNext(RB.position);
-                stream.SendNext(RacerInput.Gas);
-                stream.SendNext(RacerInput.Steer);
+                stream.SendNext(RB.rotation);
+                stream.SendNext(RacerInput.GasInput);
+                stream.SendNext(RacerInput.SteerInput);
+                stream.SendNext(RacerInput.DriftInput);
             }
             else
             {
-                float history = Time.time - INTERPOLATION_PERIOD;
-                if (history > lastSnapShot && history < info.SentServerTime)
-                {
-                    delta = Mathf.Abs((float)(info.SentServerTime - lastSnapShot));
-                }
-                lastSnapShot = info.SentServerTime;
-
                 remotePosition = (Vector2)stream.ReceiveNext();
+                remoteRotation = (float)stream.ReceiveNext();
                 remoteInputV = (float)stream.ReceiveNext();
                 remoteInputH = (float)stream.ReceiveNext();
+                remoteDrift = (bool)stream.ReceiveNext();
             }
         }
 

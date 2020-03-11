@@ -6,8 +6,9 @@ namespace MultiplayerRacer
 {
     public class RacerInput : MonoBehaviour
     {
-        public static float Gas => Input.GetAxis("Vertical");
-        public static float Steer => -Input.GetAxis("Horizontal");
+        public static float GasInput => Input.GetAxis("Vertical");
+        public static float SteerInput => -Input.GetAxis("Horizontal");
+        public static bool DriftInput => Input.GetKey(KeyCode.LeftShift);
 
         private const float MAX_WAIT_FOR_PLAYER_INPUT = 20f;
 
@@ -28,21 +29,20 @@ namespace MultiplayerRacer
                 return;
 
             //left (1.0) to right (-1.0)
-            float h = Steer;
+            float h = SteerInput;
             //up (1.0) to down (-1.0)
-            float v = Gas;
-            bool drift = Input.GetKey(KeyCode.LeftShift);
+            float v = GasInput;
 
             //update motor values
             motor.AddSpeed(v);
-            motor.Steer(h, drift);
+            motor.Steer(h, DriftInput);
             motor.ClampVelocity();
         }
 
-        public void SimulateRemote(float v, float h)
+        public void SimulateRemote(float v, float h, bool drift)
         {
             motor.AddSpeed(v);
-            motor.Steer(h, false);
+            motor.Steer(h, drift);
             motor.ClampVelocity();
         }
 
