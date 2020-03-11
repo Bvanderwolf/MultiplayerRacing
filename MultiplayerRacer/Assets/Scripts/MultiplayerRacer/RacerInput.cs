@@ -9,9 +9,6 @@ namespace MultiplayerRacer
         public static float Gas => Input.GetAxis("Vertical");
         public static float Steer => -Input.GetAxis("Horizontal");
 
-        public float lastInputH { get; private set; }
-        public float lastInputV { get; private set; }
-
         private const float MAX_WAIT_FOR_PLAYER_INPUT = 20f;
 
         private Racer racer;
@@ -42,7 +39,7 @@ namespace MultiplayerRacer
             motor.ClampVelocity();
         }
 
-        public void UpdateRemote(float v, float h)
+        public void SimulateRemote(float v, float h)
         {
             motor.AddSpeed(v);
             motor.Steer(h, false);

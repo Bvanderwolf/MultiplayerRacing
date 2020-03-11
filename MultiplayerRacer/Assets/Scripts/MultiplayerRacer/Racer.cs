@@ -52,8 +52,8 @@ namespace MultiplayerRacer
             //update other clients their car
             if (!PV.IsMine)
             {
-                remoteRacerInput.UpdateRemote(remoteInputV, remoteInputH);
-                //increase movetime and rotateTime so that the remote car keeps moving towards predicted location
+                remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH);
+                //RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime);
                 remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
             }
         }
