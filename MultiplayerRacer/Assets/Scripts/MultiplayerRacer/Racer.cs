@@ -9,6 +9,7 @@ namespace MultiplayerRacer
     public class Racer : MonoBehaviour, IPunInstantiateMagicCallback, IPunObservable
     {
         [SerializeField] private GameObject carCamera;
+        [SerializeField] private Transform remoteCar;
         [SerializeField] private bool canRace;
 
         public GameObject Camera => carCamera;
@@ -24,23 +25,17 @@ namespace MultiplayerRacer
         private Rigidbody2D RB;
         private PhotonView PV;
 
+        private RacerInput remoteRacerInput;
         private Vector2 remotePosition;
-        private float remoteRotation;
+        private float remoteInputV;
+        private float remoteInputH;
 
-        private float moveTime;
-        private float moveSpeed;
-
-        private float rotateTime;
-        private float rotateSpeed;
-        private float maxDistanceToRemote;
-        private float maxAngleDifference;
+        private double lastSnapShot;
+        private float delta;
 
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
-        private const float MAX_DISTANCE_TO_REMOTE = 1.0f;
-        private const float MAX_ANGLE_DIFFERENCE = 20f;
-        private const float MOVE_SPEED_BASE = 5f;
-        private const float ROTATE_SPEED_BASE = 6f;
+        private const float INTERPOLATION_PERIOD = 0.1f;
 
         private TimeSpan startTime;
 
@@ -49,10 +44,6 @@ namespace MultiplayerRacer
             RB = GetComponent<Rigidbody2D>();
             //store camera rotation for reset in late update
             cameraRotation = carCamera.transform.rotation;
-
-            moveSpeed = MOVE_SPEED_BASE;
-            maxDistanceToRemote = MAX_DISTANCE_TO_REMOTE;
-            maxAngleDifference = MAX_ANGLE_DIFFERENCE;
         }
 
         //Update during render frames
@@ -61,12 +52,9 @@ namespace MultiplayerRacer
             //update other clients their car
             if (!PV.IsMine)
             {
-                float delta = Time.deltaTime;
+                remoteRacerInput.UpdateRemote(remoteInputV, remoteInputH);
                 //increase movetime and rotateTime so that the remote car keeps moving towards predicted location
-                moveTime += delta * moveSpeed;
-                //linearly interpolate between position and predicted remote position
-                RB.position = Vector2.Lerp(RB.position, remotePosition, moveTime);
-                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, moveTime);
+                remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
             }
         }
 
@@ -80,40 +68,22 @@ namespace MultiplayerRacer
         {
             if (stream.IsWriting)
             {
-                //if this is our script we send the position and rotation
                 stream.SendNext(RB.position);
-                stream.SendNext(RB.rotation);
-                stream.SendNext(RB.velocity);
-                stream.SendNext(RB.angularVelocity);
+                stream.SendNext(RacerInput.Gas);
+                stream.SendNext(RacerInput.Steer);
             }
             else
             {
-                //get difference in photon's current server time and its time when sending as lag
-                float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
+                float history = Time.time - INTERPOLATION_PERIOD;
+                if (history > lastSnapShot && history < info.SentServerTime)
+                {
+                    delta = Mathf.Abs((float)(info.SentServerTime - lastSnapShot));
+                }
+                lastSnapShot = info.SentServerTime;
 
-                //update move speed of remote car and it's snap thresholds.
-                moveSpeed = MOVE_SPEED_BASE - (MOVE_SPEED_BASE * lag);
-                maxDistanceToRemote = MAX_DISTANCE_TO_REMOTE + (MAX_DISTANCE_TO_REMOTE * lag);
-                maxAngleDifference = MAX_ANGLE_DIFFERENCE + (MAX_ANGLE_DIFFERENCE * lag);
-
-                //store the remote position and rotation of other car
                 remotePosition = (Vector2)stream.ReceiveNext();
-                remoteRotation = (float)stream.ReceiveNext();
-                //add to remote position the received velocity times the lag
-                remotePosition += ((Vector2)stream.ReceiveNext() * lag);
-                remoteRotation += ((float)stream.ReceiveNext() * lag);
-                //if the distance to the remote position is to far, teleport to it
-                if (Vector2.Distance(RB.position, remotePosition) > maxDistanceToRemote)
-                {
-                    RB.position = remotePosition;
-                }
-                //if the difference between remote rotation and ours is to big, snap to it
-                if ((Mathf.Abs(remoteRotation - RB.rotation) > maxAngleDifference))
-                {
-                    RB.rotation = remoteRotation;
-                }
-
-                moveTime = 0;
+                remoteInputV = (float)stream.ReceiveNext();
+                remoteInputH = (float)stream.ReceiveNext();
             }
         }
 
@@ -132,6 +102,10 @@ namespace MultiplayerRacer
 
                 //make others disable our camera
                 _PV.RPC("DisableCamera", RpcTarget.OthersBuffered, _PV.ViewID);
+            }
+            else
+            {
+                remoteRacerInput = GetComponent<RacerInput>();
             }
         }
 
