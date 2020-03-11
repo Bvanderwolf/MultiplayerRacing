@@ -26,14 +26,21 @@ namespace MultiplayerRacer
 
         private Vector2 remotePosition;
         private float remoteRotation;
+
         private float moveTime;
-        private float moveSpeed = 5f;
-        private float lastMoveSpeed;
+        private float moveSpeed;
+
+        private float rotateTime;
+        private float rotateSpeed;
+        private float maxDistanceToRemote;
+        private float maxAngleDifference;
 
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
         private const float MAX_DISTANCE_TO_REMOTE = 1.0f;
         private const float MAX_ANGLE_DIFFERENCE = 20f;
+        private const float MOVE_SPEED_BASE = 5f;
+        private const float ROTATE_SPEED_BASE = 6f;
 
         private TimeSpan startTime;
 
@@ -42,6 +49,10 @@ namespace MultiplayerRacer
             RB = GetComponent<Rigidbody2D>();
             //store camera rotation for reset in late update
             cameraRotation = carCamera.transform.rotation;
+
+            moveSpeed = MOVE_SPEED_BASE;
+            maxDistanceToRemote = MAX_DISTANCE_TO_REMOTE;
+            maxAngleDifference = MAX_ANGLE_DIFFERENCE;
         }
 
         //Update during render frames
@@ -50,8 +61,9 @@ namespace MultiplayerRacer
             //update other clients their car
             if (!PV.IsMine)
             {
-                //increase movetime so that the remote car keeps moving towards predicted location
-                moveTime += Time.deltaTime * moveSpeed;
+                float delta = Time.deltaTime;
+                //increase movetime and rotateTime so that the remote car keeps moving towards predicted location
+                moveTime += delta * moveSpeed;
                 //linearly interpolate between position and predicted remote position
                 RB.position = Vector2.Lerp(RB.position, remotePosition, moveTime);
                 RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, moveTime);
@@ -78,6 +90,12 @@ namespace MultiplayerRacer
             {
                 //get difference in photon's current server time and its time when sending as lag
                 float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
+
+                //update move speed of remote car and it's snap thresholds.
+                moveSpeed = MOVE_SPEED_BASE - (MOVE_SPEED_BASE * lag);
+                maxDistanceToRemote = MAX_DISTANCE_TO_REMOTE + (MAX_DISTANCE_TO_REMOTE * lag);
+                maxAngleDifference = MAX_ANGLE_DIFFERENCE + (MAX_ANGLE_DIFFERENCE * lag);
+
                 //store the remote position and rotation of other car
                 remotePosition = (Vector2)stream.ReceiveNext();
                 remoteRotation = (float)stream.ReceiveNext();
@@ -85,12 +103,12 @@ namespace MultiplayerRacer
                 remotePosition += ((Vector2)stream.ReceiveNext() * lag);
                 remoteRotation += ((float)stream.ReceiveNext() * lag);
                 //if the distance to the remote position is to far, teleport to it
-                if (Vector2.Distance(RB.position, remotePosition) > MAX_DISTANCE_TO_REMOTE)
+                if (Vector2.Distance(RB.position, remotePosition) > maxDistanceToRemote)
                 {
                     RB.position = remotePosition;
                 }
                 //if the difference between remote rotation and ours is to big, snap to it
-                if ((Mathf.Abs(remoteRotation - RB.rotation) > MAX_ANGLE_DIFFERENCE))
+                if ((Mathf.Abs(remoteRotation - RB.rotation) > maxAngleDifference))
                 {
                     RB.rotation = remoteRotation;
                 }
