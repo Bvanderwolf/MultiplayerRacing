@@ -53,7 +53,7 @@ namespace MultiplayerRacer
             if (!PV.IsMine)
             {
                 remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH);
-                //RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime);
+                RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime);
                 remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
             }
         }
