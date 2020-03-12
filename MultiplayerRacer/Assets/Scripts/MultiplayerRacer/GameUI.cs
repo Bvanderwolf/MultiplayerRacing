@@ -1,6 +1,7 @@
 ﻿using Photon.Pun;
 using Photon.Realtime;
 using System;
+using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,6 +23,9 @@ namespace MultiplayerRacer
 
         private PhotonView PV;
 
+        private Queue<string> eventTextBuffer = new Queue<string>();
+        private bool showingEventText = false;
+
         protected override void Awake()
         {
             base.Awake();
@@ -35,7 +39,35 @@ namespace MultiplayerRacer
         /// <param name="text"></param>
         public void ShowText(string text)
         {
-            animations.PopupText(eventText, text, EVENT_TEXT_FADE_DELAY);
+            if (!showingEventText)
+            {
+                showingEventText = true;
+                animations.PopupText(eventText, text, TryDequeueEvenTextBuffer, EVENT_TEXT_FADE_DELAY);
+            }
+            else
+            {
+                eventTextBuffer.Enqueue(text);
+            }
+        }
+
+        /// <summary>
+        /// Tries starting a popup text if there is text in the
+        /// eventTextBuffer
+        /// </summary>
+        private void TryDequeueEvenTextBuffer()
+        {
+            if (eventTextBuffer.Count != 0)
+            {
+                animations.PopupText(
+                    eventText,
+                    eventTextBuffer.Dequeue(),
+                    TryDequeueEvenTextBuffer,
+                    EVENT_TEXT_FADE_DELAY);
+            }
+            else
+            {
+                showingEventText = false;
+            }
         }
 
         /// <summary>

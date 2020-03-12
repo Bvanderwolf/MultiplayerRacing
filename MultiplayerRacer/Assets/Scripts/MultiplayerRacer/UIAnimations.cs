@@ -47,7 +47,7 @@ namespace MultiplayerRacer
         /// Does a popup op of given text with fade. If given text is null or empty, uses text
         /// component its text;
         /// </summary>
-        public void PopupText(GameObject textGo, string text, float fadeDelay = 0)
+        public void PopupText(GameObject textGo, string text, Action endAction, float fadeDelay = 0)
         {
             if (textGo != null && textGo.GetComponent<Text>() != null)
             {
@@ -57,7 +57,7 @@ namespace MultiplayerRacer
                 {
                     textComp.text = text;
                 }
-                StartCoroutine(PopupTextWithReset(textGo, color, fadeDelay));
+                StartCoroutine(PopupTextWithReset(textGo, color, endAction, fadeDelay));
             }
             else Debug.LogError("text game object or Text component is null");
         }
@@ -110,7 +110,7 @@ namespace MultiplayerRacer
             callback?.Invoke();
         }
 
-        private IEnumerator PopupTextWithReset(GameObject go, Color resetColor, float fadeDelay = 0)
+        private IEnumerator PopupTextWithReset(GameObject go, Color resetColor, Action endAction, float fadeDelay = 0)
         {
             //scale text
             yield return StartCoroutine(ScaleText(go.transform));
@@ -119,6 +119,7 @@ namespace MultiplayerRacer
             yield return StartCoroutine(FadeText(textComp, textComp.color));
             go.transform.localScale = Vector3.zero;
             textComp.color = resetColor;
+            endAction?.Invoke();
         }
 
         private IEnumerator ScaleText(Transform transform)
