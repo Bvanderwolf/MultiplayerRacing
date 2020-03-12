@@ -286,13 +286,6 @@ namespace MultiplayerRacer
             if (!PhotonNetwork.IsMasterClient)
                 return;
 
-            //if the master client is the only one left he leaves the room
-            if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
-            {
-                Debug.LogError("Last player in game scene :: Leaving Room");
-                StartCoroutine(LastManLeaveWithDelay());
-                return;
-            }
             switch (CurrentScene)
             {
                 //in the lobby scene we just reset the players ready
@@ -301,6 +294,13 @@ namespace MultiplayerRacer
                     break;
                 //in the game scene, we update players in game scene
                 case MultiplayerRacerScenes.GAME:
+                    //if the master client is the only one left in the game scene he leaves the room
+                    if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
+                    {
+                        Debug.LogError("Last player in game scene :: Leaving Room");
+                        StartCoroutine(LastManLeaveWithDelay());
+                        return;
+                    }
                     Master.UpdatePlayersInGameScene(false);
                     switch (CurrentGamePhase)
                     {
