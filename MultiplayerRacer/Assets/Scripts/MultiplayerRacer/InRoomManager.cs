@@ -44,7 +44,7 @@ namespace MultiplayerRacer
         public event Action<MultiplayerRacerScenes> OnSceneReset;
 
         public MultiplayerRacerScenes CurrentScene { get; private set; } = MultiplayerRacerScenes.LOBBY;
-        private GamePhase CurrentGamePhase = GamePhase.NONE;
+        public GamePhase CurrentGamePhase { get; private set; } = GamePhase.NONE;
 
         public int NextLevelIndex
         {
@@ -264,7 +264,7 @@ namespace MultiplayerRacer
 
             //now that currentScene is updated, we set our canvas reference
             UI = helper.GetCanvasReference(CurrentScene);
-
+            Debug.LogError("loaded");
             //and set it up
             Room room = PhotonNetwork.CurrentRoom;
             UI.SetupRoomStatus(PhotonNetwork.NickName, room);

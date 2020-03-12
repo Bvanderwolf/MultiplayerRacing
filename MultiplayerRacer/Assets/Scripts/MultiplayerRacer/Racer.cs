@@ -51,8 +51,14 @@ namespace MultiplayerRacer
             //update other clients their car
             if (!PV.IsMine)
             {
-                //simulate remote car based on remote inputs
-                remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH, remoteDrift);
+                bool racing = InRoomManager.Instance.CurrentGamePhase == GamePhase.RACING;
+
+                if (racing)
+                {
+                    //only simulate remote car based on remote inputs if we are in the racing phase
+                    remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH, remoteDrift);
+                }
+
                 //correct any errors by delayed remote input by linear interpolation towards remote position and rotation
                 RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime);
                 RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, Time.deltaTime);
@@ -71,21 +77,32 @@ namespace MultiplayerRacer
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
         {
+            bool racing = InRoomManager.Instance.CurrentGamePhase == GamePhase.RACING;
             if (stream.IsWriting)
             {
+                //send position and rotation of simulated car
                 stream.SendNext(RB.position);
                 stream.SendNext(RB.rotation);
-                stream.SendNext(RacerInput.GasInput);
-                stream.SendNext(RacerInput.SteerInput);
-                stream.SendNext(RacerInput.DriftInput);
+
+                if (racing)
+                {   //if the player is racing, send inputs
+                    stream.SendNext(RacerInput.GasInput);
+                    stream.SendNext(RacerInput.SteerInput);
+                    stream.SendNext(RacerInput.DriftInput);
+                }
             }
             else
             {
                 remotePosition = (Vector2)stream.ReceiveNext();
                 remoteRotation = (float)stream.ReceiveNext();
-                remoteInputV = (float)stream.ReceiveNext();
-                remoteInputH = (float)stream.ReceiveNext();
-                remoteDrift = (bool)stream.ReceiveNext();
+
+                if (racing)
+                {
+                    //if the player is racing, receive inputs
+                    remoteInputV = (float)stream.ReceiveNext();
+                    remoteInputH = (float)stream.ReceiveNext();
+                    remoteDrift = (bool)stream.ReceiveNext();
+                }
             }
         }
 

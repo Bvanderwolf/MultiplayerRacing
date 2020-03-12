@@ -79,7 +79,7 @@ namespace MultiplayerRacer
         {
             if (inputH > -INPUT_THRESHOLD && inputH < INPUT_THRESHOLD)
             {
-                rb.angularDrag = steerFriction * 2f;
+                rb.angularDrag = steerFriction * 3f;
                 return true;
             }
             return false;

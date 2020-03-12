@@ -18,7 +18,7 @@ namespace MultiplayerRacer
         public Bounds carSpawnBounds => carSpawns.transform.GetChild(0).GetComponent<SpriteRenderer>().bounds;
 
         public Bounds SideWalkFlexBounds => sidewalkFlex.GetComponent<SpriteRenderer>().bounds;
-        private Vector3 SideWalkFlexUpPosition => new Vector3(0, (MainBounds.size.y * 0.5f) - (SideWalkFlexBounds.size.y * 0.5f));
+        private Vector3 SideWalkFlexUpPosition => new Vector3(0, (MainBounds.size.y * 0.5f) + (SideWalkFlexBounds.size.y * 0.5f));
 
         private RoadType type;
 
