@@ -54,8 +54,8 @@ namespace MultiplayerRacer
                 //simulate remote car based on remote inputs
                 remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH, remoteDrift);
                 //correct any errors by delayed remote input by linear interpolation towards remote position and rotation
-                //RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime);
-                //RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, Time.deltaTime);
+                RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime);
+                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, Time.deltaTime);
 
                 //show remote car as ghost with remote position and remote rotation
                 remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
