@@ -297,7 +297,7 @@ namespace MultiplayerRacer
                     //if the master client is the only one left in the game scene he leaves the room
                     if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
                     {
-                        Debug.LogError("Last player in game scene :: Leaving Room");
+                        ((GameUI)UI).ShowText("Last player in game scene :: Leaving Room");
                         StartCoroutine(LastManLeaveWithDelay());
                         return;
                     }
@@ -365,6 +365,12 @@ namespace MultiplayerRacer
             if (UI != null)
             {
                 UI.UpdateIsMasterclient();
+                switch (CurrentScene)
+                {
+                    case MultiplayerRacerScenes.GAME:
+                        ((GameUI)UI).ShowText($"Host migrated :: {newMasterClient.NickName} is the new host");
+                        break;
+                }
             }
             else Debug.LogError("Wont update room :: UI is null");
         }
@@ -412,6 +418,10 @@ namespace MultiplayerRacer
                     LobbyUI lobbyUI = (LobbyUI)UI;
                     lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
                     lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                    break;
+
+                case MultiplayerRacerScenes.GAME:
+                    ((GameUI)UI).ShowText($"{otherPlayer.NickName} left the game");
                     break;
             }
             SetReady(false);
