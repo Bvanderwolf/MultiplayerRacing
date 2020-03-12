@@ -368,6 +368,8 @@ namespace MultiplayerRacer
             lobbyUI.UpdateConnectStatus(false);
             lobbyUI.UpdateConnectColor(false);
             lobbyUI.ResetReadyButtons();
+            lobbyUI.SetConnectButtonInteractability(true);
+            Application.quitting -= OnQuitEvent;
 
             print(cause);
         }
