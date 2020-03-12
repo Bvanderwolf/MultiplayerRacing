@@ -3,7 +3,6 @@ using Photon.Pun;
 using System;
 using MultiplayerRacerEnums;
 using ExitGames.Client.Photon;
-using System.Linq;
 
 namespace MultiplayerRacer
 {
@@ -33,13 +32,6 @@ namespace MultiplayerRacer
         private float remoteInputH;
         private bool remoteDrift;
 
-        private double lastSnapShot;
-        private float delta;
-
-        private bool extrapolate;
-        private float extrapolateTime = 0;
-        private float extrapolateAmount = 0.25f;
-
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
         private const float INTERPOLATION_PERIOD = 0.1f;
@@ -59,47 +51,11 @@ namespace MultiplayerRacer
             //update other clients their car
             if (!PV.IsMine)
             {
-                double targetTime = PhotonNetwork.Time - INTERPOLATION_PERIOD;
-                double targetSnapShot = (float)lastSnapShot - ((1f / PhotonNetwork.SerializationRate) * 2f);
-
-                if (targetTime > targetSnapShot)
-                {
-                    delta = (float)(lastSnapShot - targetSnapShot);
-                    extrapolate = false;
-                }
-                else
-                {
-                    if (!extrapolate)
-                    {
-                        extrapolate = true;
-                        Debug.LogError("extrapolating");
-                    }
-                    else
-                    {
-                        extrapolateTime += Time.deltaTime;
-                        if (extrapolateTime >= extrapolateAmount)
-                        {
-                            Debug.LogError("extrapolate time amount exceeded");
-                            RB.position = remotePosition;
-                            RB.rotation = remoteRotation;
-                            extrapolateTime = 0;
-                            extrapolate = false;
-                        }
-                    }
-                }
-
-                if (extrapolate)
-                {
-                    float lag = Mathf.Abs((float)(PhotonNetwork.Time - lastSnapShot));
-                    Vector2 direction = (remotePosition - RB.position).normalized;
-                    remotePosition += direction * lag;
-                }
-
                 //simulate remote car based on remote inputs
                 remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH, remoteDrift);
                 //correct any errors by delayed remote input by linear interpolation towards remote position and rotation
-                RB.position = Vector2.Lerp(RB.position, remotePosition, delta);
-                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, delta);
+                RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime);
+                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, Time.deltaTime);
                 //show remote car as ghost with remote position and remote rotation
                 remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
                 remoteCar.eulerAngles = new Vector3(0, 0, transform.eulerAngles.z + (transform.eulerAngles.z - remoteRotation));
@@ -124,7 +80,6 @@ namespace MultiplayerRacer
             }
             else
             {
-                lastSnapShot = info.SentServerTime;
                 remotePosition = (Vector2)stream.ReceiveNext();
                 remoteRotation = (float)stream.ReceiveNext();
                 remoteInputV = (float)stream.ReceiveNext();
