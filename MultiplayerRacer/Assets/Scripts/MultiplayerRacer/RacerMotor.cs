@@ -8,7 +8,8 @@ namespace MultiplayerRacer
         [SerializeField] private float acceleration;
         [SerializeField] private float steering;
         [SerializeField] private float maxVelocity;
-        [SerializeField] private ParticleSystem[] sparks;
+        [SerializeField] private ParticleSystem spark;
+        [SerializeField] private TrailRenderer[] trails;
 
         private Rigidbody2D rb;
         private float steerFriction;
@@ -22,7 +23,7 @@ namespace MultiplayerRacer
         private bool driftStart = false;
         private bool driftEnd = false;
 
-        [SerializeField] private float driftRotation;
+        private float driftRotation;
         private float lastRotation;
         private bool lastDriftWasLeft = false;
 
@@ -42,21 +43,26 @@ namespace MultiplayerRacer
         {
             if (boosting)
             {
-                float boostDelta = currentBoostTime / BOOST_TIME;
+                //define boost percentage
+                float boostPerc = currentBoostTime / BOOST_TIME;
                 currentBoostTime += Time.deltaTime;
                 if (currentBoostTime >= BOOST_TIME)
                 {
+                    //if current boost time exceeds set boost time, stop
                     currentBoostTime = 0;
                     boosting = false;
+                    spark.Stop();
                 }
-
-                Vector2 boostForce = transform.up * DRIFT_BOOST_FACTOR * (1f - boostDelta);
+                //add boost force based on percentage in boosts to make boost fade
+                Vector2 boostForce = transform.up * (DRIFT_BOOST_FACTOR * (1f - boostPerc));
                 rb.AddForce(boostForce);
             }
 
+            //if no input is given, return
             if (NoGas(inputV))
                 return;
 
+            //add speed based on input and acceleration to rigidbody
             Vector2 speed = transform.up * (inputV * acceleration);
             rb.AddForce(speed);
         }
@@ -138,15 +144,12 @@ namespace MultiplayerRacer
 
         private void OnDriftEnd()
         {
-            foreach (ParticleSystem spark in sparks)
+            foreach (TrailRenderer trail in trails)
             {
-                if (spark.isPlaying)
-                {
-                    spark.Stop();
-                }
-                CheckForBoost();
-                driftRotation = 0;
+                trail.emitting = false;
             }
+            CheckForBoost();
+            driftRotation = 0;
             driftEnd = true;
             driftStart = false;
         }
@@ -159,6 +162,8 @@ namespace MultiplayerRacer
             {
                 //set boosting flag
                 boosting = true;
+                //set spark particle system to play
+                spark.Play();
                 //if already boosting, reset the boost time
                 currentBoostTime = 0;
             }
@@ -166,12 +171,9 @@ namespace MultiplayerRacer
 
         private void OnDriftStart()
         {
-            foreach (ParticleSystem spark in sparks)
+            foreach (TrailRenderer trail in trails)
             {
-                if (!spark.isPlaying)
-                {
-                    spark.Play();
-                }
+                trail.emitting = true;
             }
             driftRotation = 0;
             driftStart = true;

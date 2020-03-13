@@ -32,6 +32,7 @@ namespace MultiplayerRacer
         private float remoteInputV;
         private float remoteInputH;
         private bool remoteDrift;
+        private float lag;
 
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
@@ -60,10 +61,10 @@ namespace MultiplayerRacer
                     //only simulate remote car based on remote inputs if we are in the racing phase
                     remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH, remoteDrift);
                 }
-
+                float delta = Time.deltaTime + (Time.deltaTime * lag);
                 //correct any errors by delayed remote input by linear interpolation towards remote position and rotation
-                RB.position = Vector2.Lerp(RB.position, remotePosition, Time.deltaTime);
-                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, Time.deltaTime);
+                RB.position = Vector2.Lerp(RB.position, remotePosition, delta);
+                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, delta);
 
                 //show remote car as ghost with remote position and remote rotation
                 remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
@@ -85,6 +86,8 @@ namespace MultiplayerRacer
                 //send position and rotation of simulated car
                 stream.SendNext(RB.position);
                 stream.SendNext(RB.rotation);
+                stream.SendNext(RB.velocity);
+                stream.SendNext(RB.angularVelocity);
 
                 if (racing)
                 {   //if the player is racing, send inputs
@@ -95,8 +98,12 @@ namespace MultiplayerRacer
             }
             else
             {
+                lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
+
                 remotePosition = (Vector2)stream.ReceiveNext();
                 remoteRotation = (float)stream.ReceiveNext();
+                remotePosition += (Vector2)stream.ReceiveNext() * lag;
+                remoteRotation += (float)stream.ReceiveNext() * lag;
 
                 if (racing)
                 {
