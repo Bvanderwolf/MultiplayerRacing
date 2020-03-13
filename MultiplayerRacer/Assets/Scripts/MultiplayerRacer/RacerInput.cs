@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Photon.Pun;
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -14,18 +15,20 @@ namespace MultiplayerRacer
 
         private Racer racer;
         private RacerMotor motor;
+        private PhotonView PV;
 
         private void Awake()
         {
             racer = GetComponent<Racer>();
             motor = GetComponent<RacerMotor>();
+            PV = GetComponent<PhotonView>();
         }
 
         //Render frames
         private void FixedUpdate()
         {
             //we can only check input if we can race
-            if (!racer.CanRace)
+            if (!PV.IsMine || !racer.CanRace)
                 return;
 
             //left (1.0) to right (-1.0)
@@ -35,14 +38,16 @@ namespace MultiplayerRacer
 
             //update motor values
             motor.AddSpeed(v);
-            motor.Steer(h, DriftInput);
+            motor.Steer(h);
+            motor.Drift(DriftInput);
             motor.ClampVelocity();
         }
 
         public void SimulateRemote(float v, float h, bool drift)
         {
             motor.AddSpeed(v);
-            motor.Steer(h, drift);
+            motor.Steer(h);
+            motor.Drift(drift);
             motor.ClampVelocity();
         }
 

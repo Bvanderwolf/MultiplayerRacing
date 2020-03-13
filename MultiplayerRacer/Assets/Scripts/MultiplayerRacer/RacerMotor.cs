@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MultiplayerRacer
 {
@@ -16,14 +15,14 @@ namespace MultiplayerRacer
         private float weelFriction;
         private float maxVelocityBoosted;
         private const float INPUT_THRESHOLD = 0.01f;
-        private const float DRIFT_BOOST_THRESHOLD = 60f;
-        private const float DRIFT_BOOST_FACTOR = 10f;
+        private const float MIN_DRIFT_TIME = 1f;
+        private const float DRIFT_BOOST_FACTOR = 3f;
         private const float DRIFT_DAMP = 4f;
 
         private bool driftStart = false;
         private bool driftEnd = false;
 
-        private float driftRotation;
+        private float driftTime;
         private float lastRotation;
         private bool lastDriftWasLeft = false;
 
@@ -39,7 +38,7 @@ namespace MultiplayerRacer
             maxVelocityBoosted = maxVelocity * 3f;
         }
 
-        public void AddSpeed(float inputV)
+        private void FixedUpdate()
         {
             if (boosting)
             {
@@ -57,7 +56,10 @@ namespace MultiplayerRacer
                 Vector2 boostForce = transform.up * (DRIFT_BOOST_FACTOR * (1f - boostPerc));
                 rb.AddForce(boostForce);
             }
+        }
 
+        public void AddSpeed(float inputV)
+        {
             //if no input is given, return
             if (NoGas(inputV))
                 return;
@@ -67,7 +69,7 @@ namespace MultiplayerRacer
             rb.AddForce(speed);
         }
 
-        public void Steer(float inputH, bool drift)
+        public void Steer(float inputH)
         {
             //only rotatate if player has input
             if (NoSteer(inputH))
@@ -77,26 +79,34 @@ namespace MultiplayerRacer
             float direction = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.up));
             if (direction >= 0.0f)
             {
-                rb.rotation += inputH * steering * (rb.velocity.magnitude / maxVelocity);
+                rb.rotation += inputH * steering * (rb.velocity.magnitude / (maxVelocity * 0.5f));
             }
             else
             {
-                rb.rotation -= inputH * steering * (rb.velocity.magnitude / maxVelocity);
+                rb.rotation -= inputH * steering * (rb.velocity.magnitude / (maxVelocity * 0.5f));
             }
+        }
+
+        public void Drift(bool drift)
+        {
+            float force = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.left));
+            Vector2 relativeForce = Vector2.right * force;
+
             //if no drifting input is given the car will be forced to not drift
             if (!drift)
             {
+                //add damped relative force
+                rb.AddForce(rb.GetRelativeVector(relativeForce * DRIFT_DAMP));
                 if (!driftEnd)
                 {
                     //if the drift end flag is false, handle the drift ending
                     OnDriftEnd();
                 }
-                float force = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.left));
-                Vector2 relativeForce = Vector2.right * force;
-                rb.AddForce(rb.GetRelativeVector(relativeForce * DRIFT_DAMP));
             }
             else
             {
+                //add normal relative force
+                rb.AddForce(rb.GetRelativeVector(relativeForce));
                 if (!driftStart)
                 {
                     //if the drift was not started, handle the drift starting
@@ -121,25 +131,25 @@ namespace MultiplayerRacer
                 /*If we start drifting left and it is not the same
                  drift direction as last, we reset the drift rotation*/
                 if (!sameDriftAsLast)
-                    driftRotation = 0;
+                    driftTime = 0;
 
-                driftRotation += difference;
+                driftTime += Time.deltaTime;
             }
             else
             {
                 /*If we start drifting right and it is not the same
                  drift direction as last, we reset the drift rotation*/
                 if (!sameDriftAsLast)
-                    driftRotation = 0;
+                    driftTime = 0;
 
-                driftRotation -= difference;
+                driftTime += Time.deltaTime;
             }
             lastDriftWasLeft = leftDrift;
         }
 
         public void ResetDrift()
         {
-            driftRotation = 0;
+            driftTime = 0;
         }
 
         private void OnDriftEnd()
@@ -149,7 +159,7 @@ namespace MultiplayerRacer
                 trail.emitting = false;
             }
             CheckForBoost();
-            driftRotation = 0;
+            driftTime = 0;
             driftEnd = true;
             driftStart = false;
         }
@@ -157,7 +167,7 @@ namespace MultiplayerRacer
         private void CheckForBoost()
         {
             //define boost
-            bool boost = driftRotation >= DRIFT_BOOST_THRESHOLD;
+            bool boost = driftTime >= MIN_DRIFT_TIME;
             if (boost)
             {
                 //set boosting flag
@@ -175,7 +185,7 @@ namespace MultiplayerRacer
             {
                 trail.emitting = true;
             }
-            driftRotation = 0;
+            driftTime = 0;
             driftStart = true;
             driftEnd = false;
         }
@@ -217,6 +227,7 @@ namespace MultiplayerRacer
             //clamp velocity keeping boosted max velocity into account
             if (rb.velocity.magnitude > (boosting ? maxVelocityBoosted : maxVelocity))
             {
+                print("test");
                 rb.velocity = rb.velocity.normalized * maxVelocity;
             }
         }

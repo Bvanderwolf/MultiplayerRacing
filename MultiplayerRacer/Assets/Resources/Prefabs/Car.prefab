@@ -16,7 +16,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6199513176737985583
 Transform:
   m_ObjectHideFlags: 0
@@ -218,8 +218,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carCamera: {fileID: 5173830234699297827}
+  spriteRend: {fileID: 5173830235293659672}
   remoteCar: {fileID: 6199513176737985583}
   canRace: 0
+  simulateRemote: 0
 --- !u!114 &5419838646975346472
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -244,8 +246,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bf0a5be74bfb94439065da0a7e93691, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  acceleration: 1.75
-  steering: 3
+  acceleration: 3.5
+  steering: 2.75
   maxVelocity: 10
   spark: {fileID: 790921217}
   trails:

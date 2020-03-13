@@ -9,10 +9,12 @@ namespace MultiplayerRacer
     public class Racer : MonoBehaviour, IPunInstantiateMagicCallback, IPunObservable
     {
         [SerializeField] private GameObject carCamera;
+        [SerializeField] private SpriteRenderer spriteRend;
         [SerializeField] private Transform remoteCar;
         [SerializeField] private bool canRace;
+        [SerializeField] private bool showRemote;
 
-        public GameObject Camera => carCamera;
+        public GameObject CarCamera => carCamera;
         public bool CanRace => canRace;
 
         /// <summary>
@@ -27,16 +29,24 @@ namespace MultiplayerRacer
 
         private RacerInput remoteRacerInput;
         private RacerMotor motor;
+
         private Vector2 remotePosition;
+        private Vector2 remoteVelocity;
         private float remoteRotation;
+
         private float remoteInputV;
         private float remoteInputH;
         private bool remoteDrift;
+
         private float lag;
+        private bool remoteCollision;
+        private bool isColliding;
 
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
-        private const float INTERPOLATION_PERIOD = 0.1f;
+        private const float SMOOTHING_POSITION_OFFSET = 2f;
+        private const float MAX_REMOTE_DISTANCE = 3f;
+        private const float MAX_REMOTE_ANGLE = 15f;
 
         private TimeSpan startTime;
 
@@ -46,6 +56,10 @@ namespace MultiplayerRacer
             motor = GetComponent<RacerMotor>();
             //store camera rotation for reset in late update
             cameraRotation = carCamera.transform.rotation;
+            if (showRemote)
+            {
+                remoteCar.gameObject.SetActive(true);
+            }
         }
 
         //Update during render frames
@@ -54,21 +68,16 @@ namespace MultiplayerRacer
             //update other clients their car
             if (!PV.IsMine)
             {
-                bool racing = InRoomManager.Instance.CurrentGamePhase == GamePhase.RACING;
+                SimulateCar();
+                CorrectCarSimulation();
+                UpdateRemoteCarGhost();
 
-                if (racing)
+                if (NotVisible())
                 {
-                    //only simulate remote car based on remote inputs if we are in the racing phase
-                    remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH, remoteDrift);
+                    //if the car is remote car is not visible, set the position and rotation directly
+                    RB.position = remotePosition;
+                    RB.rotation = remoteRotation;
                 }
-                float delta = Time.deltaTime + (Time.deltaTime * lag);
-                //correct any errors by delayed remote input by linear interpolation towards remote position and rotation
-                RB.position = Vector2.Lerp(RB.position, remotePosition, delta);
-                RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, delta);
-
-                //show remote car as ghost with remote position and remote rotation
-                remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
-                remoteCar.eulerAngles = new Vector3(0, 0, transform.eulerAngles.z + (transform.eulerAngles.z - remoteRotation));
             }
         }
 
@@ -76,6 +85,44 @@ namespace MultiplayerRacer
         {
             //for now simply reset camera rotation after all updates
             carCamera.transform.rotation = cameraRotation;
+        }
+
+        //uses remote inputs to simulate the car
+        private void SimulateCar()
+        {
+            bool racing = InRoomManager.Instance.CurrentGamePhase == GamePhase.RACING;
+            if (racing)
+            {
+                //only simulate remote car based on remote inputs if we are in the racing phase
+                remoteRacerInput.SimulateRemote(remoteInputV, remoteInputH, remoteDrift);
+            }
+        }
+
+        //linearly interpolates between position and remote position
+        private void CorrectCarSimulation()
+        {
+            float renderFrame = 1 / 60f;
+            float delta = Time.deltaTime + (renderFrame * lag) + (remoteCollision ? renderFrame : 0);
+            //correct errors by delayed remote input by linear interpolation towards remote position and rotation
+            RB.position = Vector2.Lerp(RB.position, remotePosition, delta);
+            RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, delta);
+        }
+
+        //updates remote car as ghost with remote position and remote rotation
+        private void UpdateRemoteCarGhost()
+        {
+            remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
+            remoteCar.eulerAngles = new Vector3(0, 0, transform.eulerAngles.z + (transform.eulerAngles.z - remoteRotation));
+        }
+
+        /// <summary>
+        /// returns whether the remote car is visible or not
+        /// </summary>
+        /// <returns></returns>
+        private bool NotVisible()
+        {
+            Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+            return !GeometryUtility.TestPlanesAABB(planes, remoteCar.GetComponent<SpriteRenderer>().bounds);
         }
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
@@ -88,6 +135,7 @@ namespace MultiplayerRacer
                 stream.SendNext(RB.rotation);
                 stream.SendNext(RB.velocity);
                 stream.SendNext(RB.angularVelocity);
+                stream.SendNext(isColliding);
 
                 if (racing)
                 {   //if the player is racing, send inputs
@@ -102,8 +150,10 @@ namespace MultiplayerRacer
 
                 remotePosition = (Vector2)stream.ReceiveNext();
                 remoteRotation = (float)stream.ReceiveNext();
-                remotePosition += (Vector2)stream.ReceiveNext() * lag;
+                remoteVelocity = (Vector2)stream.ReceiveNext();
+                remotePosition += remoteVelocity * lag;
                 remoteRotation += (float)stream.ReceiveNext() * lag;
+                remoteCollision = (bool)stream.ReceiveNext();
 
                 if (racing)
                 {
@@ -216,6 +266,12 @@ namespace MultiplayerRacer
         {
             //reset drift when colliding with something
             motor.ResetDrift();
+            isColliding = true;
+        }
+
+        private void OnCollisionExit2D(Collision2D collision)
+        {
+            isColliding = false;
         }
 
         [PunRPC]
@@ -223,7 +279,7 @@ namespace MultiplayerRacer
         {
             //get the camera of the car in our scene based on viewID and set it to inactive
             PhotonView PV = PhotonView.Find(viewID);
-            GameObject carCamera = PV.GetComponent<Racer>()?.Camera;
+            GameObject carCamera = PV.GetComponent<Racer>()?.CarCamera;
             if (carCamera != null)
             {
                 carCamera.SetActive(false);
