@@ -26,6 +26,7 @@ namespace MultiplayerRacer
         private PhotonView PV;
 
         private RacerInput remoteRacerInput;
+        private RacerMotor motor;
         private Vector2 remotePosition;
         private float remoteRotation;
         private float remoteInputV;
@@ -41,6 +42,7 @@ namespace MultiplayerRacer
         private void Awake()
         {
             RB = GetComponent<Rigidbody2D>();
+            motor = GetComponent<RacerMotor>();
             //store camera rotation for reset in late update
             cameraRotation = carCamera.transform.rotation;
         }
@@ -201,6 +203,12 @@ namespace MultiplayerRacer
                 //if the exit is the same as the entry we need to shift the road back
                 OnRoadBoundInteraction(collision.transform.parent.gameObject, true, sameExitAsEntry || boundExitAfterReset);
             }
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            //reset drift when colliding with something
+            motor.ResetDrift();
         }
 
         [PunRPC]
