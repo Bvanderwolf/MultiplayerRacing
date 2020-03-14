@@ -111,8 +111,8 @@ namespace MultiplayerRacer
         //updates remote car as ghost with remote position and remote rotation
         private void UpdateRemoteCarGhost()
         {
-            remoteCar.position = transform.position + (Vector3)(remotePosition - RB.position);
-            remoteCar.eulerAngles = new Vector3(0, 0, transform.eulerAngles.z + (transform.eulerAngles.z - remoteRotation));
+            remoteCar.position = remotePosition;
+            remoteCar.eulerAngles = new Vector3(0, 0, remoteRotation);
         }
 
         /// <summary>
