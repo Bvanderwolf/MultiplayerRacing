@@ -10,6 +10,7 @@ namespace MultiplayerRacer
         [SerializeField] private GameObject sidewalkFlex;
         [SerializeField] private GameObject roadBound;
         [SerializeField] private GameObject finish;
+        [SerializeField] private RoadProps props;
 
         public GameObject Main => main;
         public Bounds MainBounds => main.GetComponent<SpriteRenderer>().bounds;
@@ -20,22 +21,30 @@ namespace MultiplayerRacer
         public Bounds SideWalkFlexBounds => sidewalkFlex.GetComponent<SpriteRenderer>().bounds;
         private Vector3 SideWalkFlexUpPosition => new Vector3(0, (MainBounds.size.y * 0.5f) + (SideWalkFlexBounds.size.y * 0.5f));
 
-        private RoadType type;
-
-        public RoadType Type
+        public void SetupRoad(RoadType[] types, int trackIndex)
         {
-            get => type;
-            set
+            SetRoadType(types, trackIndex);
+            ConfigureRoadProps(types.Length, trackIndex);
+        }
+
+        /// <summary>
+        /// sets up road type based on index and given types
+        /// </summary>
+        /// <param name="types"></param>
+        /// <param name="trackIndex"></param>
+        private void SetRoadType(RoadType[] types, int trackIndex)
+        {
+            switch (types[trackIndex])
             {
-                switch (value)
-                {
-                    case RoadType.DEFAULT: SetDefaultType(); break;
-                    case RoadType.START: SetStartType(); break;
-                    case RoadType.END: SetEndType(); break;
-                }
+                case RoadType.DEFAULT: SetDefaultType(); break;
+                case RoadType.START: SetStartType(); break;
+                case RoadType.END: SetEndType(); break;
             }
         }
 
+        /// <summary>
+        /// Sets up the default road type
+        /// </summary>
         private void SetDefaultType()
         {
             sidewalkFlex.transform.localPosition = Vector3.zero;
@@ -44,6 +53,9 @@ namespace MultiplayerRacer
             finish.SetActive(false);
         }
 
+        /// <summary>
+        /// Sets up the start road type
+        /// </summary>
         private void SetStartType()
         {
             sidewalkFlex.transform.localPosition = -SideWalkFlexUpPosition;
@@ -52,12 +64,37 @@ namespace MultiplayerRacer
             finish.SetActive(false);
         }
 
+        /// <summary>
+        /// Sets up the end road type
+        /// </summary>
         private void SetEndType()
         {
             sidewalkFlex.transform.localPosition = SideWalkFlexUpPosition;
             sidewalkFlex.SetActive(true);
             roadBound.SetActive(false);
             finish.SetActive(true);
+        }
+
+        /// <summary>
+        /// configures road props based on track length and track index
+        /// </summary>
+        /// <param name="trackIndex"></param>
+        private void ConfigureRoadProps(int trackLength, int trackIndex)
+        {
+            //define not configured
+            bool notConfigured = trackIndex >= RoadManager.PropConfiguration.Count;
+            if (notConfigured)
+            {
+                //define if index represents start or end road
+                bool startOrEnd = trackIndex == 0 || trackIndex == trackLength - 1;
+                //if not configured already, add the prop config
+                RoadManager.PropConfiguration.Add(props.SetProps(startOrEnd));
+            }
+            else
+            {
+                //if already configured, use stored configuration
+                props.SetProps(RoadManager.PropConfiguration[trackIndex]);
+            }
         }
 
         /// <summary>

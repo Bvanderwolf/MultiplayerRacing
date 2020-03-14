@@ -1,10 +1,9 @@
-﻿using System;
-using MultiplayerRacerEnums;
+﻿using MultiplayerRacerEnums;
 using UnityEngine;
 
 namespace MultiplayerRacer
 {
-    [Serializable]
+    [System.Serializable]
     public struct RaceTrack
     {
         [SerializeField] private string name;

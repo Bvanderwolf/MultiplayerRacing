@@ -32,6 +32,11 @@ namespace MultiplayerRacer
         public int NumberInRoom { get; private set; } = 0;
         public bool IsReady { get; private set; } = false;
 
+        /// <summary>
+        /// name of track set in lobby
+        /// </summary>
+        public string NameOfTrackChoosen { get; private set; } = "Default";
+
         public event Action<MultiplayerRacerScenes, bool> OnReadyStatusChange;
 
         public event Action OnGameStart;

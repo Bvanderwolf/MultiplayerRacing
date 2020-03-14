@@ -22,21 +22,39 @@ namespace MultiplayerRacer
         private RaceTrack trackPlaying;
         private int trackIndexOn = 0;
 
+        public static readonly List<Sprite[]> RoadProps = new List<Sprite[]>();
+        public static readonly List<string> PropConfiguration = new List<string>();
+
         private void Awake()
         {
             PV = GetComponent<PhotonView>();
-            SetupRoadValues();
+
+            LoadRoadProps();
+            //SetupRoadValues();
             SetupSceneRelations();
-            //Testing();
+            Testing();
         }
 
         private void Testing()
         {
+            raceTrackDict = new Dictionary<string, RaceTrack>();
+            foreach (RaceTrack track in tracks) raceTrackDict.Add(track.Name, track);
+
+            for (int i = 0; i < tracks.Length; i++)
+            {
+                tracks[i].CheckMaxRoadTypes();
+                tracks[i].CheckForStartAndEnd();
+            }
+
             GameObject.Find("Car").GetComponent<Racer>().OnRoadBoundInteraction += DoRoadShift;
             trackPlaying = raceTrackDict["Default"];
+
             //set other roads their type based on next road types to come
-            roads[1].Type = trackPlaying.RoadTypes[1];
-            roads[0].Type = trackPlaying.RoadTypes[2];
+            roadOn = roads[2];
+            roadOn.SetupRoad(trackPlaying.RoadTypes, trackIndexOn);
+            roads[1].SetupRoad(trackPlaying.RoadTypes, 1);
+            roads[0].SetupRoad(trackPlaying.RoadTypes, 2);
+            roadLength = roadOn.MainBounds.size.y;
         }
 
         private void OnValidate()
@@ -47,6 +65,26 @@ namespace MultiplayerRacer
                 tracks[i].CheckMaxRoadTypes();
                 tracks[i].CheckForStartAndEnd();
             }
+        }
+
+        //load in all necessary road props for the roads to manage
+        private void LoadRoadProps()
+        {
+            string path = "Sprites/Roads/Props/";
+
+            RoadProps.Add(new Sprite[4] {
+                Resources.Load<Sprite>(path + "Container_A"),
+                Resources.Load<Sprite>(path + "Container_B"),
+                Resources.Load<Sprite>(path + "Container_C"),
+                Resources.Load<Sprite>(path + "Container_A")
+            });
+            RoadProps.Add(new Sprite[1] {
+                Resources.Load<Sprite>(path + "Crate")
+            });
+            RoadProps.Add(new Sprite[2] {
+                Resources.Load<Sprite>(path + "Czech_Hdgehog_A"),
+                Resources.Load<Sprite>(path + "Czech_Hdgehog_B")
+            });
         }
 
         /// <summary>
@@ -63,8 +101,11 @@ namespace MultiplayerRacer
                 tracks[i].CheckForStartAndEnd();
             }
 
+            trackPlaying = raceTrackDict[InRoomManager.Instance.NameOfTrackChoosen];
             roadOn = roads[2];
-            roadOn.Type = RoadType.START;
+            roadOn.SetupRoad(trackPlaying.RoadTypes, trackIndexOn);
+            roads[1].SetupRoad(trackPlaying.RoadTypes, trackIndexOn + 1);
+            roads[0].SetupRoad(trackPlaying.RoadTypes, trackIndexOn + 2);
             roadLength = roadOn.MainBounds.size.y;
         }
 
@@ -101,12 +142,6 @@ namespace MultiplayerRacer
 
         private void OnRaceStarted()
         {
-            trackPlaying = raceTrackDict["Default"]; //for now use default track. In future get from parameter
-
-            //set other roads their type based on next road types to come
-            roads[1].Type = trackPlaying.RoadTypes[trackIndexOn + 1];
-            roads[0].Type = trackPlaying.RoadTypes[trackIndexOn + 2];
-
             roadOn.SetCarSpawnsInactive();
         }
 
@@ -120,9 +155,9 @@ namespace MultiplayerRacer
             roads[2].transform.localPosition = new Vector3(0, -roadLength);
 
             //set roads their type based on next road types to come
-            roads[2].Type = trackPlaying.RoadTypes[trackIndexOn];
-            roads[1].Type = trackPlaying.RoadTypes[trackIndexOn + 1];
-            roads[0].Type = trackPlaying.RoadTypes[trackIndexOn + 2];
+            roads[2].SetupRoad(trackPlaying.RoadTypes, trackIndexOn);
+            roads[1].SetupRoad(trackPlaying.RoadTypes, trackIndexOn + 1);
+            roads[0].SetupRoad(trackPlaying.RoadTypes, trackIndexOn + 2);
 
             roadOn = roads[2];
         }
@@ -253,7 +288,7 @@ namespace MultiplayerRacer
             int offset = onExit ? 1 : 2;
             //index of the type for shifting road is either 2 indexes ahead or behind, based on forwardshift or not
             int newShiftingRoadTypeIndex = forwardShift ? trackIndexOn + offset : trackIndexOn - offset;
-            shiftingRoad.Type = trackPlaying.RoadTypes[newShiftingRoadTypeIndex];
+            shiftingRoad.SetupRoad(trackPlaying.RoadTypes, newShiftingRoadTypeIndex);
         }
 
         /// <summary>
