@@ -66,19 +66,19 @@ namespace MultiplayerRacer
         private void FixedUpdate()
         {
             //update other clients their car
-            //if (!PV.IsMine)
-            //{
-            //    SimulateCar();
-            //    CorrectCarSimulation();
-            //    UpdateRemoteCarGhost();
+            if (!PV.IsMine)
+            {
+                SimulateCar();
+                CorrectCarSimulation();
+                UpdateRemoteCarGhost();
 
-            //    if (NotVisible())
-            //    {
-            //        //if the car is remote car is not visible, set the position and rotation directly
-            //        RB.position = remotePosition;
-            //        RB.rotation = remoteRotation;
-            //    }
-            //}
+                if (NotVisible())
+                {
+                    //if the car is remote car is not visible, set the position and rotation directly
+                    RB.position = remotePosition;
+                    RB.rotation = remoteRotation;
+                }
+            }
         }
 
         private void LateUpdate()
@@ -220,8 +220,8 @@ namespace MultiplayerRacer
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
-            //if (!PV.IsMine)
-            //    return;
+            if (!PV.IsMine)
+                return;
 
             if (collision.tag == "RoadBound")
             {
@@ -245,8 +245,8 @@ namespace MultiplayerRacer
 
         private void OnTriggerExit2D(Collider2D collision)
         {
-            //if (!PV.IsMine)
-            //    return;
+            if (!PV.IsMine)
+                return;
 
             if (collision.tag == "RoadBound")
             {

@@ -5,6 +5,7 @@ using System;
 using MultiplayerRacerEnums;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Random = UnityEngine.Random;
 
 namespace MultiplayerRacer
 {
@@ -66,6 +67,7 @@ namespace MultiplayerRacer
         }
 
         public const int COUNTDOWN_LENGTH = 3;
+        public const int RANDOM_SEED = 177;
         public const float READY_SEND_TIMEOUT = 0.75f;
 
         private PhotonView PV;
@@ -243,6 +245,8 @@ namespace MultiplayerRacer
             //subscribe OnGameSceneLoaded to scene loaded event before sloading the level
             SceneManager.sceneLoaded += OnLoadedGameScene;
             MatchMakingManager.Instance.AttachOnGameSceneLoaded(this);
+            //set randomness seed for each client to be the same.
+            Random.InitState(RANDOM_SEED);
 
             if (PhotonNetwork.IsMasterClient)
             {

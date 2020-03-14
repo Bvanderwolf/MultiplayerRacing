@@ -28,7 +28,7 @@ namespace MultiplayerRacer
         private void FixedUpdate()
         {
             //we can only check input if we can race
-            if (!racer.CanRace)
+            if (!PV.IsMine || !racer.CanRace)
                 return;
 
             //left (1.0) to right (-1.0)

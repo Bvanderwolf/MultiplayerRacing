@@ -30,9 +30,9 @@ namespace MultiplayerRacer
             PV = GetComponent<PhotonView>();
 
             LoadRoadProps();
-            //SetupRoadValues();
+            SetupRoadValues();
             SetupSceneRelations();
-            Testing();
+            //Testing();
         }
 
         private void Testing()

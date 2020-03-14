@@ -88,12 +88,12 @@ namespace MultiplayerRacer
                 //define if index represents start or end road
                 bool startOrEnd = trackIndex == 0 || trackIndex == trackLength - 1;
                 //if not configured already, add the prop config
-                RoadManager.PropConfiguration.Add(props.SetProps(startOrEnd));
+                RoadManager.PropConfiguration.Add(props.SetupProps(startOrEnd, MainBounds));
             }
             else
             {
                 //if already configured, use stored configuration
-                props.SetProps(RoadManager.PropConfiguration[trackIndex]);
+                props.SetupProps(RoadManager.PropConfiguration[trackIndex]);
             }
         }
 
