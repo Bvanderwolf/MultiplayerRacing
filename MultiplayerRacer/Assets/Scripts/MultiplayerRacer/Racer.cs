@@ -102,7 +102,7 @@ namespace MultiplayerRacer
         private void CorrectCarSimulation()
         {
             float renderFrame = 1 / 60f;
-            float delta = Time.deltaTime + (renderFrame * lag);// + (remoteCollision ? renderFrame : 0);
+            float delta = Time.deltaTime + (renderFrame * lag) + (remoteCollision ? renderFrame : 0);
             //correct errors by delayed remote input by linear interpolation towards remote position and rotation
             RB.position = Vector2.Lerp(RB.position, remotePosition, delta);
             RB.rotation = Mathf.Lerp(RB.rotation, remoteRotation, delta);

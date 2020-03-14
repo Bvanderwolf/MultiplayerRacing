@@ -221,7 +221,7 @@ MonoBehaviour:
   spriteRend: {fileID: 5173830235293659672}
   remoteCar: {fileID: 6199513176737985583}
   canRace: 0
-  simulateRemote: 0
+  showRemote: 1
 --- !u!114 &5419838646975346472
 MonoBehaviour:
   m_ObjectHideFlags: 0
