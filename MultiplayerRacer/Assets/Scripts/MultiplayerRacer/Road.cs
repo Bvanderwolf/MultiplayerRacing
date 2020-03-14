@@ -10,6 +10,7 @@ namespace MultiplayerRacer
         [SerializeField] private GameObject sidewalkFlex;
         [SerializeField] private GameObject roadBound;
         [SerializeField] private GameObject finish;
+        [SerializeField] private GameObject startLights;
         [SerializeField] private RoadProps props;
 
         public GameObject Main => main;
@@ -51,6 +52,7 @@ namespace MultiplayerRacer
             sidewalkFlex.SetActive(false);
             roadBound.SetActive(true);
             finish.SetActive(false);
+            startLights.SetActive(false);
         }
 
         /// <summary>
@@ -62,6 +64,7 @@ namespace MultiplayerRacer
             sidewalkFlex.SetActive(true);
             roadBound.SetActive(true);
             finish.SetActive(false);
+            startLights.SetActive(true);
         }
 
         /// <summary>
@@ -73,6 +76,7 @@ namespace MultiplayerRacer
             sidewalkFlex.SetActive(true);
             roadBound.SetActive(false);
             finish.SetActive(true);
+            startLights.SetActive(false);
         }
 
         /// <summary>
