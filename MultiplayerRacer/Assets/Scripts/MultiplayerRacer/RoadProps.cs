@@ -46,6 +46,7 @@ namespace MultiplayerRacer
                     collider.enabled = false;
                     child.localPosition = Vector3.zero;
                 }
+                SetupPropTag(child, renderer);
             }
 
             return $"{count}{config}";
@@ -112,7 +113,9 @@ namespace MultiplayerRacer
                     //if this prop is not shown set its sprite to null and collider disabled
                     renderer.sprite = null;
                     collider.enabled = false;
+                    child.localPosition = Vector3.zero;
                 }
+                SetupPropTag(child, renderer);
             }
         }
 
@@ -127,6 +130,15 @@ namespace MultiplayerRacer
             int index_spriteType = int.Parse(config.Substring(0, 1));
             int index_sprite = int.Parse(config.Substring(1, 1));
             renderer.sprite = sprites[index_spriteType][index_sprite];
+        }
+
+        private void SetupPropTag(Transform prop, SpriteRenderer renderer)
+        {
+            string spriteName = renderer.sprite?.name;
+            if (string.IsNullOrEmpty(spriteName))
+            {
+                //prop.tag =
+            }
         }
     }
 }

@@ -72,16 +72,20 @@ namespace MultiplayerRacer
         {
             string path = "Sprites/Roads/Props/";
 
-            RoadProps.Add(new Sprite[4] {
+            RoadProps.Add(new Sprite[] {
                 Resources.Load<Sprite>(path + "Container_A"),
                 Resources.Load<Sprite>(path + "Container_B"),
                 Resources.Load<Sprite>(path + "Container_C"),
                 Resources.Load<Sprite>(path + "Container_A")
             });
-            RoadProps.Add(new Sprite[1] {
+            RoadProps.Add(new Sprite[] {
                 Resources.Load<Sprite>(path + "Crate")
             });
-            RoadProps.Add(new Sprite[2] {
+            RoadProps.Add(new Sprite[]
+            {
+                Resources.Load<Sprite>(path + "Booster")
+            });
+            RoadProps.Add(new Sprite[] {
                 Resources.Load<Sprite>(path + "Czech_Hdgehog_A"),
                 Resources.Load<Sprite>(path + "Czech_Hdgehog_B")
             });

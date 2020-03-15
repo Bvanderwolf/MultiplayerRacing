@@ -13,6 +13,7 @@ namespace MultiplayerRacer
         [SerializeField] private GameObject readyUpInfo;
         [SerializeField] private GameObject eventText;
         [SerializeField] private GameObject leaderBoard;
+        [SerializeField] private Transform debug;
         [SerializeField] private KeyCode readyUpKey;
         [SerializeField] private KeyCode readyUpResetKey;
 
@@ -26,11 +27,23 @@ namespace MultiplayerRacer
         private Queue<string> eventTextBuffer = new Queue<string>();
         private bool showingEventText = false;
 
+        private static Text distanceToRemoteText;
+        private static Text positionCatchupFactorText;
+        private static Text angleToRemoteText;
+        private static Text angleCatchupFactorText;
+        private static Text lagText;
+
         protected override void Awake()
         {
             base.Awake();
             PV = GetComponent<PhotonView>();
             readyUpResetText = $"Press {readyUpResetKey} key to start Ready up";
+
+            distanceToRemoteText = debug.Find("DistToRemote").GetComponent<Text>();
+            positionCatchupFactorText = debug.Find("PositionCatchup").GetComponent<Text>();
+            angleToRemoteText = debug.Find("AngleToRemote").GetComponent<Text>();
+            angleCatchupFactorText = debug.Find("AngleCatchup").GetComponent<Text>();
+            lagText = debug.Find("Lag").GetComponent<Text>();
         }
 
         /// <summary>
@@ -276,6 +289,31 @@ namespace MultiplayerRacer
 
             //start the setup coroutine
             StartCoroutine(SetupReadyUpWithDelay());
+        }
+
+        public static void SetDistanceToRemote(float value)
+        {
+            distanceToRemoteText.text = "DistToRemote: " + value.ToString("0.##");
+        }
+
+        public static void SetPositionCatchupFactor(float value)
+        {
+            positionCatchupFactorText.text = "PositionCatchup: " + (value < 0 ? 0 : value).ToString("0.##");
+        }
+
+        public static void SetAngleToRemote(float value)
+        {
+            angleToRemoteText.text = "AngleToRemote: " + value.ToString("0.##");
+        }
+
+        public static void SetAngleCatchupFactor(float value)
+        {
+            angleCatchupFactorText.text = "AngleCatchup: " + (value < 0 ? 0 : value).ToString("0.##");
+        }
+
+        public static void SetLag(float value)
+        {
+            lagText.text = "Lag:" + value;
         }
     }
 }
