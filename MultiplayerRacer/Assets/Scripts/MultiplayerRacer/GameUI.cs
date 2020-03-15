@@ -27,23 +27,12 @@ namespace MultiplayerRacer
         private Queue<string> eventTextBuffer = new Queue<string>();
         private bool showingEventText = false;
 
-        private static Text distanceToRemoteText;
-        private static Text positionCatchupFactorText;
-        private static Text angleToRemoteText;
-        private static Text angleCatchupFactorText;
-        private static Text lagText;
-
         protected override void Awake()
         {
             base.Awake();
             PV = GetComponent<PhotonView>();
             readyUpResetText = $"Press {readyUpResetKey} key to start Ready up";
-
-            distanceToRemoteText = debug.Find("DistToRemote").GetComponent<Text>();
-            positionCatchupFactorText = debug.Find("PositionCatchup").GetComponent<Text>();
-            angleToRemoteText = debug.Find("AngleToRemote").GetComponent<Text>();
-            angleCatchupFactorText = debug.Find("AngleCatchup").GetComponent<Text>();
-            lagText = debug.Find("Lag").GetComponent<Text>();
+            SetupDebug();
         }
 
         /// <summary>
@@ -291,29 +280,20 @@ namespace MultiplayerRacer
             StartCoroutine(SetupReadyUpWithDelay());
         }
 
-        public static void SetDistanceToRemote(float value)
-        {
-            distanceToRemoteText.text = "DistToRemote: " + value.ToString("0.##");
-        }
+        #region Debug
 
-        public static void SetPositionCatchupFactor(float value)
-        {
-            positionCatchupFactorText.text = "PositionCatchup: " + (value < 0 ? 0 : value).ToString("0.##");
-        }
+        private static Text lagText;
 
-        public static void SetAngleToRemote(float value)
+        private void SetupDebug()
         {
-            angleToRemoteText.text = "AngleToRemote: " + value.ToString("0.##");
-        }
-
-        public static void SetAngleCatchupFactor(float value)
-        {
-            angleCatchupFactorText.text = "AngleCatchup: " + (value < 0 ? 0 : value).ToString("0.##");
+            lagText = debug.Find("Lag").GetComponent<Text>();
         }
 
         public static void SetLag(float value)
         {
             lagText.text = "Lag:" + value;
         }
+
+        #endregion Debug
     }
 }

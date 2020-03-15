@@ -49,8 +49,8 @@ namespace MultiplayerRacer
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
         private const float SMOOTHING_POSITION_OFFSET = 2f;
 
-        [SerializeField] private float MAX_REMOTE_DISTANCE = 0.5f;
-        [SerializeField] private float MAX_REMOTE_ANGLE = 15f;
+        private const float MAX_REMOTE_DISTANCE = 1.5f;
+        private const float MAX_REMOTE_ANGLE = 25f;
 
         private TimeSpan startTime;
 
@@ -64,8 +64,14 @@ namespace MultiplayerRacer
             {
                 remoteCar.gameObject.SetActive(true);
             }
-            PhotonNetwork.SendRate = 30;
-            PhotonNetwork.SerializationRate = PhotonNetwork.SendRate;
+        }
+
+        private void Update()
+        {
+            if (!PV.IsMine)
+            {
+                CorrectCarSimulation();
+            }
         }
 
         //Update during render frames
@@ -75,7 +81,6 @@ namespace MultiplayerRacer
             if (!PV.IsMine)
             {
                 SimulateCar();
-                CorrectCarSimulation();
                 UpdateRemoteCarGhost();
 
                 if (NotVisible())
@@ -187,10 +192,6 @@ namespace MultiplayerRacer
                 angleToRemote = Mathf.Abs(remoteRotation - RB.rotation);
                 angleCatchupFactor = 1 + (angleToRemote - MAX_REMOTE_ANGLE);
 
-                GameUI.SetDistanceToRemote(distanceToRemote);
-                GameUI.SetPositionCatchupFactor(positionCatchupFactor);
-                GameUI.SetAngleToRemote(angleToRemote);
-                GameUI.SetAngleCatchupFactor(angleCatchupFactor);
                 GameUI.SetLag(lag);
 
                 if (racing)
@@ -296,7 +297,10 @@ namespace MultiplayerRacer
                 //define whether the exit direction is the same as the direction of entry
                 bool sameExitAsEntry = diff >= -BOUND_AXIS_ERROR_MARGIN && diff <= BOUND_AXIS_ERROR_MARGIN;
                 //if the exit is the same as the entry we need to shift the road back
-                OnRoadBoundInteraction(collision.transform.parent.gameObject, true, sameExitAsEntry || boundExitAfterReset);
+                OnRoadBoundInteraction?.Invoke(
+                    collision.transform.parent.gameObject,
+                    true,
+                    sameExitAsEntry || boundExitAfterReset);
             }
         }
 

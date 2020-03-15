@@ -16,7 +16,7 @@ namespace MultiplayerRacer
         private float maxVelocityBoosted;
         private const float INPUT_THRESHOLD = 0.01f;
         private const float MIN_DRIFT_TIME = 1f;
-        private const float DRIFT_BOOST_FACTOR = 3f;
+        private const float DRIFT_BOOST_FACTOR = 2.5f;
         private const float DRIFT_DAMP = 4f;
 
         private bool driftStart = false;

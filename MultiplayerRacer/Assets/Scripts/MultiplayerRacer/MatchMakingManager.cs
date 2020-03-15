@@ -170,6 +170,8 @@ namespace MultiplayerRacer
             connectingToRoom = false;
             InRoomManager.Instance.RegisterRoomMaster();
             InRoomManager.Instance.SetNumberInRoom(this, room.PlayerCount);
+            PhotonNetwork.SendRate = 40;
+            PhotonNetwork.SerializationRate = PhotonNetwork.SendRate;
         }
 
         /// <summary>
