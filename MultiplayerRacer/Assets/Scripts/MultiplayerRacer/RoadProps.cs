@@ -11,7 +11,7 @@ namespace MultiplayerRacer
 
         private const int CONFIG_CHAR_COUNT = 3;
 
-        public string SetupProps(bool startOrEnd, Bounds bounds)
+        public string Setup(bool startOrEnd)
         {
             List<Sprite[]> propSprites = RoadManager.RoadProps;
 
@@ -83,7 +83,7 @@ namespace MultiplayerRacer
             return $"{index_spriteType}{index_sprite}";
         }
 
-        public void SetupProps(string savedConfiguration)
+        public void Setup(string savedConfiguration)
         {
             List<Sprite[]> propSprites = RoadManager.RoadProps;
             int count = int.Parse(savedConfiguration.Substring(0, 1));

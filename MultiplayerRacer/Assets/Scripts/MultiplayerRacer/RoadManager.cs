@@ -25,14 +25,18 @@ namespace MultiplayerRacer
         public static readonly List<Sprite[]> RoadProps = new List<Sprite[]>();
         public static readonly List<string> PropConfiguration = new List<string>();
 
+        public static readonly Dictionary<string, Sprite[]> EnvironmentObjects = new Dictionary<string, Sprite[]>();
+        public static readonly List<string> EnvironmentConfiguration = new List<string>();
+
         private void Awake()
         {
             PV = GetComponent<PhotonView>();
 
             LoadRoadProps();
-            SetupRoadValues();
+            LoadEnvironmentObjects();
+            //SetupRoadValues();
             SetupSceneRelations();
-            //Testing();
+            Testing();
         }
 
         private void Testing()
@@ -87,6 +91,26 @@ namespace MultiplayerRacer
             RoadProps.Add(new Sprite[] {
                 Resources.Load<Sprite>(path + "Czech_Hdgehog_A"),
                 Resources.Load<Sprite>(path + "Czech_Hdgehog_B")
+            });
+        }
+
+        private void LoadEnvironmentObjects()
+        {
+            string path = "Sprites/Environment/Objects/";
+
+            EnvironmentObjects.Add("Folliage", new Sprite[]
+            {
+                Resources.Load<Sprite>(path + "Bush"),
+                Resources.Load<Sprite>(path + "Tree")
+            });
+            EnvironmentObjects.Add("Houses", new Sprite[]
+            {
+                Resources.Load<Sprite>(path + "Decor_Building"),
+                Resources.Load<Sprite>(path + "house_metal")
+            });
+            EnvironmentObjects.Add("Pavilion", new Sprite[]
+            {
+                Resources.Load<Sprite>(path + "Pavilion")
             });
         }
 

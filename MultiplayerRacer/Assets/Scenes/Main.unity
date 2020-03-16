@@ -1053,7 +1053,7 @@ MonoBehaviour:
   - {fileID: 2123245659}
   tracks:
   - name: Default
-    roadTypes: 01000000000000000000000002000000
+    roadTypes: 03000000010000000200000006000000
   readyColor: {r: 0, g: 1, b: 0, a: 1}
 --- !u!114 &721308948
 MonoBehaviour:
@@ -2128,15 +2128,15 @@ PrefabInstance:
       propertyPath: m_Pivot.y
       value: 0.5
       objectReference: {fileID: 0}
-    - target: {fileID: 6363480166074286375, guid: d1836ad7d2d1b5845a92197ccfd2e09f,
-        type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 33
-      objectReference: {fileID: 0}
     - target: {fileID: 7345441746588890873, guid: d1836ad7d2d1b5845a92197ccfd2e09f,
         type: 3}
       propertyPath: m_FontData.m_FontSize
       value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 6363480166074286375, guid: d1836ad7d2d1b5845a92197ccfd2e09f,
+        type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 33
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d1836ad7d2d1b5845a92197ccfd2e09f, type: 3}

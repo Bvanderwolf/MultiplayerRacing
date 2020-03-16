@@ -34,21 +34,43 @@ namespace MultiplayerRacer
         /// </summary>
         public void CheckForStartAndEnd()
         {
+            bool hasStart = false;
+            bool hasEnd = false;
             //check all but first indexes for start types to reset
-            for (int i = 1; i < roadTypes.Length; i++)
+            for (int i = 0; i < roadTypes.Length; i++)
             {
-                if (roadTypes[i] == RoadType.START)
+                if (i == 0 && IsStartRoadType(roadTypes[i]))
+                    hasStart = true;
+
+                if (i != 0 && IsStartRoadType(roadTypes[i]))
                     roadTypes[i] = RoadType.DEFAULT;
             }
             //check all but last indexes for end types to reset
-            for (int i = 0; i < roadTypes.Length - 1; i++)
+            for (int i = 0; i < roadTypes.Length; i++)
             {
-                if (roadTypes[i] == RoadType.END)
+                if (i == RoadTypes.Length - 1 && IsEndRoadType(roadTypes[i]))
+                    hasEnd = true;
+
+                if (i != roadTypes.Length - 1 && IsEndRoadType(roadTypes[i]))
                     roadTypes[i] = RoadType.DEFAULT;
             }
             //set first index to start and last to end
-            roadTypes[0] = RoadType.START;
-            roadTypes[roadTypes.Length - 1] = RoadType.END;
+            if (!hasStart) roadTypes[0] = RoadType.START;
+            if (!hasEnd) roadTypes[roadTypes.Length - 1] = RoadType.END;
+        }
+
+        private bool IsStartRoadType(RoadType type)
+        {
+            return type == RoadType.START
+                || type == RoadType.START_HALF_FULL
+                || type == RoadType.START_FULL;
+        }
+
+        private bool IsEndRoadType(RoadType type)
+        {
+            return type == RoadType.END
+                || type == RoadType.END_HALF_FULL
+                || type == RoadType.END_FULL;
         }
     }
 }

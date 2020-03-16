@@ -12,6 +12,7 @@ namespace MultiplayerRacer
         [SerializeField] private GameObject finish;
         [SerializeField] private GameObject startLights;
         [SerializeField] private RoadProps props;
+        [SerializeField] private RoadEnvironment[] environments;
 
         public GameObject Main => main;
         public Bounds MainBounds => main.GetComponent<SpriteRenderer>().bounds;
@@ -26,6 +27,7 @@ namespace MultiplayerRacer
         {
             SetRoadType(types, trackIndex);
             ConfigureRoadProps(types.Length, trackIndex);
+            ConfigureEnvironment(trackIndex, types[trackIndex]);
         }
 
         /// <summary>
@@ -35,12 +37,16 @@ namespace MultiplayerRacer
         /// <param name="trackIndex"></param>
         private void SetRoadType(RoadType[] types, int trackIndex)
         {
-            switch (types[trackIndex])
-            {
-                case RoadType.DEFAULT: SetDefaultType(); break;
-                case RoadType.START: SetStartType(); break;
-                case RoadType.END: SetEndType(); break;
-            }
+            string name = types[trackIndex].ToString();
+
+            if (name.Contains("DEFAULT"))
+                SetDefaultType();
+            else if (name.Contains("START"))
+                SetStartType();
+            else if (name.Contains("END"))
+                SetEndType();
+            else
+                Debug.LogError("Type " + name + "is not valid");
         }
 
         /// <summary>
@@ -92,12 +98,38 @@ namespace MultiplayerRacer
                 //define if index represents start or end road
                 bool startOrEnd = trackIndex == 0 || trackIndex == trackLength - 1;
                 //if not configured already, add the prop config
-                RoadManager.PropConfiguration.Add(props.SetupProps(startOrEnd, MainBounds));
+                RoadManager.PropConfiguration.Add(props.Setup(startOrEnd));
             }
             else
             {
                 //if already configured, use stored configuration
-                props.SetupProps(RoadManager.PropConfiguration[trackIndex]);
+                props.Setup(RoadManager.PropConfiguration[trackIndex]);
+            }
+        }
+
+        /// <summary>
+        /// configures road environment based on track length and track index
+        /// </summary>
+        /// <param name="trackLength"></param>
+        /// <param name="trackIndex"></param>
+        private void ConfigureEnvironment(int trackIndex, RoadType type)
+        {
+            //define not configured
+            bool notConfigured = trackIndex >= RoadManager.EnvironmentConfiguration.Count;
+            if (notConfigured)
+            {
+                string config = "";
+                foreach (RoadEnvironment env in environments)
+                    env.Setup(type, out config);
+
+                print(config);
+                RoadManager.EnvironmentConfiguration.Add(config);
+            }
+            else
+            {
+                string config = RoadManager.EnvironmentConfiguration[trackIndex];
+                foreach (RoadEnvironment env in environments)
+                    env.Setup(ref config);
             }
         }
 
