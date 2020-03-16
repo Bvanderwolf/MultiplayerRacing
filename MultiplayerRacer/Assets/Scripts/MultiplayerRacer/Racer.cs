@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using ExitGames.Client.Photon;
+using MultiplayerRacerEnums;
 using Photon.Pun;
 using System;
-using MultiplayerRacerEnums;
-using ExitGames.Client.Photon;
+using UnityEngine;
 
 namespace MultiplayerRacer
 {
@@ -47,7 +47,6 @@ namespace MultiplayerRacer
 
         private float boundEnterAxisValue;
         private const float BOUND_AXIS_ERROR_MARGIN = 0.5f;
-        private const float SMOOTHING_POSITION_OFFSET = 2f;
 
         private const float MAX_REMOTE_DISTANCE = 1.5f;
         private const float MAX_REMOTE_ANGLE = 25f;
@@ -113,21 +112,18 @@ namespace MultiplayerRacer
         //linearly interpolates between position and remote position
         private void CorrectCarSimulation()
         {
+            //define tick time (seconds between serialization)
             float tickTime = 1f / PhotonNetwork.SerializationRate;
-
+            //define if distance or angle needs catching up
             bool distanceCatchup = distanceToRemote > MAX_REMOTE_DISTANCE;
             bool angleCatchUp = angleToRemote > MAX_REMOTE_ANGLE;
-
+            //define move delta and angle based on distance/angle to remote car, times the tick time
             float movedelta = (distanceToRemote * tickTime);
             float rotateDelta = (angleToRemote * tickTime);
-
-            float movedelta_lag = distanceToRemote * (tickTime * lag);
-            float rotateDelta_lag = angleToRemote * (tickTime * lag);
-
+            //define our actual max move and rotate deltas based on if we need to catch up or not
             float maxMoveDelta = (distanceCatchup ? movedelta * positionCatchupFactor : movedelta);
             float maxRotateDelta = (angleCatchUp ? rotateDelta * angleCatchupFactor : rotateDelta);
-
-            //correct errors by delayed remote input by linear interpolation towards remote position and rotation
+            //do the linear interpolation given our maximum distance and angle deltas
             RB.position = Vector2.MoveTowards(RB.position, remotePosition, maxMoveDelta);
             RB.rotation = Mathf.MoveTowards(RB.rotation, remoteRotation, maxRotateDelta);
         }
@@ -178,6 +174,12 @@ namespace MultiplayerRacer
                 remoteRotation += (float)stream.ReceiveNext() * lag;
                 remoteCollision = (bool)stream.ReceiveNext();
 
+                distanceToRemote = (remotePosition - RB.position).magnitude;
+                positionCatchupFactor = 1 + (distanceToRemote - MAX_REMOTE_DISTANCE);
+
+                angleToRemote = Mathf.Abs(remoteRotation - RB.rotation);
+                angleCatchupFactor = 1 + (angleToRemote - MAX_REMOTE_ANGLE);
+
                 bool distanceCatchup = distanceToRemote > MAX_REMOTE_DISTANCE;
                 bool angleCatchUp = angleToRemote > MAX_REMOTE_ANGLE;
 
@@ -186,12 +188,6 @@ namespace MultiplayerRacer
 
                 if (angleCatchUp && remoteCollision)
                     RB.rotation = remoteRotation;
-
-                distanceToRemote = (remotePosition - RB.position).magnitude;
-                positionCatchupFactor = 1 + (distanceToRemote - MAX_REMOTE_DISTANCE);
-
-                angleToRemote = Mathf.Abs(remoteRotation - RB.rotation);
-                angleCatchupFactor = 1 + (angleToRemote - MAX_REMOTE_ANGLE);
 
                 GameUI.SetLag(lag);
 

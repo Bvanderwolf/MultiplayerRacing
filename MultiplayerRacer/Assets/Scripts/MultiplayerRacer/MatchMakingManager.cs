@@ -14,8 +14,10 @@ namespace MultiplayerRacer
         private Color connectColor = new Color(0, 0.75f, 0);
         private Color disconnectColor = new Color(0.75f, 0, 0);
 
-        private const string ROOM_NAME = "RacingRoom";
         public const int MAX_PLAYERS = 2;
+        private const string ROOM_NAME = "RacingRoom";
+        private const int SEND_RATE = 40;
+        private const int SERIALIZATION_RATE = 20;
 
         private bool connectingToMaster = false;
         private bool connectingToRoom = false;
@@ -170,8 +172,8 @@ namespace MultiplayerRacer
             connectingToRoom = false;
             InRoomManager.Instance.RegisterRoomMaster();
             InRoomManager.Instance.SetNumberInRoom(this, room.PlayerCount);
-            PhotonNetwork.SendRate = 40;
-            PhotonNetwork.SerializationRate = PhotonNetwork.SendRate;
+            PhotonNetwork.SendRate = SEND_RATE;
+            PhotonNetwork.SerializationRate = SERIALIZATION_RATE;
         }
 
         /// <summary>
