@@ -48,7 +48,6 @@ namespace MultiplayerRacer
 
             GameObject.Find("Car").GetComponent<Racer>().OnRoadBoundInteraction += DoRoadShift;
             trackPlaying = raceTrackDict["Default"];
-
             //set other roads their type based on next road types to come
             roadOn = roads[2];
             roadOn.SetupRoad(trackPlaying.RoadTypes, trackIndexOn);

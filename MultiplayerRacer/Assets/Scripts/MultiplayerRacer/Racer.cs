@@ -70,6 +70,7 @@ namespace MultiplayerRacer
         {
             if (!PV.IsMine)
             {
+                //corect car simulation during game frames
                 CorrectCarSimulation();
             }
         }
@@ -259,6 +260,12 @@ namespace MultiplayerRacer
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
+            if (collision.tag == "Booster")
+            {
+                //both remote and our car can get boosted by booster prop
+                motor.SetBoost();
+            }
+
             if (!PV.IsMine)
                 return;
 

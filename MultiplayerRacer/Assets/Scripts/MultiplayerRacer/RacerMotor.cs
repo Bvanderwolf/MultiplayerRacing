@@ -170,13 +170,18 @@ namespace MultiplayerRacer
             bool boost = driftTime >= MIN_DRIFT_TIME;
             if (boost)
             {
-                //set boosting flag
-                boosting = true;
-                //set spark particle system to play
-                spark.Play();
-                //if already boosting, reset the boost time
-                currentBoostTime = 0;
+                SetBoost();
             }
+        }
+
+        public void SetBoost()
+        {
+            //set boosting flag
+            boosting = true;
+            //set spark particle system to play
+            spark.Play();
+            //if already boosting, reset the boost time
+            currentBoostTime = 0;
         }
 
         private void OnDriftStart()
@@ -227,7 +232,6 @@ namespace MultiplayerRacer
             //clamp velocity keeping boosted max velocity into account
             if (rb.velocity.magnitude > (boosting ? maxVelocityBoosted : maxVelocity))
             {
-                print("test");
                 rb.velocity = rb.velocity.normalized * maxVelocity;
             }
         }

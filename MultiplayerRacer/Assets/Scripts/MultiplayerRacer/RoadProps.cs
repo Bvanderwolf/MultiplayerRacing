@@ -135,9 +135,15 @@ namespace MultiplayerRacer
         private void SetupPropTag(Transform prop, SpriteRenderer renderer)
         {
             string spriteName = renderer.sprite?.name;
-            if (string.IsNullOrEmpty(spriteName))
+            if (!string.IsNullOrEmpty(spriteName) && spriteName == "Booster")
             {
-                //prop.tag =
+                prop.tag = "Booster";
+                prop.GetComponent<BoxCollider2D>().isTrigger = true;
+            }
+            else
+            {
+                prop.tag = "Untagged";
+                prop.GetComponent<BoxCollider2D>().isTrigger = false;
             }
         }
     }

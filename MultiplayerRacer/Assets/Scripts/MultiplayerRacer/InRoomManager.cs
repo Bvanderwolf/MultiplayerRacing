@@ -67,8 +67,8 @@ namespace MultiplayerRacer
         }
 
         public const int COUNTDOWN_LENGTH = 3;
-        public const int RANDOM_SEED = 177;
         public const float READY_SEND_TIMEOUT = 0.75f;
+        private const int RANDOM_SEED = 133;
 
         private PhotonView PV;
         private MultiplayerRacerUI UI = null;
