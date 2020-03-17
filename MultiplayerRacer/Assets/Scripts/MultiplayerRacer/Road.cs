@@ -119,17 +119,23 @@ namespace MultiplayerRacer
             if (notConfigured)
             {
                 string config = "";
-                foreach (RoadEnvironment env in environments)
-                    env.Setup(type, out config);
-
-                print(config);
+                //update config with environments settings
+                for (int i = 0; i < environments.Length; i++)
+                {
+                    config += environments[i].Setup(type);
+                }
+                //add settng to configuration list
                 RoadManager.EnvironmentConfiguration.Add(config);
             }
             else
             {
+                //get setting
                 string config = RoadManager.EnvironmentConfiguration[trackIndex];
-                foreach (RoadEnvironment env in environments)
-                    env.Setup(ref config);
+                //update environments
+                for (int i = 0; i < environments.Length; i++)
+                {
+                    environments[i].Setup(ref config);
+                }
             }
         }
 
