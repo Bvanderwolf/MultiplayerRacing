@@ -59,10 +59,6 @@ namespace MultiplayerRacer
             motor = GetComponent<RacerMotor>();
             //store camera rotation for reset in late update
             cameraRotation = carCamera.transform.rotation;
-            if (showRemote)
-            {
-                remoteCar.gameObject.SetActive(true);
-            }
         }
 
         //private void Update()
@@ -203,24 +199,28 @@ namespace MultiplayerRacer
 
         public void OnPhotonInstantiate(PhotonMessageInfo info)
         {
-            PhotonView _PV = info.photonView;
-            PV = _PV;
-            if (_PV.IsMine)
+            PV = info.photonView;
+            if (PV.IsMine)
             {
                 //to stuff with photon message info
                 info.Sender.TagObject = this.gameObject;
 
                 //subcribe to in room events
                 InRoomManager.Instance.OnGameStart += OnRacerCanStart;
-                InRoomManager.Instance.OnSceneReset += OnRacerReset;
 
                 //make others disable our camera
-                _PV.RPC("DisableCamera", RpcTarget.OthersBuffered, _PV.ViewID);
+                PV.RPC("DisableCamera", RpcTarget.OthersBuffered, PV.ViewID);
             }
             else
             {
                 remoteRacerInput = GetComponent<RacerInput>();
+                if (showRemote)
+                {
+                    remoteCar.gameObject.SetActive(true);
+                }
             }
+            //both our and other clients their racer will reset when needed
+            InRoomManager.Instance.OnSceneReset += OnRacerReset;
         }
 
         /// <summary>

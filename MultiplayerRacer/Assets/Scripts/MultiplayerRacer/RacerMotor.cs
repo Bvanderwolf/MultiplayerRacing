@@ -10,14 +10,18 @@ namespace MultiplayerRacer
         [SerializeField] private ParticleSystem spark;
         [SerializeField] private TrailRenderer[] trails;
 
+        private readonly Vector2 localCenterOfMass = new Vector2(0, -0.5f);
         private Rigidbody2D rb;
         private float steerFriction;
         private float weelFriction;
         private float maxVelocityBoosted;
+
         private const float INPUT_THRESHOLD = 0.01f;
         private const float MIN_DRIFT_TIME = 1f;
         private const float DRIFT_BOOST_FACTOR = 2.5f;
         private const float DRIFT_DAMP = 4f;
+        private const float STEER_DAMP = 0.025f;
+        private const float BOOST_TIME = 1.5f;
 
         private bool driftStart = false;
         private bool driftEnd = false;
@@ -28,7 +32,6 @@ namespace MultiplayerRacer
 
         private bool boosting = false;
         private float currentBoostTime = 0;
-        private const float BOOST_TIME = 1.5f;
 
         private void Awake()
         {
@@ -36,6 +39,7 @@ namespace MultiplayerRacer
             steerFriction = rb.angularDrag;
             weelFriction = rb.drag;
             maxVelocityBoosted = maxVelocity * 3f;
+            rb.centerOfMass = localCenterOfMass;
         }
 
         private void FixedUpdate()
@@ -77,13 +81,16 @@ namespace MultiplayerRacer
 
             //based on going forward or backward do rotation
             float direction = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.up));
+            float torque = (inputH * steering * (rb.velocity.magnitude / maxVelocity)) * STEER_DAMP;
             if (direction >= 0.0f)
             {
-                rb.rotation += inputH * steering * (rb.velocity.magnitude / (maxVelocity * 0.5f));
+                //rb.rotation += inputH * steering * (rb.velocity.magnitude / (maxVelocity * 0.5f));
+                rb.AddTorque(torque, ForceMode2D.Impulse);
             }
             else
             {
-                rb.rotation -= inputH * steering * (rb.velocity.magnitude / (maxVelocity * 0.5f));
+                //rb.rotation -= inputH * steering * (rb.velocity.magnitude / (maxVelocity * 0.5f));
+                rb.AddTorque(-torque, ForceMode2D.Impulse);
             }
         }
 
