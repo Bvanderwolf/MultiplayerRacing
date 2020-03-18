@@ -61,32 +61,32 @@ namespace MultiplayerRacer
             cameraRotation = carCamera.transform.rotation;
         }
 
-        //private void Update()
-        //{
-        //    if (!PV.IsMine)
-        //    {
-        //        //corect car simulation during game frames
-        //        CorrectCarSimulation();
-        //    }
-        //}
+        private void Update()
+        {
+            if (!PV.IsMine)
+            {
+                //corect car simulation during game frames
+                CorrectCarSimulation();
+            }
+        }
 
-        ////Update during render frames
-        //private void FixedUpdate()
-        //{
-        //    //update other clients their car
-        //    if (!PV.IsMine)
-        //    {
-        //        SimulateCar();
-        //        UpdateRemoteCarGhost();
+        //Update during render frames
+        private void FixedUpdate()
+        {
+            //update other clients their car
+            if (!PV.IsMine)
+            {
+                SimulateCar();
+                UpdateRemoteCarGhost();
 
-        //        if (NotVisible())
-        //        {
-        //            //if the car is remote car is not visible, set the position and rotation directly
-        //            RB.position = remotePosition;
-        //            RB.rotation = remoteRotation;
-        //        }
-        //    }
-        //}
+                if (NotVisible())
+                {
+                    //if the car is remote car is not visible, set the position and rotation directly
+                    RB.position = remotePosition;
+                    RB.rotation = remoteRotation;
+                }
+            }
+        }
 
         private void LateUpdate()
         {
@@ -262,8 +262,8 @@ namespace MultiplayerRacer
                 motor.SetBoost();
             }
 
-            //if (!PV.IsMine)
-            //    return;
+            if (!PV.IsMine)
+                return;
 
             if (collision.tag == "RoadBound")
             {
@@ -287,8 +287,8 @@ namespace MultiplayerRacer
 
         private void OnTriggerExit2D(Collider2D collision)
         {
-            //if (!PV.IsMine)
-            //    return;
+            if (!PV.IsMine)
+                return;
 
             if (collision.tag == "RoadBound")
             {

@@ -15,9 +15,13 @@ namespace MultiplayerRacer
 
         [SerializeField] private Color disconnectColor = new Color(0.75f, 0, 0);
 
+        private float readyStatusAnchorX;
+        private const int MAX_READYBUTTONS_IN_ROW = 4;
+
         protected override void Awake()
         {
             base.Awake();
+            readyStatusAnchorX = readyStatus.GetComponent<RectTransform>().anchoredPosition.x;
         }
 
         //sets up connect button and returns if succeeded
@@ -127,37 +131,44 @@ namespace MultiplayerRacer
                 if (!FindAndSetReadyStatusReference())
                     return;
 
-            Transform statusTransform = readyStatus.transform;
-            if (count < 0 || count > statusTransform.childCount)
+            RectTransform statusTransform = readyStatus.GetComponent<RectTransform>();
+            if (count <= 0 || count > statusTransform.childCount)
             {
                 Debug.LogError("count does not corespond with child count");
                 return;
             }
+            //get constrain count (rows)
+            int constraintCount = statusTransform.GetComponent<GridLayoutGroup>().constraintCount;
+            //get collum count based on player count devided by constrainCount
+            int collums = Mathf.CeilToInt(count / (float)constraintCount);
+            //define x position of ready button based on start value (anchorX), constraintCount and collums
+            float x = readyStatusAnchorX * Mathf.Pow(constraintCount, collums - 1);
+            //if the player count makes it so there are not 1 collum or maximum collums we add the base value
+            if (count > constraintCount && count < statusTransform.childCount - 1)
+                x += readyStatusAnchorX;
 
-            //setup necessary variables for chaining buttons on x axis
-            float width = GetComponent<Canvas>().pixelRect.width;
-            float buttonWidthHalf = statusTransform.GetChild(0).GetComponent<RectTransform>().rect.width * 0.5f;
-            float margin = (width - (buttonWidthHalf * count)) / (count + 1);
-            float x = -(width * 0.5f) - (buttonWidthHalf * 0.5f);
+            statusTransform.anchoredPosition = new Vector2(x, statusTransform.anchoredPosition.y);
             //loop through children based on count and display them on given position
             for (int ci = 0; ci < count; ci++)
             {
                 //place button on canvas based
                 GameObject child = statusTransform.GetChild(ci).gameObject;
-                RectTransform rectTF = child.GetComponent<RectTransform>();
-                SetReadyButtonHeader(child.transform.Find("PlayerName")?.gameObject, $"Player {ci + 1}");
-                x += margin + buttonWidthHalf;
-                rectTF.anchoredPosition = new Vector2(rectTF.anchoredPosition.x + x, rectTF.anchoredPosition.y);
-                //set it to active if not already active
-                if (!child.activeInHierarchy)
-                {
-                    child.SetActive(true);
-                }
-                //if max players has been reached set buttons to be interactable
-                if (count == MatchMakingManager.MAX_PLAYERS)
-                {
-                    child.GetComponentInChildren<Button>().interactable = true;
-                }
+                SetReadyButton(child, ci, count);
+            }
+        }
+
+        private void SetReadyButton(GameObject button, int ci, int count)
+        {
+            SetReadyButtonHeader(button.transform.Find("PlayerName")?.gameObject, $"Player {ci + 1}");
+            //set it to active if not already active
+            if (!button.activeInHierarchy)
+            {
+                button.SetActive(true);
+            }
+            //if max players has been reached set buttons to be interactable
+            if (count == MatchMakingManager.MAX_PLAYERS)
+            {
+                button.GetComponentInChildren<Button>().interactable = true;
             }
         }
 

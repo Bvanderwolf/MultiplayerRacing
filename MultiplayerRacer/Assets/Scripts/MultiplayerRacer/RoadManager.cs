@@ -34,9 +34,9 @@ namespace MultiplayerRacer
 
             LoadRoadProps();
             LoadEnvironmentObjects();
-            //SetupRoadValues();
+            SetupRoadValues();
             SetupSceneRelations();
-            Testing();
+            //Testing();
         }
 
         private void Testing()
