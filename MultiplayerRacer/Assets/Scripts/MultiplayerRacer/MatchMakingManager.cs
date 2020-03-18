@@ -10,11 +10,13 @@ namespace MultiplayerRacer
     public class MatchMakingManager : MonoBehaviourPunCallbacks
     {
         public static MatchMakingManager Instance { get; private set; }
+
+        public const int MAX_PLAYERS = 2;
+
         private MultiplayerRacerUI UI = null;
         private Color connectColor = new Color(0, 0.75f, 0);
         private Color disconnectColor = new Color(0.75f, 0, 0);
 
-        public const int MAX_PLAYERS = 2;
         private const string ROOM_NAME = "RacingRoom";
         private const int SEND_RATE = 40;
         private const int SERIALIZATION_RATE = 20;

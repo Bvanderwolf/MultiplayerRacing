@@ -1,4 +1,5 @@
 ﻿using MultiplayerRacerEnums;
+using Photon.Pun;
 using UnityEngine;
 
 namespace MultiplayerRacer
@@ -59,6 +60,7 @@ namespace MultiplayerRacer
             roadBound.SetActive(true);
             finish.SetActive(false);
             startLights.SetActive(false);
+            SetCarSpawnsActive(false);
         }
 
         /// <summary>
@@ -71,6 +73,7 @@ namespace MultiplayerRacer
             roadBound.SetActive(true);
             finish.SetActive(false);
             startLights.SetActive(true);
+            SetCarSpawnsActive(true);
         }
 
         /// <summary>
@@ -83,6 +86,7 @@ namespace MultiplayerRacer
             roadBound.SetActive(false);
             finish.SetActive(true);
             startLights.SetActive(false);
+            SetCarSpawnsActive(false);
         }
 
         /// <summary>
@@ -142,13 +146,13 @@ namespace MultiplayerRacer
         /// <summary>
         /// sets all car spawns to an inactive state
         /// </summary>
-        public void SetCarSpawnsInactive()
+        private void SetCarSpawnsActive(bool value)
         {
             //set all car spawns to an inactive state
             Transform carSpawnTransform = carSpawns.transform;
             for (int ci = 0; ci < carSpawnTransform.childCount; ci++)
             {
-                carSpawnTransform.GetChild(ci).gameObject.SetActive(false);
+                carSpawnTransform.GetChild(ci).gameObject.SetActive(value);
             }
         }
 
@@ -157,21 +161,15 @@ namespace MultiplayerRacer
         /// is outside the player count bound, this car spawn will not be used
         /// so it will be made inactive
         /// </summary>
-        public void ResetCarSpawns(int playerCount, Color unReadyColor)
+        public void ResetCarSpawns()
         {
             //loop through all car spawns and try resetting them
             Transform carSpawnTransform = carSpawns.transform;
+            int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
             for (int ci = 0; ci < carSpawnTransform.childCount; ci++)
             {
                 GameObject carSpawn = carSpawnTransform.GetChild(ci).gameObject;
-                carSpawn.GetComponent<SpriteRenderer>().color = unReadyColor;
-                carSpawn.transform.localPosition = Vector3.zero;
-                /*if this car spawn is outside the player count bound,
-                this car spawn will not be used so it can be made inactive*/
-                if ((ci + 1) > playerCount)
-                {
-                    carSpawn.SetActive(false);
-                }
+                carSpawn.GetComponent<SpriteRenderer>().color = Color.white;
             }
         }
 
@@ -180,27 +178,23 @@ namespace MultiplayerRacer
         /// of the one used by your car. Will return null when failed.
         /// </summary>
         /// <returns></returns>
-        public GameObject SetupCarSpawns(int playerCount, int numberInRoom)
+        public GameObject SetupCarSpawns(int playerCount, int numberInRoom, Color unreadyColor)
         {
             Transform carSpawnTransform = carSpawns.transform;
             Transform road = main.transform;
             if (carSpawnTransform == null || road == null)
             {
-                Debug.LogError("Wont setup car spawns :: car spawn or road is null");
+                Debug.LogError("Wont get car spawn :: car spawn or road is null");
                 return null;
             }
-            float width = MainBounds.size.x;
-            float carSpawnWidthHalf = carSpawnBounds.size.x * 0.5f;
-            float margin = (width - (carSpawnWidthHalf * playerCount)) / (playerCount + 1);
-            float x = -(width * 0.5f) - (carSpawnWidthHalf * 0.5f);
-            //loop through children based on count and place them on given position
-            for (int ci = 0; ci < playerCount; ci++)
+            for (int ci = 0; ci < carSpawnTransform.childCount; ci++)
             {
-                x += margin + carSpawnWidthHalf;
-                Transform tf = carSpawnTransform.GetChild(ci);
-                Vector3 position = tf.localPosition;
-                tf.localPosition = new Vector2(position.x + x, position.y);
-                tf.gameObject.SetActive(true);
+                bool used = ci < playerCount;
+                if (used)
+                {
+                    GameObject carSpawn = carSpawnTransform.GetChild(ci).gameObject;
+                    carSpawn.GetComponent<SpriteRenderer>().color = unreadyColor;
+                }
             }
             //return the position of the child based on our number in the room
             return carSpawnTransform.GetChild(numberInRoom - 1).gameObject;

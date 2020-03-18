@@ -1053,8 +1053,9 @@ MonoBehaviour:
   - {fileID: 2123245659}
   tracks:
   - name: Default
-    roadTypes: 03000000010000000200000006000000
+    roadTypes: 0400000001000000020000000100000008000000
   readyColor: {r: 0, g: 1, b: 0, a: 1}
+  unReadyColor: {r: 1, g: 0.49803922, b: 0, a: 1}
 --- !u!114 &721308948
 MonoBehaviour:
   m_ObjectHideFlags: 0

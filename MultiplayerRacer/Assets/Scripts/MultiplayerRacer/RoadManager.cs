@@ -10,12 +10,12 @@ namespace MultiplayerRacer
         [SerializeField] private Road[] roads;
         [SerializeField] private RaceTrack[] tracks;
         [SerializeField] private Color readyColor;
+        [SerializeField] private Color unReadyColor;
 
         private Road roadOn;
         private GameObject myCarSpawn;
         private GameObject myCar;
         private PhotonView PV;
-        private Color unReadyColor;
         private float roadLength;
 
         private Dictionary<string, RaceTrack> raceTrackDict;
@@ -31,7 +31,6 @@ namespace MultiplayerRacer
         private void Awake()
         {
             PV = GetComponent<PhotonView>();
-
             LoadRoadProps();
             LoadEnvironmentObjects();
             SetupRoadValues();
@@ -151,7 +150,6 @@ namespace MultiplayerRacer
                 //place the car spawns on the road for players and get our own car spawn
                 myCarSpawn = SetupCarSpawns();
                 myCar = PhotonNetwork.Instantiate("Prefabs/Car", myCarSpawn.transform.position, Quaternion.identity);
-                unReadyColor = myCarSpawn.GetComponent<SpriteRenderer>().color; //save default color as unready color
                 SetupRacerConnection();
             }
             else Debug.LogError("Wont do car setup :: not connected to photon network");
@@ -169,7 +167,7 @@ namespace MultiplayerRacer
 
         private void OnRaceStarted()
         {
-            roadOn.SetCarSpawnsInactive();
+            roadOn.ResetCarSpawns();
         }
 
         private void OnGameHasRestart()
@@ -194,10 +192,8 @@ namespace MultiplayerRacer
             if (scene != MultiplayerRacerScenes.GAME)
                 return;
 
-            int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
-
-            //reset car spawns according to new playercount
-            roadOn.ResetCarSpawns(playerCount, unReadyColor);
+            //reset car spawns
+            roadOn.ResetCarSpawns();
 
             //re-setup car spawns getting our new car spawn and placing the car on it
             myCarSpawn = SetupCarSpawns();
@@ -377,7 +373,7 @@ namespace MultiplayerRacer
         {
             int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
             int numberInRoom = InRoomManager.Instance.NumberInRoom;
-            return roadOn.SetupCarSpawns(playerCount, numberInRoom);
+            return roadOn.SetupCarSpawns(playerCount, numberInRoom, unReadyColor);
         }
 
         /// <summary>
@@ -387,7 +383,7 @@ namespace MultiplayerRacer
         /// <returns></returns>
         private Transform GetCarSpawn(int playerNumber)
         {
-            if (playerNumber < 0 || playerNumber > MatchMakingManager.MAX_PLAYERS)
+            if (playerNumber <= 0 || playerNumber > MatchMakingManager.MAX_PLAYERS)
                 return null;
 
             return roadOn.CarSpawns.transform.GetChild(playerNumber - 1);
