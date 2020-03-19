@@ -26,16 +26,15 @@ namespace MultiplayerRacer
             {
                 Transform child = propParent.GetChild(ci);
                 SpriteRenderer renderer = child.GetComponent<SpriteRenderer>();
-                BoxCollider2D collider = child.GetComponent<BoxCollider2D>();
+                PolygonCollider2D polyCollider = child.GetComponent<PolygonCollider2D>();
                 bool canShow = ci < count;
                 if (canShow)
                 {
                     //if this prop can be shown, set its sprite and update config with it
                     config += SetupPropSprite(renderer, propSprites);
                     //enable collider and set its size
-                    collider.enabled = true;
-                    Vector3 size = renderer.sprite.bounds.size;
-                    collider.size = new Vector2(size.x * child.lossyScale.x, size.y * child.lossyScale.y);
+                    polyCollider.enabled = true;
+                    SetColliderShape(polyCollider, renderer.sprite);
                     //setup position of prop and update the config with it
                     config += SetupPropPosition(child);
                 }
@@ -43,7 +42,7 @@ namespace MultiplayerRacer
                 {
                     //if this prop is not shown set its sprite to null and collider disabled
                     renderer.sprite = null;
-                    collider.enabled = false;
+                    polyCollider.enabled = false;
                     child.localPosition = Vector3.zero;
                 }
                 SetupPropTag(child, renderer);
@@ -93,7 +92,7 @@ namespace MultiplayerRacer
             {
                 Transform child = propParent.GetChild(ci);
                 SpriteRenderer renderer = child.GetComponent<SpriteRenderer>();
-                BoxCollider2D collider = child.GetComponent<BoxCollider2D>();
+                PolygonCollider2D polyCollider = child.GetComponent<PolygonCollider2D>();
                 bool canShow = ci < count;
                 if (canShow)
                 {
@@ -101,10 +100,9 @@ namespace MultiplayerRacer
                     //if this prop can be shown, set its sprite
                     SetupPropSprite(renderer, propSprites, config);
                     //enable collider
-                    collider.enabled = true;
+                    polyCollider.enabled = true;
                     //set collider to fit around the sprite
-                    Vector3 size = renderer.sprite.bounds.size;
-                    collider.size = new Vector2(size.x * child.lossyScale.x, size.y * child.lossyScale.y);
+                    SetColliderShape(polyCollider, renderer.sprite);
                     //set position of prop based on last character in config
                     SetupPropPosition(child, int.Parse(config.Substring(CONFIG_CHAR_COUNT - 1)));
                 }
@@ -112,7 +110,7 @@ namespace MultiplayerRacer
                 {
                     //if this prop is not shown set its sprite to null and collider disabled
                     renderer.sprite = null;
-                    collider.enabled = false;
+                    polyCollider.enabled = false;
                     child.localPosition = Vector3.zero;
                 }
                 SetupPropTag(child, renderer);
@@ -138,12 +136,25 @@ namespace MultiplayerRacer
             if (!string.IsNullOrEmpty(spriteName) && spriteName == "Booster")
             {
                 prop.tag = "Booster";
-                prop.GetComponent<BoxCollider2D>().isTrigger = true;
+                prop.GetComponent<PolygonCollider2D>().isTrigger = true;
             }
             else
             {
                 prop.tag = "Untagged";
-                prop.GetComponent<BoxCollider2D>().isTrigger = false;
+                prop.GetComponent<PolygonCollider2D>().isTrigger = false;
+            }
+        }
+
+        private void SetColliderShape(PolygonCollider2D polyCollider, Sprite sprite)
+        {
+            polyCollider.pathCount = sprite.GetPhysicsShapeCount();
+
+            List<Vector2> path = new List<Vector2>();
+            for (int i = 0; i < polyCollider.pathCount; i++)
+            {
+                path.Clear();
+                sprite.GetPhysicsShape(i, path);
+                polyCollider.SetPath(i, path);
             }
         }
     }
