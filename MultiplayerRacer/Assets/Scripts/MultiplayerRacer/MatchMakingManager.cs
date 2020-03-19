@@ -11,7 +11,7 @@ namespace MultiplayerRacer
     {
         public static MatchMakingManager Instance { get; private set; }
 
-        public const int MAX_PLAYERS = 2;
+        public const int MAX_PLAYERS = 8;
 
         private MultiplayerRacerUI UI = null;
         private Color connectColor = new Color(0, 0.75f, 0);
@@ -188,7 +188,9 @@ namespace MultiplayerRacer
             //setup room options and join or create room
             RoomOptions options = new RoomOptions();
             options.IsVisible = false;
-            options.MaxPlayers = MAX_PLAYERS;
+            //max players defaults to 1 so the master client can set the player count when inside
+            options.MaxPlayers = 1;
+            //create or join room with options
             PhotonNetwork.JoinOrCreateRoom(ROOM_NAME, options, TypedLobby.Default);
         }
 
@@ -302,6 +304,7 @@ namespace MultiplayerRacer
             base.OnCreatedRoom();
             //if this client created the room, it is the master client and is the room master
             InRoomManager.Instance.SetRoomMaster(this);
+            ((LobbyUI)UI).SetMaxPlayersInputFieldActiveState(true);
         }
 
         public override void OnCreateRoomFailed(short returnCode, string message)
@@ -313,8 +316,10 @@ namespace MultiplayerRacer
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
-            //if we where connecting to a room we setup values and ui accordingly
-            if (connectingToRoom)
+            //define first in room as the max player count being 1
+            bool firstInRoom = PhotonNetwork.CurrentRoom.MaxPlayers == 1;
+            //if we where connecting to a room and are not the first, we setup values and ui accordingly
+            if (connectingToRoom && !firstInRoom)
             {
                 LobbyUI lobbyUI = (LobbyUI)UI;
                 Room room = PhotonNetwork.CurrentRoom;
@@ -331,6 +336,8 @@ namespace MultiplayerRacer
         public override void OnJoinRoomFailed(short returnCode, string message)
         {
             base.OnJoinRoomFailed(returnCode, message);
+            ((LobbyUI)UI).SetConnectButtonInteractability(true);
+            connectingToRoom = false;
             Debug.LogError($"Joining room failed with message: {message}");
         }
 

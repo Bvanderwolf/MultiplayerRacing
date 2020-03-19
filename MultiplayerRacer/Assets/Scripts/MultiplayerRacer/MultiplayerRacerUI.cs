@@ -51,7 +51,7 @@ namespace MultiplayerRacer
             Text playerCountComp = roomStatus.transform.Find("Playercount")?.GetComponent<Text>();
             if (playerCountComp != null)
             {
-                playerCountComp.text = $"Players: {room.PlayerCount}/{MatchMakingManager.MAX_PLAYERS}";
+                playerCountComp.text = $"Players: {room.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers}";
             }
             else Debug.LogError("Wont update player count :: text component is null");
 

@@ -110,6 +110,14 @@ namespace MultiplayerRacer
             UI = helper.GetCanvasReference(CurrentScene);
         }
 
+        public void SetMaxPlayersInRoom(int count)
+        {
+            if (count <= 1 || count > MatchMakingManager.MAX_PLAYERS)
+                return;
+
+            PhotonNetwork.CurrentRoom.MaxPlayers = (byte)count;
+        }
+
         /// <summary>
         /// sets InroomManager its isready value and updates the master client with this value
         /// if updateMaster is true, set it to false if you are the master client
@@ -222,7 +230,7 @@ namespace MultiplayerRacer
 
         private void MaxPlayersReadyCheck(MultiplayerRacerScenes scene)
         {
-            if (Master.PlayersReady != MatchMakingManager.MAX_PLAYERS)
+            if (Master.PlayersReady != PhotonNetwork.CurrentRoom.MaxPlayers)
                 return;
 
             //countdown can start
@@ -489,7 +497,7 @@ namespace MultiplayerRacer
                 Master.UpdatePlayersInGameScene(join);
 
                 //if all players are in the game scene, the master client can start the game
-                if (Master.PlayersInGameScene == MatchMakingManager.MAX_PLAYERS)
+                if (Master.PlayersInGameScene == PhotonNetwork.CurrentRoom.MaxPlayers)
                 {
                     ((GameUI)UI).SendShowReadyUpInfo(); //make the game ui send ready up info
                 }

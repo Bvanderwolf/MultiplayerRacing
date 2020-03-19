@@ -10,6 +10,7 @@ namespace MultiplayerRacer
     {
         [SerializeField] private Button connectButton;
         [SerializeField] private GameObject readyStatus;
+        [SerializeField] private GameObject maxPlayerInputField;
 
         [SerializeField] private Color connectColor = new Color(0, 0.75f, 0);
 
@@ -84,6 +85,45 @@ namespace MultiplayerRacer
                     return;
 
             connectButton.interactable = value;
+        }
+
+        public void SetMaxPlayersInputFieldActiveState(bool value)
+        {
+            if (maxPlayerInputField == null)
+                Debug.LogError("MaxPlayerInputField not found :: not setting it");
+
+            if (value)
+                maxPlayerInputField.GetComponent<InputField>().onEndEdit.AddListener(OnMaxPlayerInputFieldEdited);
+            else
+                maxPlayerInputField.GetComponent<InputField>().onEndEdit.RemoveListener(OnMaxPlayerInputFieldEdited);
+
+            maxPlayerInputField.SetActive(value);
+        }
+
+        public void OnMaxPlayerInputFieldEdited(string edit)
+        {
+            if (InValidMaxPlayerInput(edit))
+            {
+                InputField input = maxPlayerInputField.GetComponent<InputField>();
+                input.text = "";
+                input.placeholder.color = Color.red;
+                return;
+            }
+            //update the room's max players so players can join
+            InRoomManager.Instance.SetMaxPlayersInRoom(int.Parse(edit));
+            //since on joined room won't be called for the master client, set it manualy
+            MatchMakingManager.Instance.OnJoinedRoom();
+            //set active state of input field to false
+            SetMaxPlayersInputFieldActiveState(false);
+        }
+
+        private bool InValidMaxPlayerInput(string input)
+        {
+            if (!char.IsNumber(input[0]))
+                return false;
+
+            int number = int.Parse(input);
+            return number <= 1 || number > MatchMakingManager.MAX_PLAYERS;
         }
 
         /// <summary>
@@ -166,7 +206,7 @@ namespace MultiplayerRacer
                 button.SetActive(true);
             }
             //if max players has been reached set buttons to be interactable
-            if (count == MatchMakingManager.MAX_PLAYERS)
+            if (count == PhotonNetwork.CurrentRoom.MaxPlayers)
             {
                 button.GetComponentInChildren<Button>().interactable = true;
             }
