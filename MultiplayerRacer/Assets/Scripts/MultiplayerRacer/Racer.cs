@@ -232,9 +232,13 @@ namespace MultiplayerRacer
             if (scene != MultiplayerRacerScenes.GAME)
                 return;
 
-            RB.velocity = Vector2.zero;
-            RB.angularVelocity = 0;
-            RB.rotation = 0;
+            if (RB != null)
+            {
+                RB.velocity = Vector2.zero;
+                RB.angularVelocity = 0;
+                RB.rotation = 0;
+            }
+
             canRace = false;
         }
 

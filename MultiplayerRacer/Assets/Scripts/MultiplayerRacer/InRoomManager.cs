@@ -31,6 +31,7 @@ namespace MultiplayerRacer
         }
 
         public int NumberInRoom { get; private set; } = 0;
+        public int PlayersPlaying { get; private set; }
         public bool IsReady { get; private set; } = false;
 
         /// <summary>
@@ -230,8 +231,20 @@ namespace MultiplayerRacer
 
         private void MaxPlayersReadyCheck(MultiplayerRacerScenes scene)
         {
-            if (Master.PlayersReady != PhotonNetwork.CurrentRoom.MaxPlayers)
-                return;
+            switch (scene)
+            {
+                case MultiplayerRacerScenes.LOBBY:
+                    //we can only start if the maxium amount of players in the lobby are ready
+                    if (Master.PlayersReady != PhotonNetwork.CurrentRoom.MaxPlayers)
+                        return;
+                    break;
+
+                case MultiplayerRacerScenes.GAME:
+                    //we can only start racing if all players in the games scene are ready
+                    if (Master.PlayersReady != Master.PlayersInGameScene)
+                        return;
+                    break;
+            }
 
             //countdown can start
             PV.RPC("StartCountdown", RpcTarget.AllViaServer);
@@ -322,7 +335,10 @@ namespace MultiplayerRacer
                     switch (CurrentGamePhase)
                     {
                         //in the setup gamephase send all players ready up info again
-                        case GamePhase.SETUP: ((GameUI)UI).SendShowReadyUpInfo(); break;
+                        case GamePhase.SETUP:
+                            ((GameUI)UI).SendShowReadyUpInfo();
+                            break;
+
                         case GamePhase.RACING:
                             //the race can be finished if the last player left to finish, left the room
                             if (Master.RaceIsFinished)
@@ -497,7 +513,7 @@ namespace MultiplayerRacer
                 Master.UpdatePlayersInGameScene(join);
 
                 //if all players are in the game scene, the master client can start the game
-                if (Master.PlayersInGameScene == PhotonNetwork.CurrentRoom.MaxPlayers)
+                if (Master.PlayersInGameScene == PhotonNetwork.CurrentRoom.PlayerCount)
                 {
                     ((GameUI)UI).SendShowReadyUpInfo(); //make the game ui send ready up info
                 }
@@ -512,7 +528,21 @@ namespace MultiplayerRacer
                 //let the room master update players ready
                 Master.UpdatePlayersReady(isready);
                 //check if all players are ready
-                MaxPlayersReadyCheck(CurrentScene);
+                switch (CurrentScene)
+                {
+                    case MultiplayerRacerScenes.LOBBY:
+                        //check for max players ready in lobby each time
+                        MaxPlayersReadyCheck(CurrentScene);
+                        break;
+
+                    case MultiplayerRacerScenes.GAME:
+                        //only check for max players ready if all players are in game scene
+                        if (Master.PlayersInGameScene == PhotonNetwork.CurrentRoom.PlayerCount)
+                        {
+                            MaxPlayersReadyCheck(CurrentScene);
+                        }
+                        break;
+                }
             }
         }
 

@@ -182,10 +182,7 @@ namespace MultiplayerRacer
 
             //get our car game object and wait for player input
             GameObject car = (GameObject)PhotonNetwork.LocalPlayer.TagObject;
-            car.GetComponent<RacerInput>().WaitForPlayerInput(
-                readyUpKey,
-                (succes) => SetReadyUpResult(succes),
-                () => count == room.PlayerCount);
+            car.GetComponent<RacerInput>().WaitForPlayerInput(readyUpKey, (succes) => SetReadyUpResult(succes));
         }
 
         /// <summary>
