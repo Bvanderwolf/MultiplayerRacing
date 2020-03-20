@@ -68,8 +68,14 @@ namespace MultiplayerRacer
             if (NoGas(inputV))
                 return;
 
-            //add speed based on input and acceleration to rigidbody
-            Vector2 speed = transform.up * (inputV * acceleration);
+            //define force percentage based on percentage towards max velocity
+            float forcePerc = 1 - (rb.velocity.magnitude / maxVelocity);
+            //use sine to increase percentage at lower range and decrease at higher
+            forcePerc = Mathf.Sin(forcePerc * Mathf.PI * 0.5f);
+            //define acceleartion force based on acceleration and force percentage
+            float accelerationForce = acceleration * forcePerc;
+            //add speed based on input and acceleration force to rigidbody
+            Vector2 speed = transform.up * (inputV * accelerationForce);
             rb.AddForce(speed);
         }
 
