@@ -37,7 +37,8 @@ namespace MultiplayerRacer
             if (!connectButton.gameObject.activeInHierarchy)
             {
                 connectButton.gameObject.SetActive(true);
-                roomStatus.SetActive(false);
+                SetButtonInfoActiveState(false);
+                SetRoomStatusActiveState(false);
             }
             //set connect color to default: is red for not connected
             UpdateConnectColor(false);
@@ -149,14 +150,14 @@ namespace MultiplayerRacer
         /// <param name="nickname">player name in room</param>
         /// <param name="room">room in</param>
         /// <param name="ismaster">ismaster client status</param>
-        public override void SetupRoomStatus(string nickname, Room room)
+        public override void SetupRoomInfo(string nickname, Room room)
         {
-            base.SetupRoomStatus(nickname, room);
+            base.SetupRoomInfo(nickname, room);
 
             //if room status is not enabled yet, enable it and disable connect button
             if (!roomStatus.activeInHierarchy)
             {
-                roomStatus.SetActive(true);
+                SetButtonInfoActiveState(true);
                 connectButton.gameObject.SetActive(false);
             }
         }
@@ -296,7 +297,8 @@ namespace MultiplayerRacer
             ResetReadyButtons();
             //hide exit button
             HideExitButton();
-            HideRoomStatus();
+            SetButtonInfoActiveState(false);
+            SetRoomStatusActiveState(false);
 
             //start countdown animation and let masterclient load the game scene on end
             animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, endAction, check);

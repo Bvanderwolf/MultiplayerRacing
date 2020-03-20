@@ -139,7 +139,8 @@ namespace MultiplayerRacer
         {
             //hide unnecessary UI Elements
             HideExitButton();
-            HideRoomStatus();
+            SetButtonInfoActiveState(false);
+            SetRoomStatusActiveState(false);
 
             animations.CountDown(countdownText, InRoomManager.COUNTDOWN_LENGTH, endAction, check);
         }

@@ -324,7 +324,7 @@ namespace MultiplayerRacer
                 LobbyUI lobbyUI = (LobbyUI)UI;
                 Room room = PhotonNetwork.CurrentRoom;
                 SetConnectedToRoom(room);
-                lobbyUI.SetupRoomStatus(MakeNickname(), room);
+                lobbyUI.SetupRoomInfo(MakeNickname(), room);
                 lobbyUI.UpdateReadyButtons(room.PlayerCount);
                 lobbyUI.SetupExitButton(LeaveRoom);
                 lobbyUI.UpdateConnectColor(false); //reset color of connect button.

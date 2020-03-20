@@ -14,6 +14,7 @@ namespace MultiplayerRacer
     {
         [SerializeField] protected GameObject countdownText;
         [SerializeField] protected GameObject roomStatus;
+        [SerializeField] private GameObject infoButton;
         [SerializeField] protected Button exitButton;
 
         protected UIAnimations animations;
@@ -84,7 +85,7 @@ namespace MultiplayerRacer
         /// <param name="nickname">player name in room</param>
         /// <param name="room">room in</param>
         /// <param name="ismaster">ismaster client status</param>
-        public virtual void SetupRoomStatus(string nickname, Room room)
+        public virtual void SetupRoomInfo(string nickname, Room room)
         {
             if (roomStatus == null)
                 if (!FindAndSetRoomStatusReference())
@@ -136,28 +137,29 @@ namespace MultiplayerRacer
             exitButton.gameObject.SetActive(false);
         }
 
-        // <summary>
-        /// sets active state of room status to false
-        /// </summary>
-        public void HideRoomStatus()
+        public void OnInfoButtonClick()
         {
-            if (roomStatus == null)
-                if (!FindAndSetRoomStatusReference())
-                    return;
+            if (roomStatus.activeInHierarchy)
+                SetRoomStatusActiveState(false);
+            else
+                SetRoomStatusActiveState(true);
+        }
 
-            roomStatus.SetActive(false);
+        public void SetButtonInfoActiveState(bool value)
+        {
+            infoButton.SetActive(value);
         }
 
         // <summary>
-        /// sets active state of room status to false
+        /// sets active state of room status
         /// </summary>
-        public void ShowRoomStatus()
+        public void SetRoomStatusActiveState(bool value)
         {
             if (roomStatus == null)
                 if (!FindAndSetRoomStatusReference())
                     return;
 
-            roomStatus.SetActive(true);
+            roomStatus.SetActive(value);
         }
 
         /// <summary>

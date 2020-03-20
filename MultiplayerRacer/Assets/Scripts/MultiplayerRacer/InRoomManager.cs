@@ -297,7 +297,7 @@ namespace MultiplayerRacer
             Debug.LogError("loaded");
             //and set it up
             Room room = PhotonNetwork.CurrentRoom;
-            UI.SetupRoomStatus(PhotonNetwork.NickName, room);
+            UI.SetupRoomInfo(PhotonNetwork.NickName, room);
             room.IsOpen = false; //New players cannot join the game if the game scene has been loaded
 
             //update players in game values and tell others buffered to setup game scene
@@ -462,7 +462,7 @@ namespace MultiplayerRacer
             if (IsResetAble)
             {
                 UI.ShowExitButton();
-                UI.ShowRoomStatus();
+                UI.SetButtonInfoActiveState(true);
                 OnSceneReset?.Invoke(CurrentScene);
             }
         }
