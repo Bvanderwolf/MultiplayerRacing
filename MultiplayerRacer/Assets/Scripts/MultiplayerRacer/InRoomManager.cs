@@ -73,7 +73,7 @@ namespace MultiplayerRacer
 
         private PhotonView PV;
         private MultiplayerRacerUI UI = null;
-        private InRoomManagerHelper helper = new InRoomManagerHelper();
+        private InRoomManagerHelper helper = null;
         private bool IsResetAble => CurrentScene == MultiplayerRacerScenes.LOBBY || CurrentGamePhase == GamePhase.SETUP;
 
         /*
@@ -98,6 +98,9 @@ namespace MultiplayerRacer
                 Instance = this;
             }
             PV = GetComponent<PhotonView>();
+
+            helper = new InRoomManagerHelper();
+
             DontDestroyOnLoad(this.gameObject);
         }
 

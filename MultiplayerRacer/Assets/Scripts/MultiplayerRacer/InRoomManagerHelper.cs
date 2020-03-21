@@ -12,6 +12,29 @@ namespace MultiplayerRacer
     public class InRoomManagerHelper
     {
         public static readonly byte[] memRoomMaster = new byte[RoomMaster.BYTESIZE];
+        public List<Sprite> CarSprites { get; private set; }
+
+        public InRoomManagerHelper()
+        {
+            //load car sprites for storage upon instantiation
+            LoadCarSprites();
+        }
+
+        private void LoadCarSprites()
+        {
+            string path = "Sprites/Cars/";
+            CarSprites = new List<Sprite>()
+            {
+                Resources.Load<Sprite>(path + "car_people1"),
+                Resources.Load<Sprite>(path + "car_people2"),
+                Resources.Load<Sprite>(path + "car_people3"),
+                Resources.Load<Sprite>(path + "car_people4"),
+                Resources.Load<Sprite>(path + "car_people5"),
+                Resources.Load<Sprite>(path + "car_people6"),
+                Resources.Load<Sprite>(path + "car_people7"),
+                Resources.Load<Sprite>(path + "car_people8")
+            };
+        }
 
         /// <summary>
         /// Returns a UI script based on current scene

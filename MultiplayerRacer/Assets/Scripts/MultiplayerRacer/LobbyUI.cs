@@ -9,8 +9,9 @@ namespace MultiplayerRacer
     public class LobbyUI : MultiplayerRacerUI
     {
         [SerializeField] private Button connectButton;
-        [SerializeField] private GameObject readyStatus;
+        [SerializeField] private GameObject playersInfo;
         [SerializeField] private GameObject maxPlayerInputField;
+        [SerializeField] private GameObject carSelect;
 
         [SerializeField] private Color connectColor = new Color(0, 0.75f, 0);
 
@@ -22,7 +23,7 @@ namespace MultiplayerRacer
         protected override void Awake()
         {
             base.Awake();
-            readyStatusAnchorX = readyStatus.GetComponent<RectTransform>().anchoredPosition.x;
+            readyStatusAnchorX = playersInfo.GetComponent<RectTransform>().anchoredPosition.x;
         }
 
         //sets up connect button and returns if succeeded
@@ -168,11 +169,11 @@ namespace MultiplayerRacer
         /// <param name="count"></param>
         public void UpdateReadyButtons(int count)
         {
-            if (readyStatus == null)
+            if (playersInfo == null)
                 if (!FindAndSetReadyStatusReference())
                     return;
 
-            RectTransform statusTransform = readyStatus.GetComponent<RectTransform>();
+            RectTransform statusTransform = playersInfo.GetComponent<RectTransform>();
             if (count <= 0 || count > statusTransform.childCount)
             {
                 Debug.LogError("count does not corespond with child count");
@@ -239,7 +240,7 @@ namespace MultiplayerRacer
                 return;
 
             //add onclick listener to players ready button
-            Transform statusTransform = readyStatus.transform;
+            Transform statusTransform = playersInfo.transform;
             Button button = statusTransform.GetChild(playerNumber - 1)?.GetComponentInChildren<Button>();
             if (button != null)
             {
@@ -266,11 +267,11 @@ namespace MultiplayerRacer
         /// </summary>
         public void ResetReadyButtons()
         {
-            if (readyStatus == null)
+            if (playersInfo == null)
                 if (!FindAndSetReadyStatusReference())
                     return;
 
-            Transform statusTransform = readyStatus.transform;
+            Transform statusTransform = playersInfo.transform;
             for (int ci = 0; ci < statusTransform.childCount; ci++)
             {
                 GameObject child = statusTransform.GetChild(ci).gameObject;
@@ -285,6 +286,13 @@ namespace MultiplayerRacer
                     child.SetActive(false);
                 }
             }
+        }
+
+        public void SetCarSelectActiveState(bool value)
+        {
+            //buttons voor navigatie koppelen (onpress callback functies)
+
+            //callback voor selecting car -> set active state false, laat playerinfo zien en zet hashtable propertie
         }
 
         public void StartCountDownForGameScene(Action endAction, Func<bool> check = null)
@@ -308,7 +316,7 @@ namespace MultiplayerRacer
         private void UpdateReadyButton(int playerNumber, bool ready)
         {
             //get ready button on canvas based on player number and change its color based on ready value
-            Button button = readyStatus.transform.GetChild(playerNumber - 1)?.GetComponentInChildren<Button>();
+            Button button = playersInfo.transform.GetChild(playerNumber - 1)?.GetComponentInChildren<Button>();
             button.image.color = ready ? connectColor : Color.white;
         }
 
@@ -348,12 +356,12 @@ namespace MultiplayerRacer
                 GameObject child = tf.GetChild(ci).gameObject;
                 if (child.name == "ReadyStatus")
                 {
-                    readyStatus = child;
+                    playersInfo = child;
                     break;
                 }
             }
 
-            if (readyStatus == null)
+            if (playersInfo == null)
             {
                 Debug.LogError($"Ready status GameObject not found");
                 return false;
