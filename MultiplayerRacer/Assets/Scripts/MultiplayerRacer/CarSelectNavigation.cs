@@ -16,12 +16,15 @@ namespace MultiplayerRacer
         [SerializeField] private Button navigationRight;
 
         private const float SLIDE_SPEED = 0.55f;
+        private const float BACK_SIDE_WIDTH = 60f;
 
         private float[,] carImageInFocusAlphas;
         private float[,] carImageOutOfFocusAlphas;
 
         private GameObject carInFocus;
         private GameObject carOutOfFocus;
+
+        private Vector2 carImageScale;
 
         private void Awake()
         {
@@ -41,6 +44,7 @@ namespace MultiplayerRacer
             //set car in focus and out of focus based on starting scene
             carInFocus = carImageOne.gameObject;
             carOutOfFocus = carImageTwo.gameObject;
+            carImageScale = new Vector2(carImageOne.rect.width / texOne.width, carImageOne.rect.height / texOne.height);
             //update invisability of car out of focus
             UpdateImageInVisability(carOutOfFocus, carImageTwo.rect, new Bounds(back.position, back.sizeDelta * 2f));
         }
@@ -54,24 +58,34 @@ namespace MultiplayerRacer
         {
             Rect rect = carImageOne.rect;
             Vector3 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
+            Vector2 backSize = (back.sizeDelta * 2f) - new Vector2(BACK_SIDE_WIDTH, 0);
+            Bounds backBound = new Bounds(back.position, backSize);
             //set position of car out of focus to the right of back
             carOutOfFocus.transform.position = back.position + offset;
             //move car, that is in focus, out of focus
-            StartCoroutine(MoveCarImageOutOfFocus(carInFocus));
+            StartCoroutine(MoveCarImageOutOfFocus(carInFocus, rect, backBound, true));
             //move car, that is out of focus, into focus
-            StartCoroutine(MoveCarImageIntoFocus(carOutOfFocus));
+            StartCoroutine(MoveCarImageIntoFocus(carOutOfFocus, rect, backBound, true));
         }
 
         private void OnNavigateRight()
         {
+            Rect rect = carImageOne.rect;
+            Vector3 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
+            Vector2 backSize = (back.sizeDelta * 2f) - new Vector2(BACK_SIDE_WIDTH, 0);
+            Bounds backBound = new Bounds(back.position, backSize);
+            //set position of car out of focus to the right of back
+            carOutOfFocus.transform.position = back.position - offset;
+            //move car, that is in focus, out of focus
+            StartCoroutine(MoveCarImageOutOfFocus(carInFocus, rect, backBound, false));
+            //move car, that is out of focus, into focus
+            StartCoroutine(MoveCarImageIntoFocus(carOutOfFocus, rect, backBound, false));
         }
 
-        private IEnumerator MoveCarImageOutOfFocus(GameObject car)
+        private IEnumerator MoveCarImageOutOfFocus(GameObject car, Rect rect, Bounds backBound, bool left)
         {
-            Rect rect = carImageOne.rect;
-            Bounds backBound = new Bounds(back.position, back.sizeDelta * 2f);
             Vector2 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
-            Vector2 endPosition = (Vector2)back.position - offset;
+            Vector2 endPosition = (Vector2)back.position - (left ? offset : -offset);
             float currentTime = 0;
             //linearly interpolate car image toward end position
             while (currentTime != 1f)
@@ -92,12 +106,10 @@ namespace MultiplayerRacer
             carOutOfFocus = car;
         }
 
-        private IEnumerator MoveCarImageIntoFocus(GameObject car)
+        private IEnumerator MoveCarImageIntoFocus(GameObject car, Rect rect, Bounds backBound, bool left)
         {
-            Rect rect = carImageOne.rect;
-            Bounds backBound = new Bounds(back.position, back.sizeDelta * 2f);
             Vector2 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
-            Vector2 endPosition = back.position;
+            Vector2 startPosition = (Vector2)back.position + (left ? offset : -offset);
             float currentTime = 0;
             //linearly interpolate car image toward end position
             while (currentTime != 1f)
@@ -110,7 +122,7 @@ namespace MultiplayerRacer
                 //ease car in
                 perc = 1 - Mathf.Cos(perc * Mathf.PI * 0.5f);
                 //linearly interpolate
-                car.transform.position = Vector2.Lerp((Vector2)back.position + offset, endPosition, perc);
+                car.transform.position = Vector2.Lerp(startPosition, back.position, perc);
                 //check if out of focus already
                 UpdateImageVisability(car, rect, backBound);
                 yield return new WaitForFixedUpdate();
@@ -128,17 +140,19 @@ namespace MultiplayerRacer
         {
             //get position from where texture is being drawn (left top corner)
             Vector2 drawStartPos = (Vector2)car.transform.position + new Vector2(-carRect.width * 0.5f, carRect.height * 0.5f);
+            Vector2 drawEndPos = (Vector2)car.transform.position - new Vector2(-carRect.width * 0.5f, carRect.height * 0.5f);
             //get main texture of car to update
             Texture2D tex = (Texture2D)car.GetComponent<Image>().mainTexture;
             //define whether car is in focus
             bool inFocus = car == carInFocus;
             //loop through texture its pixels
+            Debug.DrawLine(drawStartPos, drawEndPos, Color.red, Time.deltaTime);
             for (int x = 0; x < tex.width; x++)
             {
                 for (int y = 0; y < tex.height; y++)
                 {
                     //if a pixel is out of background bounds it can be made transparent
-                    Vector2 pixelPos = drawStartPos + (new Vector2(x, -y) * back.lossyScale);
+                    Vector2 pixelPos = drawStartPos + ((new Vector2(x, -y) * carImageScale));
                     if (!backBound.Contains(pixelPos))
                     {
                         //get out of bounds pixel color
