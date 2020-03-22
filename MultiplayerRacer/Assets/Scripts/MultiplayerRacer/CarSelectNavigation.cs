@@ -20,12 +20,13 @@ namespace MultiplayerRacer
         private const float BACK_SIDE_WIDTH = 60f;
 
         private Dictionary<int, Color[]> carTextureColors;
-        private int currentTextureNumber;
+        private int textureNumInFocus;
 
         private GameObject carInFocus;
         private GameObject carOutOfFocus;
 
         private Vector2 carImageScale;
+        private Bounds backBounds;
 
         private List<Sprite> CarSprites;
 
@@ -33,6 +34,10 @@ namespace MultiplayerRacer
         {
             navigationLeft.onClick.AddListener(OnNavigateLeft);
             navigationRight.onClick.AddListener(OnNavigateRight);
+
+            Vector2 backSize = (back.sizeDelta * 2f) - new Vector2(BACK_SIDE_WIDTH, 0);
+            backBounds = new Bounds(back.position, backSize);
+
             InitImages();
         }
 
@@ -70,10 +75,10 @@ namespace MultiplayerRacer
 
             //set car image scale to be used when pixel positions need to be calculated
             carImageScale = new Vector2(carImageOne.rect.width / texOne.width, carImageOne.rect.height / texOne.height);
-            currentTextureNumber = 1;
+            textureNumInFocus = 1;
 
             //update invisability of car out of focus
-            UpdateImageInVisability(carOutOfFocus, carImageTwo.rect, new Bounds(back.position, back.sizeDelta * 2f));
+            UpdateImageInVisability(carOutOfFocus, carImageTwo.rect);
         }
 
         private void AddTextureToDictionary(Texture2D tex)
@@ -90,32 +95,25 @@ namespace MultiplayerRacer
         private void OnNavigateLeft()
         {
             Rect rect = carImageOne.rect;
-            Vector3 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
-            Vector2 backSize = (back.sizeDelta * 2f) - new Vector2(BACK_SIDE_WIDTH, 0);
-            Bounds backBound = new Bounds(back.position, backSize);
-            //set position of car out of focus to the right of back
-            carOutOfFocus.transform.position = back.position + offset;
+            //update focus with increase = true
+            UpdateFocus(false);
             //move car, that is in focus, out of focus
-            StartCoroutine(MoveCarImageOutOfFocus(carInFocus, rect, backBound, true));
+            StartCoroutine(MoveCarImageOutOfFocus(carInFocus, rect, true));
             //move car, that is out of focus, into focus
-            StartCoroutine(MoveCarImageIntoFocus(carOutOfFocus, rect, backBound, true));
+            StartCoroutine(MoveCarImageIntoFocus(carOutOfFocus, rect, true));
         }
 
         private void OnNavigateRight()
         {
             Rect rect = carImageOne.rect;
-            Vector3 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
-            Vector2 backSize = (back.sizeDelta * 2f) - new Vector2(BACK_SIDE_WIDTH, 0);
-            Bounds backBound = new Bounds(back.position, backSize);
-            //set position of car out of focus to the right of back
-            carOutOfFocus.transform.position = back.position - offset;
+            UpdateFocus(true);
             //move car, that is in focus, out of focus
-            StartCoroutine(MoveCarImageOutOfFocus(carInFocus, rect, backBound, false));
+            StartCoroutine(MoveCarImageOutOfFocus(carInFocus, rect, false));
             //move car, that is out of focus, into focus
-            StartCoroutine(MoveCarImageIntoFocus(carOutOfFocus, rect, backBound, false));
+            StartCoroutine(MoveCarImageIntoFocus(carOutOfFocus, rect, false));
         }
 
-        private IEnumerator MoveCarImageOutOfFocus(GameObject car, Rect rect, Bounds backBound, bool left)
+        private IEnumerator MoveCarImageOutOfFocus(GameObject car, Rect rect, bool left)
         {
             Vector2 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
             Vector2 endPosition = (Vector2)back.position - (left ? offset : -offset);
@@ -133,13 +131,13 @@ namespace MultiplayerRacer
                 //linearly interpolate
                 car.transform.position = Vector2.Lerp(back.position, endPosition, perc);
                 //check if out of focus already
-                UpdateImageInVisability(car, rect, backBound);
+                UpdateImageInVisability(car, rect);
                 yield return new WaitForFixedUpdate();
             }
             carOutOfFocus = car;
         }
 
-        private IEnumerator MoveCarImageIntoFocus(GameObject car, Rect rect, Bounds backBound, bool left)
+        private IEnumerator MoveCarImageIntoFocus(GameObject car, Rect rect, bool left)
         {
             Vector2 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
             Vector2 startPosition = (Vector2)back.position + (left ? offset : -offset);
@@ -159,7 +157,7 @@ namespace MultiplayerRacer
                 //linearly interpolate
                 car.transform.position = Vector2.Lerp(startPosition, back.position, perc);
                 //update image visability
-                UpdateImageVisability(car, carTextureColors[num], rect, backBound);
+                UpdateImageVisability(car, carTextureColors[num], rect);
                 yield return new WaitForFixedUpdate();
             }
             carInFocus = car;
@@ -171,7 +169,7 @@ namespace MultiplayerRacer
         /// </summary>
         /// <param name="carRect"></param>
         /// <param name="backBound"></param>
-        private void UpdateImageInVisability(GameObject car, Rect carRect, Bounds backBound)
+        private void UpdateImageInVisability(GameObject car, Rect carRect)
         {
             //get position from where texture is being drawn (left top corner)
             Vector2 drawStartPos = (Vector2)car.transform.position + new Vector2(-carRect.width * 0.5f, carRect.height * 0.5f);
@@ -184,7 +182,7 @@ namespace MultiplayerRacer
                 {
                     //if a pixel is out of background bounds it can be made transparent
                     Vector2 pixelPos = drawStartPos + ((new Vector2(x, -y) * carImageScale));
-                    if (!backBound.Contains(pixelPos))
+                    if (!backBounds.Contains(pixelPos))
                     {
                         //get out of bounds pixel color and set it to transparent
                         tex.SetPixel(x, y, Color.clear);
@@ -194,7 +192,7 @@ namespace MultiplayerRacer
             tex.Apply();
         }
 
-        private void UpdateImageVisability(GameObject car, Color[] pixelColors, Rect carRect, Bounds backBound)
+        private void UpdateImageVisability(GameObject car, Color[] pixelColors, Rect carRect)
         {
             //get position from where texture is being drawn (left top corner)
             Vector2 drawStartPos = (Vector2)car.transform.position + new Vector2(-carRect.width * 0.5f, carRect.height * 0.5f);
@@ -209,7 +207,7 @@ namespace MultiplayerRacer
                 {
                     //if a pixel is inside of background bounds it can be made visible
                     Vector2 pixelPos = drawStartPos + (new Vector2(x, -y) * back.lossyScale);
-                    if (backBound.Contains(pixelPos))
+                    if (backBounds.Contains(pixelPos))
                     {
                         int i = x + tex.width * y;
                         Color memTexCol = pixelColors[i];
@@ -218,6 +216,36 @@ namespace MultiplayerRacer
                 }
             }
             tex.Apply();
+        }
+
+        private void UpdateFocus(bool increase)
+        {
+            Vector3 offset = new Vector2((back.sizeDelta.x * 0.5f) + carImageOne.rect.width, 0);
+            if (increase)
+            {
+                //update texture number in focus (increasing it)
+                bool outOfbounds = textureNumInFocus == CarSprites.Count;
+                textureNumInFocus = outOfbounds ? 1 : textureNumInFocus + 1;
+                //set position of car out of focus to the right of back
+                carOutOfFocus.transform.position = back.position - offset;
+            }
+            else
+            {
+                //update texture number in focus (decreasing it)
+                bool outOfbounds = textureNumInFocus == 1;
+                textureNumInFocus = outOfbounds ? CarSprites.Count : textureNumInFocus - 1;
+                //set position of car out of focus to the right of back
+                carOutOfFocus.transform.position = back.position + offset;
+            }
+            //set new car sprite based on texture num in focus
+            Image image = carOutOfFocus.GetComponent<Image>();
+            image.sprite = CarSprites[textureNumInFocus - 1];
+            if (!carTextureColors.ContainsKey(textureNumInFocus))
+            {
+                //if the texture colors dictionary doesn't contain the colors, add it
+                carTextureColors.Add(textureNumInFocus, ((Texture2D)image.mainTexture).GetPixels());
+            }
+            UpdateImageInVisability(carOutOfFocus, carOutOfFocus.GetComponent<RectTransform>().rect);
         }
     }
 }
