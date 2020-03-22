@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -18,13 +19,15 @@ namespace MultiplayerRacer
         private const float SLIDE_SPEED = 0.55f;
         private const float BACK_SIDE_WIDTH = 60f;
 
-        private float[,] carImageInFocusAlphas;
-        private float[,] carImageOutOfFocusAlphas;
+        private Dictionary<int, Color[]> carTextureColors;
+        private int currentTextureNumber;
 
         private GameObject carInFocus;
         private GameObject carOutOfFocus;
 
         private Vector2 carImageScale;
+
+        private List<Sprite> CarSprites;
 
         private void Awake()
         {
@@ -35,18 +38,48 @@ namespace MultiplayerRacer
 
         private void InitImages()
         {
+            string path = "Sprites/Cars/";
+            CarSprites = new List<Sprite>()
+            {
+                Resources.Load<Sprite>(path + "car_people1"),
+                Resources.Load<Sprite>(path + "car_people2"),
+                Resources.Load<Sprite>(path + "car_people3"),
+                Resources.Load<Sprite>(path + "car_people4"),
+                Resources.Load<Sprite>(path + "car_people5"),
+                Resources.Load<Sprite>(path + "car_people6"),
+                Resources.Load<Sprite>(path + "car_people7"),
+                Resources.Load<Sprite>(path + "car_people8")
+            };
+            carTextureColors = new Dictionary<int, Color[]>();
+
             //create image in focus alphas based on image one texture size
-            Texture texOne = carImageOne.GetComponent<Image>().mainTexture;
-            carImageInFocusAlphas = new float[texOne.width, texOne.height];
+            Image imageOne = carImageOne.GetComponent<Image>();
+            imageOne.sprite = CarSprites[0];
+            Texture2D texOne = (Texture2D)imageOne.mainTexture;
+            AddTextureToDictionary(texOne);
+
             //create image in focus alphas based on image two texture size
-            Texture texTwo = carImageTwo.GetComponent<Image>().mainTexture;
-            carImageOutOfFocusAlphas = new float[texTwo.width, texTwo.height];
+            Image imageTwo = carImageTwo.GetComponent<Image>();
+            imageTwo.sprite = CarSprites[1];
+            Texture2D texTwo = (Texture2D)imageTwo.mainTexture;
+            AddTextureToDictionary(texTwo);
+
             //set car in focus and out of focus based on starting scene
             carInFocus = carImageOne.gameObject;
             carOutOfFocus = carImageTwo.gameObject;
+
+            //set car image scale to be used when pixel positions need to be calculated
             carImageScale = new Vector2(carImageOne.rect.width / texOne.width, carImageOne.rect.height / texOne.height);
+            currentTextureNumber = 1;
+
             //update invisability of car out of focus
             UpdateImageInVisability(carOutOfFocus, carImageTwo.rect, new Bounds(back.position, back.sizeDelta * 2f));
+        }
+
+        private void AddTextureToDictionary(Texture2D tex)
+        {
+            int num = int.Parse(tex.name.Substring(tex.name.Length - 1));
+            carTextureColors.Add(num, tex.GetPixels());
         }
 
         public void ListenToSelectButton(UnityAction action)
@@ -110,6 +143,8 @@ namespace MultiplayerRacer
         {
             Vector2 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
             Vector2 startPosition = (Vector2)back.position + (left ? offset : -offset);
+            Texture2D tex = (Texture2D)car.GetComponent<Image>().mainTexture;
+            int num = int.Parse(tex.name.Substring(tex.name.Length - 1));
             float currentTime = 0;
             //linearly interpolate car image toward end position
             while (currentTime != 1f)
@@ -123,8 +158,8 @@ namespace MultiplayerRacer
                 perc = 1 - Mathf.Cos(perc * Mathf.PI * 0.5f);
                 //linearly interpolate
                 car.transform.position = Vector2.Lerp(startPosition, back.position, perc);
-                //check if out of focus already
-                UpdateImageVisability(car, rect, backBound);
+                //update image visability
+                UpdateImageVisability(car, carTextureColors[num], rect, backBound);
                 yield return new WaitForFixedUpdate();
             }
             carInFocus = car;
@@ -140,13 +175,9 @@ namespace MultiplayerRacer
         {
             //get position from where texture is being drawn (left top corner)
             Vector2 drawStartPos = (Vector2)car.transform.position + new Vector2(-carRect.width * 0.5f, carRect.height * 0.5f);
-            Vector2 drawEndPos = (Vector2)car.transform.position - new Vector2(-carRect.width * 0.5f, carRect.height * 0.5f);
             //get main texture of car to update
             Texture2D tex = (Texture2D)car.GetComponent<Image>().mainTexture;
-            //define whether car is in focus
-            bool inFocus = car == carInFocus;
             //loop through texture its pixels
-            Debug.DrawLine(drawStartPos, drawEndPos, Color.red, Time.deltaTime);
             for (int x = 0; x < tex.width; x++)
             {
                 for (int y = 0; y < tex.height; y++)
@@ -155,29 +186,15 @@ namespace MultiplayerRacer
                     Vector2 pixelPos = drawStartPos + ((new Vector2(x, -y) * carImageScale));
                     if (!backBound.Contains(pixelPos))
                     {
-                        //get out of bounds pixel color
-                        Color col = tex.GetPixel(x, y);
-                        if (col.a != 0f)
-                        {
-                            //if the color is not already transparent, set its apha to zero
-                            Color newCol = new Color(col.r, col.g, col.b, 0f);
-                            tex.SetPixel(x, y, newCol);
-                        }
-                        if (col != Color.clear && col.a != 0f)
-                        {
-                            //save alpha colors of all pixels to array based on focus or not
-                            if (inFocus)
-                                carImageInFocusAlphas[x, y] = col.a;
-                            else
-                                carImageOutOfFocusAlphas[x, y] = col.a;
-                        }
+                        //get out of bounds pixel color and set it to transparent
+                        tex.SetPixel(x, y, Color.clear);
                     }
                 }
             }
             tex.Apply();
         }
 
-        private void UpdateImageVisability(GameObject car, Rect carRect, Bounds backBound)
+        private void UpdateImageVisability(GameObject car, Color[] pixelColors, Rect carRect, Bounds backBound)
         {
             //get position from where texture is being drawn (left top corner)
             Vector2 drawStartPos = (Vector2)car.transform.position + new Vector2(-carRect.width * 0.5f, carRect.height * 0.5f);
@@ -194,12 +211,9 @@ namespace MultiplayerRacer
                     Vector2 pixelPos = drawStartPos + (new Vector2(x, -y) * back.lossyScale);
                     if (backBound.Contains(pixelPos))
                     {
-                        //get inside of bounds pixel color
-                        Color col = tex.GetPixel(x, y);
-                        float a = inFocus ? carImageInFocusAlphas[x, y] : carImageOutOfFocusAlphas[x, y];
-                        //set the color of pixel to the inside stored carImageAlphas array
-                        Color newCol = new Color(col.r, col.g, col.b, a);
-                        tex.SetPixel(x, y, newCol);
+                        int i = x + tex.width * y;
+                        Color memTexCol = pixelColors[i];
+                        tex.SetPixel(x, y, memTexCol);
                     }
                 }
             }
