@@ -48,8 +48,8 @@ namespace MultiplayerRacer
 
         public void OnLobbyLeave()
         {
-            SetDefaultSettings(false);
-            ResetFocus();
+            SetDefaultFocusSettings();
+            SetDefaultSceneSettings(false);
             UpdateImageInVisability(carOutOfFocus, carImageTwo.rect);
         }
 
@@ -57,7 +57,8 @@ namespace MultiplayerRacer
         {
             CarTextureColors = new Dictionary<int, Color[]>();
 
-            SetDefaultSettings(true);
+            SetDefaultFocusSettings();
+            SetDefaultSceneSettings(true);
             //set car image scale to be used when pixel positions need to be calculated
             Texture2D tex = (Texture2D)carImageOne.GetComponent<Image>().mainTexture;
             carImageScale = new Vector2(carImageOne.rect.width / tex.width, carImageOne.rect.height / tex.height);
@@ -66,26 +67,34 @@ namespace MultiplayerRacer
             UpdateImageInVisability(carOutOfFocus, carImageTwo.rect);
         }
 
-        private void SetDefaultSettings(bool init)
+        private void SetDefaultFocusSettings()
+        {
+            //set car in focus and out of focus based on starting scene
+            carInFocus = carImageOne.gameObject;
+            carOutOfFocus = carImageTwo.gameObject;
+
+            Vector3 offset = new Vector3((back.sizeDelta.x * 0.5f) + carImageOne.rect.width, 0);
+            carInFocus.transform.position = back.position;
+            carOutOfFocus.transform.position = back.position + offset;
+
+            TextureNumInFocus = 1;
+        }
+
+        private void SetDefaultSceneSettings(bool init)
         {
             List<Sprite> carSprites = InRoomManager.Instance.GetSelectableCarSprites();
 
             //create image in focus alphas based on image one texture size
-            Image imageOne = carImageOne.GetComponent<Image>();
+            Image imageOne = carInFocus.GetComponent<Image>();
             imageOne.sprite = carSprites[0];
             Texture2D texOne = (Texture2D)imageOne.mainTexture;
             if (init) AddTextureToDictionary(texOne);
 
             //create image in focus alphas based on image two texture size
-            Image imageTwo = carImageTwo.GetComponent<Image>();
+            Image imageTwo = carOutOfFocus.GetComponent<Image>();
             imageTwo.sprite = carSprites[1];
             Texture2D texTwo = (Texture2D)imageTwo.mainTexture;
             if (init) AddTextureToDictionary(texTwo);
-
-            //set car in focus and out of focus based on starting scene
-            carInFocus = carImageOne.gameObject;
-            carOutOfFocus = carImageTwo.gameObject;
-            TextureNumInFocus = 1;
 
             //set text to a car name based on in focus texture
             carName.text = carNames[TextureNumInFocus - 1];
@@ -275,13 +284,6 @@ namespace MultiplayerRacer
                 CarTextureColors.Add(TextureNumInFocus, ((Texture2D)image.mainTexture).GetPixels());
             }
             UpdateImageInVisability(carOutOfFocus, carOutOfFocus.GetComponent<RectTransform>().rect);
-        }
-
-        private void ResetFocus()
-        {
-            Vector3 offset = new Vector3((back.sizeDelta.x * 0.5f) + carImageOne.rect.width, 0);
-            carInFocus.transform.position = back.position;
-            carOutOfFocus.transform.position = back.position + offset;
         }
 
         /// <summary>
