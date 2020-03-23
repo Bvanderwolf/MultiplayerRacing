@@ -1091,7 +1091,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &613368462
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1109,7 +1109,7 @@ RectTransform:
   - {fileID: 1248545227}
   - {fileID: 1935953147}
   m_Father: {fileID: 1524450940}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -2560,7 +2560,7 @@ RectTransform:
   - {fileID: 1043289440}
   - {fileID: 1847516345}
   m_Father: {fileID: 1524450940}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -2666,8 +2666,8 @@ RectTransform:
   - {fileID: 967452204}
   - {fileID: 1829037766}
   - {fileID: 1774985841}
-  - {fileID: 1454069318}
   - {fileID: 613368462}
+  - {fileID: 1454069318}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2695,7 +2695,7 @@ MonoBehaviour:
   connectButton: {fileID: 660137401}
   playersInfo: {fileID: 967452203}
   maxPlayerInputField: {fileID: 1774985840}
-  carSelect: {fileID: 613368461}
+  carSelect: {fileID: 613368463}
   connectColor: {r: 0, g: 0.75, b: 0, a: 1}
   disconnectColor: {r: 0.75, g: 0, b: 0, a: 1}
 --- !u!114 &1524450942

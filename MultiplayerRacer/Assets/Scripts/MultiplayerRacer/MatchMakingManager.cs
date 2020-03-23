@@ -173,7 +173,7 @@ namespace MultiplayerRacer
         {
             connectingToRoom = false;
             InRoomManager.Instance.RegisterRoomMaster();
-            InRoomManager.Instance.SetNumberInRoom(this, room.PlayerCount);
+            InRoomManager.Instance.UpdateNumberInRoom();
             PhotonNetwork.SendRate = SEND_RATE;
             PhotonNetwork.SerializationRate = SERIALIZATION_RATE;
         }
@@ -325,9 +325,11 @@ namespace MultiplayerRacer
                 Room room = PhotonNetwork.CurrentRoom;
                 SetConnectedToRoom(room);
                 lobbyUI.SetupRoomInfo(MakeNickname(), room);
-                lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                lobbyUI.UpdatePlayerInfo(room.PlayerCount);
                 lobbyUI.SetupExitButton(LeaveRoom);
+                lobbyUI.SetCarSelectActiveState(true);
                 lobbyUI.UpdateConnectColor(false); //reset color of connect button.
+                lobbyUI.UpdateCarsSelectedWithPlayerProperties();
                 FullRoomCheck(); //client can be the one filling up the room.
                 Application.quitting += OnQuitEvent; //setup quitting event with leaving master check
             }
@@ -364,7 +366,7 @@ namespace MultiplayerRacer
             //re attach ui for lobby usage
             AttachUI(MultiplayerRacerScenes.LOBBY);
             //reset ready buttons to handle in ready select leaving
-            ((LobbyUI)UI).ResetReadyButtons();
+            ((LobbyUI)UI).OnLobbyLeave();
             //set connecting to master to true since we are reconnecting to master
             connectingToMaster = true;
             //unsubsribe from quitting event
@@ -380,7 +382,7 @@ namespace MultiplayerRacer
             LobbyUI lobbyUI = (LobbyUI)UI;
             lobbyUI.UpdateConnectStatus(false);
             lobbyUI.UpdateConnectColor(false);
-            lobbyUI.ResetReadyButtons();
+            lobbyUI.ResetPlayerInfo();
             lobbyUI.SetConnectButtonInteractability(true);
             Application.quitting -= OnQuitEvent;
 

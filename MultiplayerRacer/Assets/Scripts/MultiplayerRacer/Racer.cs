@@ -253,7 +253,7 @@ namespace MultiplayerRacer
 
         private void AddFinishInfoToHashTable(string time)
         {
-            Hashtable table = new Hashtable();
+            Hashtable table = PhotonNetwork.LocalPlayer.CustomProperties;
             table.Add("FinishTime", time);
             PhotonNetwork.LocalPlayer.SetCustomProperties(table);
         }

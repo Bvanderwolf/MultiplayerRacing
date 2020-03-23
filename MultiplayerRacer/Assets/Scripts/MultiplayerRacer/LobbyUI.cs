@@ -1,6 +1,8 @@
-﻿using Photon.Pun;
+﻿using ExitGames.Client.Photon;
+using Photon.Pun;
 using Photon.Realtime;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,7 +13,7 @@ namespace MultiplayerRacer
         [SerializeField] private Button connectButton;
         [SerializeField] private GameObject playersInfo;
         [SerializeField] private GameObject maxPlayerInputField;
-        [SerializeField] private GameObject carSelect;
+        [SerializeField] private CarSelectNavigation carSelect;
 
         [SerializeField] private Color connectColor = new Color(0, 0.75f, 0);
 
@@ -20,10 +22,18 @@ namespace MultiplayerRacer
         private float readyStatusAnchorX;
         private const int MAX_READYBUTTONS_IN_ROW = 4;
 
+        private bool selectingCar = true;
+        private PhotonView PV;
+
+        public List<int> SelectedCars { get; private set; } = new List<int>();
+
         protected override void Awake()
         {
             base.Awake();
+            PV = GetComponent<PhotonView>();
             readyStatusAnchorX = playersInfo.GetComponent<RectTransform>().anchoredPosition.x;
+            //attach select button on click listener
+            carSelect.SelectButton.onClick.AddListener(OnCarSelectButtonPress);
         }
 
         //sets up connect button and returns if succeeded
@@ -165,10 +175,14 @@ namespace MultiplayerRacer
 
         /// <summary>
         /// Updates ready count buttons on lobby canvas based on given count
+        /// if not selecting a car
         /// </summary>
         /// <param name="count"></param>
-        public void UpdateReadyButtons(int count)
+        public void UpdatePlayerInfo(int count)
         {
+            if (selectingCar)
+                return;
+
             if (playersInfo == null)
                 if (!FindAndSetReadyStatusReference())
                     return;
@@ -190,27 +204,44 @@ namespace MultiplayerRacer
                 x += readyStatusAnchorX;
 
             statusTransform.anchoredPosition = new Vector2(x, statusTransform.anchoredPosition.y);
-            //loop through children based on count and display them on given position
             for (int ci = 0; ci < count; ci++)
             {
                 //place button on canvas based
                 GameObject child = statusTransform.GetChild(ci).gameObject;
-                SetReadyButton(child, ci, count);
+                SetPlayerInfoItem(child, ci, count);
             }
         }
 
-        private void SetReadyButton(GameObject button, int ci, int count)
+        public void SetPlayerInfoCarSprite(int playerNumber, int index, Sprite carSprite)
         {
-            SetReadyButtonHeader(button.transform.Find("PlayerName")?.gameObject, $"Player {ci + 1}");
-            //set it to active if not already active
-            if (!button.activeInHierarchy)
+            //car sprite index kan niet meer gebruikt worden nu hij gekozen is
+            Transform playerInfo = playersInfo.transform.GetChild(playerNumber - 1);
+            GameObject CarImage = playerInfo.Find("CarImage").gameObject;
+            CarImage.GetComponent<Image>().sprite = carSprite;
+            CarImage.SetActive(true);
+
+            //add index of choosen car to selected cars index
+            SelectedCars.Add(index);
+            if (selectingCar)
             {
-                button.SetActive(true);
+                //if we are looking at a car (in focus) that is taken, disable select button
+                bool takenCarInFocus = index == carSelect.TextureNumInFocus - 1;
+                if (takenCarInFocus) carSelect.SetSelectButtonInteractableState(false);
+            }
+        }
+
+        private void SetPlayerInfoItem(GameObject item, int ci, int count)
+        {
+            SetPlayerInfoHeader(item.transform.Find("PlayerName")?.gameObject, $"Player {ci + 1}");
+            //set it to active if not already active
+            if (!item.activeInHierarchy)
+            {
+                item.SetActive(true);
             }
             //if max players has been reached set buttons to be interactable
             if (count == PhotonNetwork.CurrentRoom.MaxPlayers)
             {
-                button.GetComponentInChildren<Button>().interactable = true;
+                item.GetComponentInChildren<Button>().interactable = true;
             }
         }
 
@@ -218,7 +249,7 @@ namespace MultiplayerRacer
         /// sets ready button header text
         /// </summary>
         /// <param name="textGo"></param>
-        private void SetReadyButtonHeader(GameObject textGo, string name)
+        private void SetPlayerInfoHeader(GameObject textGo, string name)
         {
             if (textGo != null)
             {
@@ -254,7 +285,6 @@ namespace MultiplayerRacer
                     animations.TimeOutButton(button, InRoomManager.READY_SEND_TIMEOUT);
 
                     //send rpc through server so all players get it around the same time
-                    PhotonView PV = GetComponent<PhotonView>();
                     PV.RPC("UpdateReadyButton", RpcTarget.AllViaServer, playerNumber, ready);
                 });
             }
@@ -265,7 +295,7 @@ namespace MultiplayerRacer
         /// resets ready buttons to default values, making them inactive, repositioning them,
         /// resseting the color and making them uninteractable
         /// </summary>
-        public void ResetReadyButtons()
+        public void ResetPlayerInfo()
         {
             if (playersInfo == null)
                 if (!FindAndSetReadyStatusReference())
@@ -290,9 +320,66 @@ namespace MultiplayerRacer
 
         public void SetCarSelectActiveState(bool value)
         {
-            //buttons voor navigatie koppelen (onpress callback functies)
+            //laat playerinfo zien
+            carSelect.gameObject.SetActive(value);
+        }
 
-            //callback voor selecting car -> set active state false, laat playerinfo zien en zet hashtable propertie
+        public void OnPlayerLeftSelectedCar(Player player)
+        {
+            if (!player.CustomProperties.ContainsKey("CarSpriteIndex"))
+                return;
+
+            int spriteIndex = (int)player.CustomProperties["CarSpriteIndex"];
+            SelectedCars.Remove(spriteIndex);
+            if (selectingCar)
+            {
+                bool freedCarInFocus = spriteIndex == carSelect.TextureNumInFocus - 1;
+                if (freedCarInFocus) carSelect.SetSelectButtonInteractableState(true);
+            }
+        }
+
+        private void OnCarSelectButtonPress()
+        {
+            //get car sprite index
+            int carSpriteIndex = carSelect.TextureNumInFocus - 1;
+            //set seleting car to false and update ready buttons
+            selectingCar = false;
+            UpdatePlayerInfo(PhotonNetwork.CurrentRoom.PlayerCount);
+            //set car sprite index as custom property for this player
+            Hashtable table = PhotonNetwork.LocalPlayer.CustomProperties;
+            table.Add("CarSpriteIndex", carSpriteIndex);
+            PhotonNetwork.LocalPlayer.SetCustomProperties(table);
+            //set car select to inactive state
+            SetCarSelectActiveState(false);
+        }
+
+        public void UpdateCarsSelectedWithPlayerProperties()
+        {
+            Dictionary<int, Player> players = PhotonNetwork.CurrentRoom.Players;
+            foreach (KeyValuePair<int, Player> player in players)
+            {
+                if (player.Value.CustomProperties.ContainsKey("CarSpriteIndex"))
+                {
+                    int index = (int)player.Value.CustomProperties["CarSpriteIndex"];
+                    int numberInRoom = InRoomManager.Instance.GetRoomNumberOfActor(player.Key);
+                    Sprite sprite = InRoomManager.Instance.GetUsableCarSprite(index);
+                    SetPlayerInfoCarSprite(numberInRoom, index, sprite);
+                }
+            }
+        }
+
+        public void OnLobbyLeave()
+        {
+            ResetPlayerInfo();
+            ResetCarSelectProps();
+        }
+
+        public void ResetCarSelectProps()
+        {
+            carSelect.gameObject.SetActive(false);
+            SelectedCars.Clear();
+            selectingCar = false;
+            carSelect.OnLobbyLeave();
         }
 
         public void StartCountDownForGameScene(Action endAction, Func<bool> check = null)
@@ -302,7 +389,7 @@ namespace MultiplayerRacer
                     return;
 
             //reset ready buttons so players are not able to ready up/down
-            ResetReadyButtons();
+            ResetPlayerInfo();
             //hide exit button
             HideExitButton();
             SetButtonInfoActiveState(false);

@@ -12,7 +12,8 @@ namespace MultiplayerRacer
     public class InRoomManagerHelper
     {
         public static readonly byte[] memRoomMaster = new byte[RoomMaster.BYTESIZE];
-        public List<Sprite> CarSprites { get; private set; }
+        public List<Sprite> CarSpritesSelectable { get; private set; }
+        public List<Sprite> CarSpritesUsable { get; private set; }
 
         public InRoomManagerHelper()
         {
@@ -22,18 +23,56 @@ namespace MultiplayerRacer
 
         private void LoadCarSprites()
         {
-            string path = "Sprites/Cars/";
-            CarSprites = new List<Sprite>()
+            string selectablePath = "Sprites/Cars/CarSelect/";
+            CarSpritesSelectable = new List<Sprite>()
             {
-                Resources.Load<Sprite>(path + "car_people1"),
-                Resources.Load<Sprite>(path + "car_people2"),
-                Resources.Load<Sprite>(path + "car_people3"),
-                Resources.Load<Sprite>(path + "car_people4"),
-                Resources.Load<Sprite>(path + "car_people5"),
-                Resources.Load<Sprite>(path + "car_people6"),
-                Resources.Load<Sprite>(path + "car_people7"),
-                Resources.Load<Sprite>(path + "car_people8")
+                Resources.Load<Sprite>(selectablePath + "car_people1"),
+                Resources.Load<Sprite>(selectablePath + "car_people2"),
+                Resources.Load<Sprite>(selectablePath + "car_people3"),
+                Resources.Load<Sprite>(selectablePath + "car_people4"),
+                Resources.Load<Sprite>(selectablePath + "car_people5"),
+                Resources.Load<Sprite>(selectablePath + "car_people6"),
+                Resources.Load<Sprite>(selectablePath + "car_people7"),
+                Resources.Load<Sprite>(selectablePath + "car_people8")
             };
+            string usablePath = "Sprites/Cars/PlayerUsed/";
+            CarSpritesUsable = new List<Sprite>()
+            {
+                Resources.Load<Sprite>(usablePath + "car_people1"),
+                Resources.Load<Sprite>(usablePath + "car_people2"),
+                Resources.Load<Sprite>(usablePath + "car_people3"),
+                Resources.Load<Sprite>(usablePath + "car_people4"),
+                Resources.Load<Sprite>(usablePath + "car_people5"),
+                Resources.Load<Sprite>(usablePath + "car_people6"),
+                Resources.Load<Sprite>(usablePath + "car_people7"),
+                Resources.Load<Sprite>(usablePath + "car_people8")
+            };
+        }
+
+        public int GetNumberInRoomOfPlayer(int actorNumber)
+        {
+            Dictionary<int, Player> players = PhotonNetwork.CurrentRoom.Players;
+            Player player = players[actorNumber];
+            int num = 1;
+            foreach (KeyValuePair<int, Player> pair in players)
+            {
+                if (player.ActorNumber > pair.Key)
+                    num++;
+            }
+
+            return num;
+        }
+
+        public int GetNumberInRoomOfPlayer(Player player)
+        {
+            int num = 1;
+            foreach (KeyValuePair<int, Player> pair in PhotonNetwork.CurrentRoom.Players)
+            {
+                if (player.ActorNumber > pair.Key)
+                    num++;
+            }
+
+            return num;
         }
 
         /// <summary>

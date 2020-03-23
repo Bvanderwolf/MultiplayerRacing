@@ -6,6 +6,7 @@ using MultiplayerRacerEnums;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
+using System.Collections.Generic;
 
 namespace MultiplayerRacer
 {
@@ -152,6 +153,34 @@ namespace MultiplayerRacer
             else Debug.LogError("matchmaking manager reference is null or not the singleton instance");
         }
 
+        //sets number in the room
+        public void UpdateNumberInRoom()
+        {
+            int num = helper.GetNumberInRoomOfPlayer(PhotonNetwork.LocalPlayer);
+            Debug.LogError("Our number in Room: " + num);
+            NumberInRoom = num;
+        }
+
+        public List<Sprite> GetSelectableCarSprites()
+        {
+            return helper?.CarSpritesSelectable;
+        }
+
+        public Sprite GetUsableCarSprite(int index)
+        {
+            return helper?.CarSpritesUsable[index];
+        }
+
+        public int GetRoomNumberOfActor(int actorNumber)
+        {
+            return helper.GetNumberInRoomOfPlayer(actorNumber);
+        }
+
+        public int GetRoomNumberOfActor(Player player)
+        {
+            return helper.GetNumberInRoomOfPlayer(player);
+        }
+
         /// <summary>
         /// Registers the Room Master as a Custom Serializable Type for this room
         /// </summary>
@@ -166,15 +195,6 @@ namespace MultiplayerRacer
                 else Debug.LogError("Failed Registering Room Master! Can't play game");
             }
             else Debug.LogError("Room Master is already registered :: wont do it again");
-        }
-
-        //sets number in the room
-        public void SetNumberInRoom(MatchMakingManager manager, int number)
-        {
-            if (manager == MatchMakingManager.Instance)
-            {
-                NumberInRoom = number;
-            }
         }
 
         /// <summary>
@@ -427,20 +447,14 @@ namespace MultiplayerRacer
             Room room = PhotonNetwork.CurrentRoom;
             LobbyUI lobbyUI = (LobbyUI)UI;
             lobbyUI.UpdateRoomInfo(room);
-            lobbyUI.UpdateReadyButtons(room.PlayerCount);
+            lobbyUI.UpdatePlayerInfo(room.PlayerCount);
             FullRoomCheck(); //entering player can be the one to fill the lobby
         }
 
         public void OnPlayerLeftRoom(Player otherPlayer)
         {
-            /*if the leaving player its actor number was greater than ours,
-            it means this player joined before us so our number will go down
-            by one to get the correct value for our number in the room*/
-            Player me = PhotonNetwork.LocalPlayer;
-            if (me.ActorNumber > otherPlayer.ActorNumber)
-            {
-                NumberInRoom--;
-            }
+            //Update our number in room since
+            UpdateNumberInRoom();
             //master needs to deal with player leaving the room/him
             OnPlayerLeftMaster();
             //invoke shared functions
@@ -452,8 +466,9 @@ namespace MultiplayerRacer
             {
                 case MultiplayerRacerScenes.LOBBY:
                     LobbyUI lobbyUI = (LobbyUI)UI;
-                    lobbyUI.ResetReadyButtons(); //reset ready buttons when a player leaves
-                    lobbyUI.UpdateReadyButtons(room.PlayerCount);
+                    lobbyUI.ResetPlayerInfo(); //reset ready buttons when a player leaves
+                    lobbyUI.UpdatePlayerInfo(room.PlayerCount);
+                    lobbyUI.OnPlayerLeftSelectedCar(otherPlayer);
                     break;
 
                 case MultiplayerRacerScenes.GAME:
@@ -475,6 +490,12 @@ namespace MultiplayerRacer
             if (changedProps.ContainsKey("FinishTime") && PhotonNetwork.IsMasterClient)
             {
                 SetRacerFinished(targetPlayer.NickName, (string)changedProps["FinishTime"]);
+            }
+            if (changedProps.ContainsKey("CarSpriteIndex") && CurrentScene == MultiplayerRacerScenes.LOBBY)
+            {
+                int numberInRoom = helper.GetNumberInRoomOfPlayer(targetPlayer);
+                int carSpriteIndex = (int)changedProps["CarSpriteIndex"];
+                ((LobbyUI)UI).SetPlayerInfoCarSprite(numberInRoom, carSpriteIndex, helper.CarSpritesUsable[carSpriteIndex]);
             }
         }
 
