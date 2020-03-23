@@ -357,8 +357,9 @@ namespace MultiplayerRacer
                     Master.UpdatePlayersInGameScene(false);
                     switch (CurrentGamePhase)
                     {
-                        //in the setup gamephase send all players ready up info again
+                        //in the setup gamephase send all players ready up info again and players ready is reset
                         case GamePhase.SETUP:
+                            Master.ResetPlayersReady();
                             ((GameUI)UI).SendShowReadyUpInfo();
                             break;
 
@@ -475,10 +476,11 @@ namespace MultiplayerRacer
                     ((GameUI)UI).ShowText($"{otherPlayer.NickName} left the game");
                     break;
             }
-            SetReady(false);
-            //if resetable, exit button and room status is shown and on scene reset gets fired
+            /*if resetable, set ourselfs to unready status, exit button and room status is shown
+            and on scene reset gets fired*/
             if (IsResetAble)
             {
+                SetReady(false);
                 UI.ShowExitButton();
                 UI.SetButtonInfoActiveState(true);
                 OnSceneReset?.Invoke(CurrentScene);
@@ -562,7 +564,8 @@ namespace MultiplayerRacer
 
                     case MultiplayerRacerScenes.GAME:
                         //only check for max players ready if all players are in game scene
-                        if (Master.PlayersInGameScene == PhotonNetwork.CurrentRoom.PlayerCount)
+                        bool allPlayersInGameScene = Master.PlayersInGameScene == PhotonNetwork.CurrentRoom.PlayerCount;
+                        if (allPlayersInGameScene && CurrentGamePhase == GamePhase.SETUP)
                         {
                             MaxPlayersReadyCheck(CurrentScene);
                         }
@@ -593,6 +596,9 @@ namespace MultiplayerRacer
             //set current game phase back to setup
             CurrentGamePhase = GamePhase.SETUP;
 
+            //set ready status to false
+            IsReady = false;
+
             //call on restart and then on scene reset
             OnGameRestart();
             OnSceneReset(CurrentScene);
@@ -606,6 +612,7 @@ namespace MultiplayerRacer
             {
                 gameUI.SendShowReadyUpInfo();
                 Master.ResetPlayersFinished();
+                Master.ResetPlayersReady();
             }
         }
 
