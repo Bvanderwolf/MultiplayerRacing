@@ -365,7 +365,7 @@ namespace MultiplayerRacer
 
             //re attach ui for lobby usage
             AttachUI(MultiplayerRacerScenes.LOBBY);
-            //reset ready buttons to handle in ready select leaving
+            //reset lobbyui
             ((LobbyUI)UI).OnLobbyLeave();
             //set connecting to master to true since we are reconnecting to master
             connectingToMaster = true;

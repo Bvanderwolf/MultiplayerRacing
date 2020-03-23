@@ -19,7 +19,7 @@ namespace MultiplayerRacer
         private const float SLIDE_SPEED = 0.55f;
         private const float BACK_SIDE_WIDTH = 60f;
 
-        private Dictionary<int, Color[]> carTextureColors;
+        public Dictionary<int, Color[]> CarTextureColors { get; private set; }
         private GameObject carInFocus;
         private GameObject carOutOfFocus;
 
@@ -48,47 +48,53 @@ namespace MultiplayerRacer
 
         public void OnLobbyLeave()
         {
-            //reset car in focus en car out of focus
-            //reset car image one and car image two
-            //reset car name
-            //reset select button
-            //reset texturenuminfocus
-            //reset all images (enumerator elke x for loop wait game frame) zet kleur terug
+            SetDefaultSettings(false);
+            ResetFocus();
+            UpdateImageInVisability(carOutOfFocus, carImageTwo.rect);
         }
 
         private void InitImages()
         {
-            carTextureColors = new Dictionary<int, Color[]>();
+            CarTextureColors = new Dictionary<int, Color[]>();
+
+            SetDefaultSettings(true);
+            //set car image scale to be used when pixel positions need to be calculated
+            Texture2D tex = (Texture2D)carImageOne.GetComponent<Image>().mainTexture;
+            carImageScale = new Vector2(carImageOne.rect.width / tex.width, carImageOne.rect.height / tex.height);
+
+            //update invisability of car out of focus
+            UpdateImageInVisability(carOutOfFocus, carImageTwo.rect);
+        }
+
+        private void SetDefaultSettings(bool init)
+        {
             List<Sprite> carSprites = InRoomManager.Instance.GetSelectableCarSprites();
 
             //create image in focus alphas based on image one texture size
             Image imageOne = carImageOne.GetComponent<Image>();
             imageOne.sprite = carSprites[0];
             Texture2D texOne = (Texture2D)imageOne.mainTexture;
-            AddTextureToDictionary(texOne);
+            if (init) AddTextureToDictionary(texOne);
 
             //create image in focus alphas based on image two texture size
             Image imageTwo = carImageTwo.GetComponent<Image>();
             imageTwo.sprite = carSprites[1];
             Texture2D texTwo = (Texture2D)imageTwo.mainTexture;
-            AddTextureToDictionary(texTwo);
+            if (init) AddTextureToDictionary(texTwo);
 
             //set car in focus and out of focus based on starting scene
             carInFocus = carImageOne.gameObject;
             carOutOfFocus = carImageTwo.gameObject;
-
-            //set car image scale to be used when pixel positions need to be calculated
-            carImageScale = new Vector2(carImageOne.rect.width / texOne.width, carImageOne.rect.height / texOne.height);
             TextureNumInFocus = 1;
 
-            //update invisability of car out of focus
-            UpdateImageInVisability(carOutOfFocus, carImageTwo.rect);
+            //set text to a car name based on in focus texture
+            carName.text = carNames[TextureNumInFocus - 1];
         }
 
         private void AddTextureToDictionary(Texture2D tex)
         {
             int num = int.Parse(tex.name.Substring(tex.name.Length - 1));
-            carTextureColors.Add(num, tex.GetPixels());
+            CarTextureColors.Add(num, tex.GetPixels());
         }
 
         public void ListenToSelectButton(UnityAction action)
@@ -99,6 +105,12 @@ namespace MultiplayerRacer
         public void SetSelectButtonInteractableState(bool value)
         {
             selectButton.interactable = value;
+        }
+
+        private void SetNavigationInteractableState(bool value)
+        {
+            navigationLeft.interactable = value;
+            navigationRight.interactable = value;
         }
 
         private void OnNavigateLeft()
@@ -150,6 +162,7 @@ namespace MultiplayerRacer
         {
             //the user can't select a car if it is switching it
             selectButton.interactable = false;
+            SetNavigationInteractableState(false);
 
             Vector2 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
             Vector2 startPosition = (Vector2)back.position + (left ? offset : -offset);
@@ -169,11 +182,12 @@ namespace MultiplayerRacer
                 //linearly interpolate
                 car.transform.position = Vector2.Lerp(startPosition, back.position, perc);
                 //update image visability
-                UpdateImageVisability(car, carTextureColors[num], rect);
+                UpdateImageVisability(car, CarTextureColors[num], rect);
                 yield return new WaitForFixedUpdate();
             }
             carInFocus = car;
             selectButton.interactable = IsFocusedOnSelectableCar();
+            SetNavigationInteractableState(true);
         }
 
         /// <summary>
@@ -233,7 +247,7 @@ namespace MultiplayerRacer
 
         private void UpdateFocus(bool increase)
         {
-            Vector3 offset = new Vector2((back.sizeDelta.x * 0.5f) + carImageOne.rect.width, 0);
+            Vector3 offset = new Vector3((back.sizeDelta.x * 0.5f) + carImageOne.rect.width, 0);
             List<Sprite> carSprites = InRoomManager.Instance.GetSelectableCarSprites();
             if (increase)
             {
@@ -255,12 +269,19 @@ namespace MultiplayerRacer
             Image image = carOutOfFocus.GetComponent<Image>();
             image.sprite = carSprites[TextureNumInFocus - 1];
             carName.text = carNames[TextureNumInFocus - 1];
-            if (!carTextureColors.ContainsKey(TextureNumInFocus))
+            if (!CarTextureColors.ContainsKey(TextureNumInFocus))
             {
                 //if the texture colors dictionary doesn't contain the colors, add it
-                carTextureColors.Add(TextureNumInFocus, ((Texture2D)image.mainTexture).GetPixels());
+                CarTextureColors.Add(TextureNumInFocus, ((Texture2D)image.mainTexture).GetPixels());
             }
             UpdateImageInVisability(carOutOfFocus, carOutOfFocus.GetComponent<RectTransform>().rect);
+        }
+
+        private void ResetFocus()
+        {
+            Vector3 offset = new Vector3((back.sizeDelta.x * 0.5f) + carImageOne.rect.width, 0);
+            carInFocus.transform.position = back.position;
+            carOutOfFocus.transform.position = back.position + offset;
         }
 
         /// <summary>

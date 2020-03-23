@@ -14,6 +14,8 @@ namespace MultiplayerRacer
         [SerializeField] private bool canRace;
         [SerializeField] private bool showRemote;
 
+        public const string FINISH_TIME_HASHTABLE_KEY = "FinishTime";
+
         public GameObject CarCamera => carCamera;
         public bool CanRace => canRace;
 
@@ -254,7 +256,10 @@ namespace MultiplayerRacer
         private void AddFinishInfoToHashTable(string time)
         {
             Hashtable table = PhotonNetwork.LocalPlayer.CustomProperties;
-            table.Add("FinishTime", time);
+            if (!table.ContainsKey(FINISH_TIME_HASHTABLE_KEY))
+                table.Add(FINISH_TIME_HASHTABLE_KEY, time); //add new
+            else
+                table[FINISH_TIME_HASHTABLE_KEY] = time; //update current
             PhotonNetwork.LocalPlayer.SetCustomProperties(table);
         }
 

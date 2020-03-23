@@ -8,6 +8,8 @@ using UnityEngine.UI;
 
 namespace MultiplayerRacer
 {
+    using IEnumerator = System.Collections.IEnumerator;
+
     public class LobbyUI : MultiplayerRacerUI
     {
         [SerializeField] private Button connectButton;
@@ -24,6 +26,8 @@ namespace MultiplayerRacer
 
         private bool selectingCar = true;
         private PhotonView PV;
+
+        public const string SPRITE_INDEX_HASHTABLE_KEY = "CarSpriteIndex";
 
         public List<int> SelectedCars { get; private set; } = new List<int>();
 
@@ -216,9 +220,9 @@ namespace MultiplayerRacer
         {
             //car sprite index kan niet meer gebruikt worden nu hij gekozen is
             Transform playerInfo = playersInfo.transform.GetChild(playerNumber - 1);
-            GameObject CarImage = playerInfo.Find("CarImage").gameObject;
-            CarImage.GetComponent<Image>().sprite = carSprite;
-            CarImage.SetActive(true);
+            Image carImage = playerInfo.Find("CarImage").GetComponent<Image>();
+            carImage.sprite = carSprite;
+            carImage.gameObject.SetActive(true);
 
             //add index of choosen car to selected cars index
             SelectedCars.Add(index);
@@ -326,15 +330,23 @@ namespace MultiplayerRacer
 
         public void OnPlayerLeftSelectedCar(Player player)
         {
-            if (!player.CustomProperties.ContainsKey("CarSpriteIndex"))
+            if (!player.CustomProperties.ContainsKey(SPRITE_INDEX_HASHTABLE_KEY))
                 return;
 
-            int spriteIndex = (int)player.CustomProperties["CarSpriteIndex"];
+            int spriteIndex = (int)player.CustomProperties[SPRITE_INDEX_HASHTABLE_KEY];
             SelectedCars.Remove(spriteIndex);
             if (selectingCar)
             {
                 bool freedCarInFocus = spriteIndex == carSelect.TextureNumInFocus - 1;
                 if (freedCarInFocus) carSelect.SetSelectButtonInteractableState(true);
+            }
+            else
+            {
+                int playerNumber = InRoomManager.Instance.GetRoomNumberOfActor(player);
+                Transform playerInfo = playersInfo.transform.GetChild(playerNumber - 1);
+                Image carImage = playerInfo.Find("CarImage").GetComponent<Image>();
+                carImage.sprite = null;
+                carImage.gameObject.SetActive(false);
             }
         }
 
@@ -345,9 +357,13 @@ namespace MultiplayerRacer
             //set seleting car to false and update ready buttons
             selectingCar = false;
             UpdatePlayerInfo(PhotonNetwork.CurrentRoom.PlayerCount);
+
             //set car sprite index as custom property for this player
             Hashtable table = PhotonNetwork.LocalPlayer.CustomProperties;
-            table.Add("CarSpriteIndex", carSpriteIndex);
+            if (!table.ContainsKey(SPRITE_INDEX_HASHTABLE_KEY))
+                table.Add(SPRITE_INDEX_HASHTABLE_KEY, carSpriteIndex); //add new
+            else
+                table[SPRITE_INDEX_HASHTABLE_KEY] = carSpriteIndex; //update current
             PhotonNetwork.LocalPlayer.SetCustomProperties(table);
             //set car select to inactive state
             SetCarSelectActiveState(false);
@@ -358,9 +374,9 @@ namespace MultiplayerRacer
             Dictionary<int, Player> players = PhotonNetwork.CurrentRoom.Players;
             foreach (KeyValuePair<int, Player> player in players)
             {
-                if (player.Value.CustomProperties.ContainsKey("CarSpriteIndex"))
+                if (player.Value.CustomProperties.ContainsKey(SPRITE_INDEX_HASHTABLE_KEY))
                 {
-                    int index = (int)player.Value.CustomProperties["CarSpriteIndex"];
+                    int index = (int)player.Value.CustomProperties[SPRITE_INDEX_HASHTABLE_KEY];
                     int numberInRoom = InRoomManager.Instance.GetRoomNumberOfActor(player.Key);
                     Sprite sprite = InRoomManager.Instance.GetUsableCarSprite(index);
                     SetPlayerInfoCarSprite(numberInRoom, index, sprite);
@@ -376,10 +392,37 @@ namespace MultiplayerRacer
 
         public void ResetCarSelectProps()
         {
-            carSelect.gameObject.SetActive(false);
             SelectedCars.Clear();
-            selectingCar = false;
-            carSelect.OnLobbyLeave();
+            PhotonNetwork.LocalPlayer.CustomProperties.Remove(SPRITE_INDEX_HASHTABLE_KEY);
+            selectingCar = true;
+            carSelect.gameObject.SetActive(false);
+            StartCoroutine(ResetAllCarTextures(carSelect.OnLobbyLeave));
+        }
+
+        private IEnumerator ResetAllCarTextures(Action onEnd)
+        {
+            Dictionary<int, Color[]> carTextureColors = carSelect.CarTextureColors;
+            if (carTextureColors.Count == 0)
+                yield break;
+
+            List<Sprite> sprites = InRoomManager.Instance.GetSelectableCarSprites();
+            foreach (var texColorPair in carTextureColors)
+            {
+                int spriteIndex = texColorPair.Key - 1;
+                Texture2D tex = sprites[spriteIndex].texture;
+                for (int x = 0; x < tex.width; x++)
+                {
+                    for (int y = 0; y < tex.height; y++)
+                    {
+                        int i = x + tex.width * y;
+                        Color memTexCol = texColorPair.Value[i];
+                        tex.SetPixel(x, y, memTexCol);
+                    }
+                }
+                tex.Apply();
+                yield return new WaitForFixedUpdate();
+            }
+            onEnd?.Invoke();
         }
 
         public void StartCountDownForGameScene(Action endAction, Func<bool> check = null)

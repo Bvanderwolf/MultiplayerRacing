@@ -487,14 +487,15 @@ namespace MultiplayerRacer
 
         public void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
         {
-            if (changedProps.ContainsKey("FinishTime") && PhotonNetwork.IsMasterClient)
+            if (changedProps.ContainsKey(Racer.FINISH_TIME_HASHTABLE_KEY) && PhotonNetwork.IsMasterClient)
             {
-                SetRacerFinished(targetPlayer.NickName, (string)changedProps["FinishTime"]);
+                string time = (string)changedProps[Racer.FINISH_TIME_HASHTABLE_KEY];
+                SetRacerFinished(targetPlayer.NickName, time);
             }
-            if (changedProps.ContainsKey("CarSpriteIndex") && CurrentScene == MultiplayerRacerScenes.LOBBY)
+            if (changedProps.ContainsKey(LobbyUI.SPRITE_INDEX_HASHTABLE_KEY) && CurrentScene == MultiplayerRacerScenes.LOBBY)
             {
                 int numberInRoom = helper.GetNumberInRoomOfPlayer(targetPlayer);
-                int carSpriteIndex = (int)changedProps["CarSpriteIndex"];
+                int carSpriteIndex = (int)changedProps[LobbyUI.SPRITE_INDEX_HASHTABLE_KEY];
                 ((LobbyUI)UI).SetPlayerInfoCarSprite(numberInRoom, carSpriteIndex, helper.CarSpritesUsable[carSpriteIndex]);
             }
         }
