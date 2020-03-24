@@ -223,7 +223,9 @@ namespace MultiplayerRacer
             }
             //set car index based on player custom properties
             int spriteIndex = (int)info.Sender.CustomProperties[LobbyUI.SPRITE_INDEX_HASHTABLE_KEY];
-            spriteRend.sprite = InRoomManager.Instance.GetUsableCarSprite(spriteIndex);
+            Sprite carSprite = InRoomManager.Instance.GetUsableCarSprite(spriteIndex);
+            spriteRend.sprite = carSprite;
+            remoteCar.GetComponent<SpriteRenderer>().sprite = carSprite;
 
             //both our and other clients their racer will reset when needed
             InRoomManager.Instance.OnSceneReset += OnRacerReset;
