@@ -161,21 +161,42 @@ namespace MultiplayerRacer
             NumberInRoom = num;
         }
 
+        /// <summary>
+        /// Returns car sprites used for car select
+        /// </summary>
+        /// <returns></returns>
         public List<Sprite> GetSelectableCarSprites()
         {
             return helper?.CarSpritesSelectable;
         }
 
+        /// <summary>
+        /// Returns a non read/write car sprite used for
+        /// the game scene
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
         public Sprite GetUsableCarSprite(int index)
         {
             return helper?.CarSpritesUsable[index];
         }
 
+        /// <summary>
+        /// returns number in room of player that corresponds
+        /// with given actornumber
+        /// </summary>
+        /// <param name="actorNumber"></param>
+        /// <returns></returns>
         public int GetRoomNumberOfActor(int actorNumber)
         {
             return helper.GetNumberInRoomOfPlayer(actorNumber);
         }
 
+        /// <summary>
+        /// returns number in room of given player
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns></returns>
         public int GetRoomNumberOfActor(Player player)
         {
             return helper.GetNumberInRoomOfPlayer(player);

@@ -54,6 +54,8 @@ namespace MultiplayerRacer
             Dictionary<int, Player> players = PhotonNetwork.CurrentRoom.Players;
             Player player = players[actorNumber];
             int num = 1;
+            /*for each player that has a smaller actornumber that the player
+            increase num to eventually get its number in the room*/
             foreach (KeyValuePair<int, Player> pair in players)
             {
                 if (player.ActorNumber > pair.Key)
@@ -66,6 +68,8 @@ namespace MultiplayerRacer
         public int GetNumberInRoomOfPlayer(Player player)
         {
             int num = 1;
+            /*for each player that has a smaller actornumber that the player
+            increase num to eventually get its number in the room*/
             foreach (KeyValuePair<int, Player> pair in PhotonNetwork.CurrentRoom.Players)
             {
                 if (player.ActorNumber > pair.Key)

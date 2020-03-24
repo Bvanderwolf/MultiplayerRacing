@@ -324,10 +324,14 @@ namespace MultiplayerRacer
 
         public void SetCarSelectActiveState(bool value)
         {
-            //laat playerinfo zien
             carSelect.gameObject.SetActive(value);
         }
 
+        /// <summary>
+        /// will need to be called by client to update the car select values
+        /// based on the sprite index the player left us with
+        /// </summary>
+        /// <param name="player"></param>
         public void OnPlayerLeftSelectedCar(Player player)
         {
             if (!player.CustomProperties.ContainsKey(SPRITE_INDEX_HASHTABLE_KEY))
@@ -369,6 +373,10 @@ namespace MultiplayerRacer
             SetCarSelectActiveState(false);
         }
 
+        /// <summary>
+        /// Goes through player list, updating the player info if a car has already
+        /// been selected
+        /// </summary>
         public void UpdateCarsSelectedWithPlayerProperties()
         {
             Dictionary<int, Player> players = PhotonNetwork.CurrentRoom.Players;
@@ -384,21 +392,39 @@ namespace MultiplayerRacer
             }
         }
 
+        /// <summary>
+        /// Should be called when the player leaves a room/lobby to reset
+        /// lobby ui related values
+        /// </summary>
         public void OnLobbyLeave()
         {
             ResetPlayerInfo();
             ResetCarSelectProps();
         }
 
+        /// <summary>
+        /// resets values related to car select
+        /// </summary>
         public void ResetCarSelectProps()
         {
+            //clear selected cars array of selected car values
             SelectedCars.Clear();
+            //remove choosen car sprite from out custom properties
             PhotonNetwork.LocalPlayer.CustomProperties.Remove(SPRITE_INDEX_HASHTABLE_KEY);
+            //we now need to select a car again
             selectingCar = true;
+            //disable car select gameobject
             carSelect.gameObject.SetActive(false);
+            //make sure all selectable car textures are available when rejoining a room
             StartCoroutine(ResetAllCarTextures(carSelect.OnLobbyLeave));
         }
 
+        /// <summary>
+        /// Goes through all car texture colors that where saved from our car select and
+        /// updates selectable car sprites their texture with the origional apparant colors
+        /// </summary>
+        /// <param name="onEnd">action to be invoked when ending operation</param>
+        /// <returns></returns>
         private IEnumerator ResetAllCarTextures(Action onEnd)
         {
             Dictionary<int, Color[]> carTextureColors = carSelect.CarTextureColors;

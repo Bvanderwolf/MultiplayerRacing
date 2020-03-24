@@ -46,6 +46,10 @@ namespace MultiplayerRacer
             InitImages();
         }
 
+        /// <summary>
+        /// should be called when when leaving a room/lobby to reset
+        /// car select to default settings
+        /// </summary>
         public void OnLobbyLeave()
         {
             SetDefaultFocusSettings();
@@ -67,6 +71,9 @@ namespace MultiplayerRacer
             UpdateImageInVisability(carOutOfFocus, carImageTwo.rect);
         }
 
+        /// <summary>
+        /// Sets default settings related to focus
+        /// </summary>
         private void SetDefaultFocusSettings()
         {
             //set car in focus and out of focus based on starting scene
@@ -80,6 +87,11 @@ namespace MultiplayerRacer
             TextureNumInFocus = 1;
         }
 
+        /// <summary>
+        /// sets default settings related to scene setup. Set init bool
+        /// to true when calling this the first time
+        /// </summary>
+        /// <param name="init"></param>
         private void SetDefaultSceneSettings(bool init)
         {
             List<Sprite> carSprites = InRoomManager.Instance.GetSelectableCarSprites();
@@ -100,12 +112,21 @@ namespace MultiplayerRacer
             carName.text = carNames[TextureNumInFocus - 1];
         }
 
+        /// <summary>
+        /// Adds given texture to the dictionary, using its last
+        /// character as digit as key
+        /// </summary>
+        /// <param name="tex"></param>
         private void AddTextureToDictionary(Texture2D tex)
         {
             int num = int.Parse(tex.name.Substring(tex.name.Length - 1));
             CarTextureColors.Add(num, tex.GetPixels());
         }
 
+        /// <summary>
+        /// Subscribe action to selectbutton
+        /// </summary>
+        /// <param name="action"></param>
         public void ListenToSelectButton(UnityAction action)
         {
             selectButton.onClick.AddListener(action);
@@ -143,6 +164,14 @@ namespace MultiplayerRacer
             StartCoroutine(MoveCarImageIntoFocus(carOutOfFocus, rect, false));
         }
 
+        /// <summary>
+        /// Moves car out of focus position towards an end position based on given
+        /// left value. Will make given car's texture transparant when leaving.
+        /// </summary>
+        /// <param name="car"></param>
+        /// <param name="rect"></param>
+        /// <param name="left"></param>
+        /// <returns></returns>
         private IEnumerator MoveCarImageOutOfFocus(GameObject car, Rect rect, bool left)
         {
             Vector2 offset = new Vector2((back.sizeDelta.x * 0.5f) + rect.width, 0);
@@ -164,9 +193,19 @@ namespace MultiplayerRacer
                 UpdateImageInVisability(car, rect);
                 yield return new WaitForFixedUpdate();
             }
+            //car is now out of focus
             carOutOfFocus = car;
         }
 
+        /// <summary>
+        /// Moves car into focus from outside of the background bounds towards
+        /// the middle focus position. Will make car's texture apparent when
+        /// moving inside background bounds
+        /// </summary>
+        /// <param name="car"></param>
+        /// <param name="rect"></param>
+        /// <param name="left"></param>
+        /// <returns></returns>
         private IEnumerator MoveCarImageIntoFocus(GameObject car, Rect rect, bool left)
         {
             //the user can't select a car if it is switching it
@@ -228,6 +267,13 @@ namespace MultiplayerRacer
             tex.Apply();
         }
 
+        /// <summary>
+        /// Goes through all pixels of the car, updating pixels that are inside
+        /// background bounds to be apparent.
+        /// </summary>
+        /// <param name="car"></param>
+        /// <param name="pixelColors"></param>
+        /// <param name="carRect"></param>
         private void UpdateImageVisability(GameObject car, Color[] pixelColors, Rect carRect)
         {
             //get position from where texture is being drawn (left top corner)
@@ -254,6 +300,11 @@ namespace MultiplayerRacer
             tex.Apply();
         }
 
+        /// <summary>
+        /// Updates focus values bassed on whether we are increasing
+        /// texture num in focus or decreasing it
+        /// </summary>
+        /// <param name="increase"></param>
         private void UpdateFocus(bool increase)
         {
             Vector3 offset = new Vector3((back.sizeDelta.x * 0.5f) + carImageOne.rect.width, 0);
