@@ -262,6 +262,18 @@ namespace MultiplayerRacer
                     SetReadyUpResetResult(succes); //handle reset result
                 });
             }
+            else
+            {
+                //if we are not the master client we tell the master client we failed readying up
+                PV.RPC("ReadyUpFailed", RpcTarget.MasterClient);
+            }
+        }
+
+        [PunRPC]
+        private void ReadyUpFailed()
+        {
+            if (PhotonNetwork.IsMasterClient)
+                OnReadyUpFailed();
         }
 
         [PunRPC]

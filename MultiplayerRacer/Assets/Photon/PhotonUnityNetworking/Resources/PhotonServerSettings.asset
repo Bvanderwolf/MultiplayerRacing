@@ -51,5 +51,6 @@ MonoBehaviour:
   - UpdateFinishedPlayer
   - OnRaceEnded
   - RestartGameScene
+  - ReadyUpFailed
   DisableAutoOpenWizard: 1
   ShowSettings: 0
