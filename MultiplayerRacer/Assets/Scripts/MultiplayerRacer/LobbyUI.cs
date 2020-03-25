@@ -456,8 +456,8 @@ namespace MultiplayerRacer
         /// <returns></returns>
         private IEnumerator ResetAllCarTextures(Action onEnd)
         {
-            Dictionary<int, Color[]> carTextureColors = carSelect.CarTextureColors;
-            if (carTextureColors.Count == 0)
+            Dictionary<int, Color[]> carTextureColors = carSelect?.CarTextureColors;
+            if (carTextureColors == null || carTextureColors.Count == 0)
                 yield break;
 
             List<Sprite> sprites = InRoomManager.Instance.GetSelectableCarSprites();
