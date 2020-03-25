@@ -15,6 +15,7 @@ namespace MultiplayerRacer
         [SerializeField] private Button connectButton;
         [SerializeField] private GameObject playersInfo;
         [SerializeField] private GameObject maxPlayerInputField;
+        [SerializeField] private GameObject CreateRoomToggle;
         [SerializeField] private CarSelectNavigation carSelect;
 
         [SerializeField] private Color connectColor = new Color(0, 0.75f, 0);
@@ -30,6 +31,8 @@ namespace MultiplayerRacer
         public const string SPRITE_INDEX_HASHTABLE_KEY = "CarSpriteIndex";
 
         public List<int> SelectedCars { get; private set; } = new List<int>();
+
+        private bool maxPlayerInputFieldEdited = false;
 
         protected override void Awake()
         {
@@ -116,6 +119,20 @@ namespace MultiplayerRacer
             maxPlayerInputField.SetActive(value);
         }
 
+        public void WaitForMaxPlayerInput(Action onEnd)
+        {
+            StartCoroutine(WaitForMaxPlayerInputEnumerator(onEnd));
+        }
+
+        private IEnumerator WaitForMaxPlayerInputEnumerator(Action onEnd)
+        {
+            while (!maxPlayerInputFieldEdited) yield return new WaitForFixedUpdate();
+
+            maxPlayerInputFieldEdited = false;
+
+            onEnd?.Invoke();
+        }
+
         public void OnMaxPlayerInputFieldEdited(string edit)
         {
             if (InValidMaxPlayerInput(edit))
@@ -125,10 +142,7 @@ namespace MultiplayerRacer
                 input.placeholder.color = Color.red;
                 return;
             }
-            //update the room's max players so players can join
-            InRoomManager.Instance.SetMaxPlayersInRoom(int.Parse(edit));
-            //since on joined room won't be called for the master client, set it manualy
-            MatchMakingManager.Instance.OnJoinedRoom();
+            maxPlayerInputFieldEdited = true;
             //set active state of input field to false
             SetMaxPlayersInputFieldActiveState(false);
         }
@@ -327,6 +341,21 @@ namespace MultiplayerRacer
             carSelect.gameObject.SetActive(value);
         }
 
+        public void SetCreateRoomToggleActiveState(bool value)
+        {
+            CreateRoomToggle.SetActive(value);
+        }
+
+        public bool GetStateOfCreateRoomToggle()
+        {
+            return CreateRoomToggle.GetComponent<Toggle>().isOn;
+        }
+
+        public int GetMaxPlayersInput()
+        {
+            return int.Parse(maxPlayerInputField.GetComponent<InputField>().text);
+        }
+
         /// <summary>
         /// will need to be called by client to update the car select values
         /// based on the sprite index the player left us with
@@ -399,7 +428,7 @@ namespace MultiplayerRacer
         public void OnLobbyLeave()
         {
             ResetPlayerInfo();
-            ResetCarSelectProps();
+            ResetCarSelectProps();           
         }
 
         /// <summary>

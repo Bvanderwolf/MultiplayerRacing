@@ -185,13 +185,25 @@ namespace MultiplayerRacer
         {
             connectingToRoom = true;
 
-            //setup room options and join or create room
-            RoomOptions options = new RoomOptions();
-            options.IsVisible = false;
-            //max players defaults to 1 so the master client can set the player count when inside
-            //options.MaxPlayers = 1;
-            //create or join room with options
-            PhotonNetwork.JoinOrCreateRoom(ROOM_NAME, options, TypedLobby.Default);
+            LobbyUI lobbyUI = (LobbyUI)UI;
+            lobbyUI.SetCreateRoomToggleActiveState(false);
+
+            bool creatingRoom = lobbyUI.GetStateOfCreateRoomToggle();
+            if (creatingRoom)
+            {
+                lobbyUI.SetMaxPlayersInputFieldActiveState(true);
+                lobbyUI.WaitForMaxPlayerInput(() =>
+                {
+                    //setup room options and join or create room
+                    RoomOptions options = new RoomOptions();
+                    options.IsVisible = false;
+                    //get max players choosen by user
+                    options.MaxPlayers = (byte)lobbyUI.GetMaxPlayersInput();
+                    //create or join room with options
+                    PhotonNetwork.CreateRoom(ROOM_NAME, options);
+                });
+            }
+            else PhotonNetwork.JoinRoom(ROOM_NAME);
         }
 
         /// <summary>
@@ -303,8 +315,7 @@ namespace MultiplayerRacer
         {
             base.OnCreatedRoom();
             //if this client created the room, it is the master client and is the room master
-            InRoomManager.Instance.SetRoomMaster(this);
-            ((LobbyUI)UI).SetMaxPlayersInputFieldActiveState(true);
+            InRoomManager.Instance.SetRoomMaster(this);            
         }
 
         public override void OnCreateRoomFailed(short returnCode, string message)
@@ -317,8 +328,7 @@ namespace MultiplayerRacer
         {
             base.OnJoinedRoom();
             //define first in room as the max player count being 0
-            bool firstInRoom = PhotonNetwork.CurrentRoom.MaxPlayers == 0;
-            print(PhotonNetwork.CurrentRoom.MaxPlayers);
+            bool firstInRoom = PhotonNetwork.CurrentRoom.MaxPlayers == 0;          
             //if we where connecting to a room and are not the first, we setup values and ui accordingly
             if (connectingToRoom && !firstInRoom)
             {
@@ -339,7 +349,9 @@ namespace MultiplayerRacer
         public override void OnJoinRoomFailed(short returnCode, string message)
         {
             base.OnJoinRoomFailed(returnCode, message);
-            ((LobbyUI)UI).SetConnectButtonInteractability(true);
+            LobbyUI lobbyUI = (LobbyUI)UI;
+            lobbyUI.SetConnectButtonInteractability(true);
+            lobbyUI.SetCreateRoomToggleActiveState(true);
             connectingToRoom = false;
             Debug.LogError($"Joining room failed with message: {message}");
         }
@@ -356,6 +368,7 @@ namespace MultiplayerRacer
                 lobbyUI.UpdateConnectStatus(true);
                 lobbyUI.UpdateConnectColor(true);
                 lobbyUI.SetConnectButtonInteractability(true);
+                lobbyUI.SetCreateRoomToggleActiveState(true);
             }
         }
 
@@ -384,7 +397,7 @@ namespace MultiplayerRacer
             lobbyUI.UpdateConnectStatus(false);
             lobbyUI.UpdateConnectColor(false);
             lobbyUI.ResetPlayerInfo();
-            lobbyUI.SetConnectButtonInteractability(true);
+            lobbyUI.SetConnectButtonInteractability(true);           
             Application.quitting -= OnQuitEvent;
 
             print(cause);

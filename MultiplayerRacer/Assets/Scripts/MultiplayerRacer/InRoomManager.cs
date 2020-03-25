@@ -115,14 +115,6 @@ namespace MultiplayerRacer
             UI = helper.GetCanvasReference(CurrentScene);
         }
 
-        public void SetMaxPlayersInRoom(int count)
-        {
-            if (count <= 1 || count > MatchMakingManager.MAX_PLAYERS)
-                return;
-
-            PhotonNetwork.CurrentRoom.MaxPlayers = (byte)count;
-        }
-
         /// <summary>
         /// sets InroomManager its isready value and updates the master client with this value
         /// if updateMaster is true, set it to false if you are the master client
