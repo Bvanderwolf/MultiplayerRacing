@@ -189,7 +189,7 @@ namespace MultiplayerRacer
             RoomOptions options = new RoomOptions();
             options.IsVisible = false;
             //max players defaults to 1 so the master client can set the player count when inside
-            options.MaxPlayers = 1;
+            //options.MaxPlayers = 1;
             //create or join room with options
             PhotonNetwork.JoinOrCreateRoom(ROOM_NAME, options, TypedLobby.Default);
         }
@@ -316,8 +316,9 @@ namespace MultiplayerRacer
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
-            //define first in room as the max player count being 1
-            bool firstInRoom = PhotonNetwork.CurrentRoom.MaxPlayers == 1;
+            //define first in room as the max player count being 0
+            bool firstInRoom = PhotonNetwork.CurrentRoom.MaxPlayers == 0;
+            print(PhotonNetwork.CurrentRoom.MaxPlayers);
             //if we where connecting to a room and are not the first, we setup values and ui accordingly
             if (connectingToRoom && !firstInRoom)
             {
