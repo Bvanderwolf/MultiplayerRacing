@@ -200,7 +200,7 @@ namespace MultiplayerRacer
                     //get max players choosen by user
                     options.MaxPlayers = (byte)lobbyUI.GetMaxPlayersInput();
                     //create or join room with options
-                    PhotonNetwork.CreateRoom(ROOM_NAME, options);
+                    PhotonNetwork.CreateRoom(ROOM_NAME, options, TypedLobby.Default);
                 });
             }
             else PhotonNetwork.JoinRoom(ROOM_NAME);
