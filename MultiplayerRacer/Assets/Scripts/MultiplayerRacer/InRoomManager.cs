@@ -194,6 +194,11 @@ namespace MultiplayerRacer
             return helper.GetNumberInRoomOfPlayer(player);
         }
 
+        public int GetActorNumberOfPlayerInRoom(int playerNumber)
+        {
+            return helper.GetActorNumberOfPlayerInRoom(playerNumber);
+        }
+
         /// <summary>
         /// Registers the Room Master as a Custom Serializable Type for this room
         /// </summary>
@@ -479,10 +484,11 @@ namespace MultiplayerRacer
             switch (CurrentScene)
             {
                 case MultiplayerRacerScenes.LOBBY:
+                    //reset all player related info, then update it again
                     LobbyUI lobbyUI = (LobbyUI)UI;
-                    lobbyUI.ResetPlayerInfo(); //reset ready buttons when a player leaves
-                    lobbyUI.UpdatePlayerInfo(room.PlayerCount);
+                    lobbyUI.ResetPlayerInfo(); 
                     lobbyUI.OnPlayerLeftSelectedCar(otherPlayer);
+                    lobbyUI.UpdatePlayerInfo(room.PlayerCount);
                     break;
 
                 case MultiplayerRacerScenes.GAME:

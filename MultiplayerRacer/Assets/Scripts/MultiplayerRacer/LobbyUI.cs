@@ -252,15 +252,27 @@ namespace MultiplayerRacer
         {
             SetPlayerInfoHeader(item.transform.Find("PlayerName")?.gameObject, $"Player {ci + 1}");
             //set it to active if not already active
-            if (!item.activeInHierarchy)
-            {
+            if (!item.activeInHierarchy)            
                 item.SetActive(true);
-            }
-            //if max players has been reached set buttons to be interactable
-            if (count == PhotonNetwork.CurrentRoom.MaxPlayers)
+
+            //if the player which this item belongs to has a sprite choosen, set it
+            Room room = PhotonNetwork.CurrentRoom;
+            int playerNumber = ci + 1;
+            int actorNumber = InRoomManager.Instance.GetActorNumberOfPlayerInRoom(playerNumber);
+            Player player = room.Players[actorNumber];
+            if (player.CustomProperties.ContainsKey(SPRITE_INDEX_HASHTABLE_KEY))
             {
-                item.GetComponentInChildren<Button>().interactable = true;
+                int spriteIndex = (int)player.CustomProperties[SPRITE_INDEX_HASHTABLE_KEY];
+                Sprite sprite = InRoomManager.Instance.GetUsableCarSprite(spriteIndex);
+                Image image = item.transform.Find("CarImage").GetComponent<Image>();
+                image.sprite = sprite;
+                image.gameObject.SetActive(true);
             }
+            
+            //if max players has been reached set buttons to be interactable
+            if (count == room.MaxPlayers)           
+                item.GetComponentInChildren<Button>().interactable = true;
+            
         }
 
         /// <summary>
@@ -324,11 +336,14 @@ namespace MultiplayerRacer
             {
                 GameObject child = statusTransform.GetChild(ci).gameObject;
                 RectTransform rectTF = child.GetComponent<RectTransform>();
-                Button button = child.GetComponentInChildren<Button>();
                 rectTF.anchoredPosition = new Vector2(0, rectTF.anchoredPosition.y);
+                Button button = child.GetComponentInChildren<Button>();
                 button.image.color = Color.white;
                 button.interactable = false;
                 button.onClick.RemoveAllListeners();
+                Image image = child.transform.Find("CarImage").GetComponent<Image>();
+                image.sprite = null;
+                image.gameObject.SetActive(false);
                 if (child.activeInHierarchy)
                 {
                     child.SetActive(false);

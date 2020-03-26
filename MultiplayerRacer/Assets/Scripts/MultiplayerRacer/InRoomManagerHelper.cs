@@ -79,6 +79,16 @@ namespace MultiplayerRacer
             return num;
         }
 
+        public int GetActorNumberOfPlayerInRoom(int playerNumber)
+        {           
+            //get all actor numbers of players in room
+            Dictionary<int, Player> players = PhotonNetwork.CurrentRoom.Players;
+            List<int> nums = new List<int>();
+            foreach (var pair in players) nums.Add(pair.Key);       
+            //return number in ordered list based on player number
+            return nums.OrderBy(i => i).Skip(playerNumber - 1).FirstOrDefault();
+        }
+
         /// <summary>
         /// Returns a UI script based on current scene
         /// </summary>
