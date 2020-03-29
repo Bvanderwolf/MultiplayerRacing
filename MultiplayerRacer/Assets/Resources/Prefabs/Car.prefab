@@ -199,8 +199,8 @@ Transform:
   - {fileID: 5173830235293659673}
   - {fileID: 6199513176737985583}
   - {fileID: 534958351583279482}
-  - {fileID: 3478094601523190326}
-  - {fileID: 5006898683706105417}
+  - {fileID: 3478094601523190321}
+  - {fileID: 5006898683706105422}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -248,10 +248,10 @@ MonoBehaviour:
   acceleration: 3
   steering: 1
   maxVelocity: 5
-  spark: {fileID: 534958351583279524}
+  spark: {fileID: 534958351583279527}
   trails:
-  - {fileID: 3478094601523190517}
-  - {fileID: 5006898683706105482}
+  - {fileID: 3478094601523190504}
+  - {fileID: 5006898683706105495}
 --- !u!50 &4944676356826775653
 Rigidbody2D:
   serializedVersion: 4
@@ -365,7 +365,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: b2f5277518a60dd4faaed71f29a0c3c9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e8e4ba36562a78844bb5c7abcdb45dd1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -477,7 +477,7 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 534958351583279967}
   m_PrefabAsset: {fileID: 0}
---- !u!198 &534958351583279524 stripped
+--- !u!198 &534958351583279527 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 534958352268753758, guid: 09bb118712a7e8c46a32bb2a096fac2c,
     type: 3}
@@ -503,7 +503,7 @@ PrefabInstance:
     - target: {fileID: 2975880822460523054, guid: 6df3f9d166fca5745aa3d98deaee229c,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.439
+      value: -0.33
       objectReference: {fileID: 0}
     - target: {fileID: 2975880822460523054, guid: 6df3f9d166fca5745aa3d98deaee229c,
         type: 3}
@@ -552,13 +552,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6df3f9d166fca5745aa3d98deaee229c, type: 3}
---- !u!4 &3478094601523190326 stripped
+--- !u!4 &3478094601523190321 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2975880822460523054, guid: 6df3f9d166fca5745aa3d98deaee229c,
     type: 3}
   m_PrefabInstance: {fileID: 3478094601523189765}
   m_PrefabAsset: {fileID: 0}
---- !u!96 &3478094601523190517 stripped
+--- !u!96 &3478094601523190504 stripped
 TrailRenderer:
   m_CorrespondingSourceObject: {fileID: 4386454626106661793, guid: 6df3f9d166fca5745aa3d98deaee229c,
     type: 3}
@@ -584,7 +584,7 @@ PrefabInstance:
     - target: {fileID: 2975880822460523054, guid: 6df3f9d166fca5745aa3d98deaee229c,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.439
+      value: -0.33
       objectReference: {fileID: 0}
     - target: {fileID: 2975880822460523054, guid: 6df3f9d166fca5745aa3d98deaee229c,
         type: 3}
@@ -633,13 +633,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6df3f9d166fca5745aa3d98deaee229c, type: 3}
---- !u!4 &5006898683706105417 stripped
+--- !u!4 &5006898683706105422 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2975880822460523054, guid: 6df3f9d166fca5745aa3d98deaee229c,
     type: 3}
   m_PrefabInstance: {fileID: 5006898683706104954}
   m_PrefabAsset: {fileID: 0}
---- !u!96 &5006898683706105482 stripped
+--- !u!96 &5006898683706105495 stripped
 TrailRenderer:
   m_CorrespondingSourceObject: {fileID: 4386454626106661793, guid: 6df3f9d166fca5745aa3d98deaee229c,
     type: 3}
